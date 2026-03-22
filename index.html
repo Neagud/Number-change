@@ -2458,7 +2458,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v9'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v10'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2976,10 +2976,6 @@ function renderTrackerList(){
     cards.appendChild(card);
 
     if(curAsset!==tr.assetA){
-      // FINAL: getScoreForPair(curAsset, assetA)
-      // = "is the coin I'm holding gaining vs my base?"
-      // High = holding coin strong = good time to swap back = SWAP BACK
-      // Low = holding coin weak = wait = HOLD
       getScoreForPair(curAsset, tr.assetA).then(res=>{
         const sc=res?res.score:0;
         const scoreEl=document.getElementById(scoreId);
@@ -3305,7 +3301,7 @@ function renderDetailStats(tr){
 /* Cache for pair scores so we don't re-fetch too often */
 const _scoreCache={};
 const _scoreCacheTime={};
-const SCORE_TTL=30*1000; // 30 seconds — keeps cards in sync with analyzer
+const SCORE_TTL=30*1000; // 30s // 30 seconds — keeps cards in sync with analyzer
 
 async function getScoreForPair(a,b){
   const key=a+'_'+b;
@@ -3372,7 +3368,6 @@ async function buildTrackerSignal(tr, curAsset, signalId){
   if(!holdingBase){
     // Currently holding curAsset (e.g. UNI), want to know when to swap back to base (e.g. ALGO)
     // We need score on curAsset/base pair: high score = curAsset gaining vs base = good time to swap curAsset→base
-    // curAsset/assetA: is holding coin gaining vs base?
     const res=await getScoreForPair(curAsset, tr.assetA);
     if(!sigEl.isConnected) return;
     const sc=res?res.score:0;
