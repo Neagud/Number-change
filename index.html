@@ -2836,7 +2836,7 @@ function initTabs(){
       document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-'+tab).classList.add('active');
-      if(tab==='tracker'){ Object.keys(_scoreCache).forEach(k=>{delete _scoreCache[k]; delete _scoreCacheTime[k];}); initTrackerUI(); startTrackerLiveRefresh(); }
+      if(tab==='tracker'){ initTrackerUI(); startTrackerLiveRefresh(); }
       if(tab==='alerts'&&!window._alertsInited){ initAlerts(); window._alertsInited=true; }
     });
   });
