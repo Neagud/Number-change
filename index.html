@@ -2976,10 +2976,11 @@ function renderTrackerList(){
     cards.appendChild(card);
 
     if(curAsset!==tr.assetA){
-      // Score assetA/curAsset (FROM=base TO=holding)  
-      // High = base gaining = good to swap holding→base = SWAP BACK
-      // Low = base weakening = hold, wait
-      getScoreForPair(tr.assetA, curAsset).then(res=>{
+      // FINAL: getScoreForPair(curAsset, assetA)
+      // = "is the coin I'm holding gaining vs my base?"
+      // High = holding coin strong = good time to swap back = SWAP BACK
+      // Low = holding coin weak = wait = HOLD
+      getScoreForPair(curAsset, tr.assetA).then(res=>{
         const sc=res?res.score:0;
         const scoreEl=document.getElementById(scoreId);
         const cardEl=scoreEl?.closest('.st-tracker-card');
@@ -3371,8 +3372,8 @@ async function buildTrackerSignal(tr, curAsset, signalId){
   if(!holdingBase){
     // Currently holding curAsset (e.g. UNI), want to know when to swap back to base (e.g. ALGO)
     // We need score on curAsset/base pair: high score = curAsset gaining vs base = good time to swap curAsset→base
-    // assetA/curAsset: FROM=base TO=holding. High = base gaining = SWAP BACK
-    const res=await getScoreForPair(tr.assetA, curAsset);
+    // curAsset/assetA: is holding coin gaining vs base?
+    const res=await getScoreForPair(curAsset, tr.assetA);
     if(!sigEl.isConnected) return;
     const sc=res?res.score:0;
     const col=sc>=70?'#00c076':sc<=30?'#ef4444':'#f5a623';
@@ -3392,7 +3393,7 @@ async function buildTrackerSignal(tr, curAsset, signalId){
       <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">OPEN POSITION: holding ${curAsset}</div>
       <div style="font-size:16px;font-weight:700;color:${col}">${verdict}</div>
       <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">${explanation}</div>
-      <button onclick="switchAnalyzerPair('${tr.assetA}','${curAsset}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Analyze ${tr.assetA}/${curAsset} in detail →</button>
+      <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Analyze ${curAsset}/${tr.assetA} in detail →</button>
     </div>`;
     return;
   }
