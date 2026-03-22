@@ -2914,59 +2914,79 @@ function renderTrackerList(){
   trackers.forEach(tr=>{
     const swaps=tr.swaps||[];
     const baseAmt=calcBaseAmount(tr);
-    const fgc=calcTotalFees(tr);const growth=baseAmt!==null?((baseAmt-tr.startAmount-fgc)/tr.startAmount*100):null;
+    // Find current holding
+    let curAsset=tr.assetA;
+    swaps.forEach(sw=>{ if(sw.fromAsset===curAsset) curAsset=sw.toAsset; });
+
+    // If closed (back to base) → real profit, fees already baked in
+    // If open (holding non-base) → estimate with fee deduction
+    const isClosed=curAsset===tr.assetA;
+    const fgc=isClosed?0:calcTotalFees(tr);
+    const growth=baseAmt!==null?((baseAmt-tr.startAmount-fgc)/tr.startAmount*100):null;
     const col=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
-    // Check if current analyzer pair matches this tracker + get score signal
-    const pairMatch=(fromSym===tr.assetA&&toSym===tr.assetB)||(fromSym===tr.assetB&&toSym===tr.assetA);
-    const scoreElCard=document.querySelector('.sp-num');
-    const cardScore=scoreElCard?parseInt(scoreElCard.textContent)||0:0;
-    // Determine border color:
-    // 1. If analyzer matches and score ≥75 → green (swap now)
-    // 2. If analyzer matches and score ≤25 → red (don't swap)
-    // 3. If analyzer matches and 25-75 → orange (watch)
-    // 4. No match → neutral
-    let cardBorderCol='var(--border)';
-    let cardSignalBadge='';
-    if(pairMatch&&cardScore>0){
-      if(cardScore>=70){
-        cardBorderCol='rgba(0,192,118,0.7)';
-        cardSignalBadge=`<span style="font-size:10px;font-family:monospace;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(0,192,118,0.15);color:#00c076;border:1px solid rgba(0,192,118,0.4);margin-left:6px">✅ SWAP NOW</span>`;
-      } else if(cardScore<=30){
-        cardBorderCol='rgba(239,68,68,0.6)';
-        cardSignalBadge=`<span style="font-size:10px;font-family:monospace;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.35);margin-left:6px">❌ HOLD</span>`;
-      } else {
-        cardBorderCol='rgba(245,166,35,0.6)';
-        cardSignalBadge=`<span style="font-size:10px;font-family:monospace;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(245,166,35,0.1);color:#f5a623;border:1px solid rgba(245,166,35,0.35);margin-left:6px">⏳ WATCH</span>`;
-      }
-    }
 
     // Profit badge
-    const feesCard=calcTotalFees(tr);const profitAmtCard=baseAmt!==null?baseAmt-tr.startAmount-feesCard:null;
+    const profitAmtCard=baseAmt!==null?baseAmt-tr.startAmount-fgc:null;
     const profitColCard=profitAmtCard===null?'var(--text2)':profitAmtCard>=0?'#00c076':'#ef4444';
     const profitBadge=profitAmtCard!==null
       ?`<span style="font-size:11px;font-family:monospace;color:${profitColCard};font-weight:700">${profitAmtCard>=0?'+':''}${profitAmtCard.toFixed(4)} ${tr.assetA}</span>`
       :`<span style="font-size:11px;color:var(--text3)">open position</span>`;
 
+    // Build card with placeholder score — will be updated async
     const card=document.createElement('div');
     card.className='st-tracker-card';
-    card.style.borderColor=cardBorderCol;
+    card.style.borderColor='var(--border)';
     card.style.borderWidth='2px';
+    const scoreId='card-score-'+tr.id.replace(/[^a-z0-9]/gi,'_');
+    const holdingLabel=curAsset!==tr.assetA
+      ?`<span style="font-size:10px;color:var(--text3);font-family:monospace">holding <strong style="color:var(--amber)">${curAsset}</strong></span>`
+      :`<span style="font-size:10px;color:var(--text3);font-family:monospace">holding <strong style="color:var(--green)">${tr.assetA}</strong></span>`;
+
     card.innerHTML=`
       <div class="stc-left">
-        <div class="stc-name">${tr.name||tr.assetA+'↔'+tr.assetB}${cardSignalBadge}</div>
-        <div class="stc-pair">${tr.assetA} ↔ ${tr.assetB}</div>
+        <div class="stc-name">${tr.name||tr.assetA+'↔'+tr.assetB}</div>
+        <div class="stc-pair">${tr.assetA} ↔ ${tr.assetB} &nbsp;·&nbsp; ${holdingLabel}</div>
         <div class="stc-meta">${swaps.length} swap${swaps.length!==1?'s':''} &middot; started with ${tr.startAmount} ${tr.assetA}</div>
       </div>
       <div class="stc-right">
-        <div class="stc-growth" style="color:${col}">${growth!==null?(growth>=0?'+':'')+growth.toFixed(2)+'%':'—'}</div>
-        <div class="stc-base">${profitBadge}</div>
-        <div class="stc-actions">
-          <button class="st-view-btn" data-id="${tr.id}">View →</button>
-          <button class="st-del-tracker-btn" data-id="${tr.id}">✕</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div id="${scoreId}" style="font-size:11px;font-family:monospace;color:var(--text3)">Score: ...</div>
+            <div class="stc-growth" style="color:${col}">${growth!==null?(growth>=0?'+':'')+growth.toFixed(2)+'%':'—'}</div>
+          </div>
+          <div class="stc-base">${profitBadge}</div>
+          <div class="stc-actions">
+            <button class="st-view-btn" data-id="${tr.id}">View →</button>
+            <button class="st-del-tracker-btn" data-id="${tr.id}">✕</button>
+          </div>
         </div>
       </div>
     `;
     cards.appendChild(card);
+
+    // Async: fetch the correct score for this tracker's current position
+    // If holding non-base: score curAsset/base (high = curAsset gaining = good to swap back)
+    // If holding base: score base/assetB (high = base gaining = good to swap out)
+    const scorePair=curAsset!==tr.assetA
+      ?[curAsset, tr.assetA]
+      :[tr.assetA, tr.assetB];
+
+    getScoreForPair(scorePair[0], scorePair[1]).then(res=>{
+      const sc=res?res.score:0;
+      const scoreEl=document.getElementById(scoreId);
+      const cardEl=scoreEl?.closest('.st-tracker-card');
+      if(!scoreEl||!cardEl) return;
+
+      const scCol=sc>=70?'#00c076':sc<=30?'#ef4444':'#f5a623';
+      const scBg=sc>=70?'rgba(0,192,118,0.12)':sc<=30?'rgba(239,68,68,0.1)':'rgba(245,166,35,0.1)';
+      const scLabel=sc>=70?(curAsset!==tr.assetA?'↩ SWAP BACK':'✅ SWAP NOW'):sc<=30?'⛔ HOLD':'⏳ WATCH';
+
+      scoreEl.innerHTML=`<span style="font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:${scBg};color:${scCol}">${scLabel} ${sc}/100</span>`;
+
+      // Update card border
+      cardEl.style.borderColor=sc>=70?'rgba(0,192,118,0.6)':sc<=30?'rgba(239,68,68,0.5)':'rgba(245,166,35,0.5)';
+      cardEl.style.background=sc>=70?'rgba(0,192,118,0.03)':sc<=30?'rgba(239,68,68,0.03)':'transparent';
+    }).catch(()=>{});
   });
 
   cards.querySelectorAll('.st-view-btn').forEach(btn=>{
@@ -3185,8 +3205,12 @@ function renderDetailStats(tr){
 
   // Refresh open position with live prices (once, not recursive)
   const baseAmt=calcBaseAmount(tr);
-  const totalFees=calcTotalFees(tr);
-  // profit and growth use the SAME formula — both subtract fees for consistency
+  // Closed = back to base = real profit (fees already in actual amounts)
+  // Open = holding non-base = estimate, deduct fees
+  let curAssetD=tr.assetA;
+  (tr.swaps||[]).forEach(sw=>{ if(sw.fromAsset===curAssetD) curAssetD=sw.toAsset; });
+  const isClosedD=curAssetD===tr.assetA;
+  const totalFees=isClosedD?0:calcTotalFees(tr);
   const profitAmt=baseAmt!==null?baseAmt-tr.startAmount-totalFees:null;
   const growth=baseAmt!==null&&tr.startAmount>0?((baseAmt-tr.startAmount-totalFees)/tr.startAmount*100):null;
   const growthCol=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
@@ -3202,7 +3226,9 @@ function renderDetailStats(tr){
     fetchTrackerPrices(tr).then(()=>{
       const t2={...tr,_liveLoaded:true};
       const baseAmt2=calcBaseAmount(t2);
-      const fees2=calcTotalFees(t2);
+      let curA2=t2.assetA;
+      (t2.swaps||[]).forEach(sw=>{ if(sw.fromAsset===curA2) curA2=sw.toAsset; });
+      const fees2=(curA2===t2.assetA)?0:calcTotalFees(t2);
       if(baseAmt2===null) return;
       const profit2=baseAmt2-t2.startAmount-fees2;
       const growth2=t2.startAmount>0?((baseAmt2-t2.startAmount-fees2)/t2.startAmount*100):null;
