@@ -2976,7 +2976,10 @@ function renderTrackerList(){
     cards.appendChild(card);
 
     if(curAsset!==tr.assetA){
-      getScoreForPair(curAsset, tr.assetA).then(res=>{
+      // Score paired/base (assetB/assetA)
+      // High = paired outperforming base = good time to swap paired→base
+      // Low = paired underperforming = hold, wait
+      getScoreForPair(tr.assetB, tr.assetA).then(res=>{
         const sc=res?res.score:0;
         const scoreEl=document.getElementById(scoreId);
         const cardEl=scoreEl?.closest('.st-tracker-card');
@@ -3368,7 +3371,7 @@ async function buildTrackerSignal(tr, curAsset, signalId){
   if(!holdingBase){
     // Currently holding curAsset (e.g. UNI), want to know when to swap back to base (e.g. ALGO)
     // We need score on curAsset/base pair: high score = curAsset gaining vs base = good time to swap curAsset→base
-    const res=await getScoreForPair(curAsset, tr.assetA);
+    const res=await getScoreForPair(tr.assetB, tr.assetA);
     if(!sigEl.isConnected) return;
     const sc=res?res.score:0;
     const col=sc>=70?'#00c076':sc<=30?'#ef4444':'#f5a623';
@@ -3388,7 +3391,7 @@ async function buildTrackerSignal(tr, curAsset, signalId){
       <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">OPEN POSITION: holding ${curAsset}</div>
       <div style="font-size:16px;font-weight:700;color:${col}">${verdict}</div>
       <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">${explanation}</div>
-      <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Analyze ${curAsset}/${tr.assetA} in detail →</button>
+      <button onclick="switchAnalyzerPair('${tr.assetB}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Analyze ${tr.assetB}/${tr.assetA} in detail →</button>
     </div>`;
     return;
   }
