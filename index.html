@@ -2469,6 +2469,15 @@ function _loadScore(){
 function _saveScore(r){ try{ localStorage.setItem(_scoreKey(), JSON.stringify({...r, _ts:Date.now()})); }catch(e){} }
 function _clearScore(){ try{ localStorage.removeItem(_scoreKey()); }catch(e){} }
 
+/* When analyzer scores a pair, also update the getScoreForPair cache so tracker cards sync instantly */
+function _syncScoreCache(a, b, score){
+  const key=a+'_'+b;
+  if(typeof _scoreCache!=='undefined'){
+    _scoreCache[key]={score};
+    _scoreCacheTime[key]=Date.now();
+  }
+}
+
 async function runAIScore(s, forceRefresh){
   const panel=document.getElementById('scorePanel');if(!panel)return;
 
@@ -2596,6 +2605,8 @@ async function runAIScore(s, forceRefresh){
 
   /* Show math score + risk dashboard immediately */
   renderScore(mathResult);
+  // Sync score to getScoreForPair cache so tracker cards update instantly
+  _syncScoreCache(fromSym, toSym, ms);
   // Scan best correlated partners for the FROM coin
   scanBestPartners(fromSym);
   renderRiskDashboard({
@@ -3291,7 +3302,7 @@ function renderDetailStats(tr){
 /* Cache for pair scores so we don't re-fetch too often */
 const _scoreCache={};
 const _scoreCacheTime={};
-const SCORE_TTL=5*60*1000; // 5 min
+const SCORE_TTL=30*1000; // 30 seconds — keeps cards in sync with analyzer
 
 async function getScoreForPair(a,b){
   const key=a+'_'+b;
