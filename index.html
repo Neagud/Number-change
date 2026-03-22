@@ -2607,6 +2607,7 @@ async function runAIScore(s, forceRefresh){
   renderScore(mathResult);
   // Sync score to getScoreForPair cache so tracker cards update instantly
   _syncScoreCache(fromSym, toSym, ms);
+  _syncScoreCache(toSym, fromSym, 100-ms); // reverse pair sync
   // Scan best correlated partners for the FROM coin
   scanBestPartners(fromSym);
   renderRiskDashboard({
@@ -2977,7 +2978,8 @@ function renderTrackerList(){
 
     if(curAsset!==tr.assetA){
       // ── Open position: show score for swapping back to base ──
-      getScoreForPair(curAsset, tr.assetA).then(res=>{
+      // Use assetA/curAsset = same direction as analyzer (base→holding)
+      getScoreForPair(tr.assetA, curAsset).then(res=>{
         const sc=res?res.score:0;
         const scoreEl=document.getElementById(scoreId);
         const cardEl=scoreEl?.closest('.st-tracker-card');
@@ -3369,7 +3371,8 @@ async function buildTrackerSignal(tr, curAsset, signalId){
   if(!holdingBase){
     // Currently holding curAsset (e.g. UNI), want to know when to swap back to base (e.g. ALGO)
     // We need score on curAsset/base pair: high score = curAsset gaining vs base = good time to swap curAsset→base
-    const res=await getScoreForPair(curAsset, tr.assetA);
+    // assetA/curAsset = same direction as analyzer
+    const res=await getScoreForPair(tr.assetA, curAsset);
     if(!sigEl.isConnected) return;
     const sc=res?res.score:0;
     const col=sc>=70?'#00c076':sc<=30?'#ef4444':'#f5a623';
