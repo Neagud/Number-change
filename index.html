@@ -2914,17 +2914,19 @@ function renderTrackerList(){
   trackers.forEach(tr=>{
     const swaps=tr.swaps||[];
     const baseAmt=calcBaseAmount(tr);
-    const fgc=calcTotalFees(tr);
-    const growth=baseAmt!==null?((baseAmt-tr.startAmount-fgc)/tr.startAmount*100):null;
-    const col=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
-
     // Find current holding
     let curAsset=tr.assetA;
     swaps.forEach(sw=>{ if(sw.fromAsset===curAsset) curAsset=sw.toAsset; });
 
+    // If closed (back to base) → real profit, fees already baked in
+    // If open (holding non-base) → estimate with fee deduction
+    const isClosed=curAsset===tr.assetA;
+    const fgc=isClosed?0:calcTotalFees(tr);
+    const growth=baseAmt!==null?((baseAmt-tr.startAmount-fgc)/tr.startAmount*100):null;
+    const col=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
+
     // Profit badge
-    const feesCard=calcTotalFees(tr);
-    const profitAmtCard=baseAmt!==null?baseAmt-tr.startAmount-feesCard:null;
+    const profitAmtCard=baseAmt!==null?baseAmt-tr.startAmount-fgc:null;
     const profitColCard=profitAmtCard===null?'var(--text2)':profitAmtCard>=0?'#00c076':'#ef4444';
     const profitBadge=profitAmtCard!==null
       ?`<span style="font-size:11px;font-family:monospace;color:${profitColCard};font-weight:700">${profitAmtCard>=0?'+':''}${profitAmtCard.toFixed(4)} ${tr.assetA}</span>`
@@ -3203,8 +3205,12 @@ function renderDetailStats(tr){
 
   // Refresh open position with live prices (once, not recursive)
   const baseAmt=calcBaseAmount(tr);
-  const totalFees=calcTotalFees(tr);
-  // profit and growth use the SAME formula — both subtract fees for consistency
+  // Closed = back to base = real profit (fees already in actual amounts)
+  // Open = holding non-base = estimate, deduct fees
+  let curAssetD=tr.assetA;
+  (tr.swaps||[]).forEach(sw=>{ if(sw.fromAsset===curAssetD) curAssetD=sw.toAsset; });
+  const isClosedD=curAssetD===tr.assetA;
+  const totalFees=isClosedD?0:calcTotalFees(tr);
   const profitAmt=baseAmt!==null?baseAmt-tr.startAmount-totalFees:null;
   const growth=baseAmt!==null&&tr.startAmount>0?((baseAmt-tr.startAmount-totalFees)/tr.startAmount*100):null;
   const growthCol=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
@@ -3220,7 +3226,9 @@ function renderDetailStats(tr){
     fetchTrackerPrices(tr).then(()=>{
       const t2={...tr,_liveLoaded:true};
       const baseAmt2=calcBaseAmount(t2);
-      const fees2=calcTotalFees(t2);
+      let curA2=t2.assetA;
+      (t2.swaps||[]).forEach(sw=>{ if(sw.fromAsset===curA2) curA2=sw.toAsset; });
+      const fees2=(curA2===t2.assetA)?0:calcTotalFees(t2);
       if(baseAmt2===null) return;
       const profit2=baseAmt2-t2.startAmount-fees2;
       const growth2=t2.startAmount>0?((baseAmt2-t2.startAmount-fees2)/t2.startAmount*100):null;
