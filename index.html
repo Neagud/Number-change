@@ -941,6 +941,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
     <!-- Tracker cards -->
     <div id="stTrackerCards"></div>
+    <!-- Closed cycles section -->
+    <div id="stClosedSection" style="display:none;margin-top:2rem">
+      <div style="font-size:11px;font-family:monospace;color:var(--text3);font-weight:700;letter-spacing:1px;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)">✅ CLOSED CYCLES</div>
+      <div id="stClosedCards"></div>
+    </div>
   </div>
 
   <!-- Single tracker detail view -->
@@ -1713,6 +1718,7 @@ function renderMain(series){
         <span class="swap-size-note" id="swapSizeNote"></span>
       </div>
     </div>
+    <div id="corrWarningBanner" style="display:none"></div>
 
     <!-- ══ RISK DASHBOARD ══ -->
     <div class="risk-dashboard" id="riskDashboard" style="display:none">
@@ -2023,15 +2029,15 @@ function buildRiskAnalysis(opts){
 
   /* 1. Correlation check */
   let corrClass, corrLabel, corrNote;
-  if(corr90>=0.75){
+  if(corr90>=0.92){
     corrClass='safe'; corrLabel=corr90.toFixed(2);
     corrNote='Coins move together — ratio will likely revert ✓';
-  } else if(corr90>=0.55){
+  } else if(corr90>=0.80){
     corrClass='warn'; corrLabel=corr90.toFixed(2);
-    corrNote='Moderate correlation — some risk of decoupling';
+    corrNote='Lower correlation — higher risk of decoupling. Consider picking another crypto.';
   } else {
     corrClass='danger'; corrLabel=corr90.toFixed(2);
-    corrNote='Low correlation — coins may be decoupling, higher risk';
+    corrNote='Low correlation — coins may decouple. Not recommended for swapping.';
   }
   risks.push({label:'90-Day Correlation', val:corrLabel, cls:corrClass, note:corrNote,
     bar:true, barPct:Math.max(0,Math.min(100,(corr90+1)/2*100))});
@@ -2262,6 +2268,32 @@ function renderRiskDashboard(opts){
   document.getElementById('maInstruction').innerHTML=maInstruction;
   document.getElementById('maReason').textContent=maReason;
   document.getElementById('maScoreBadge').textContent='Score: '+score+'/100';
+
+  /* Correlation warning banner — shown below master action */
+  const corrWarn=document.getElementById('corrWarningBanner');
+  if(corrWarn){
+    if(corr90<0.80){
+      corrWarn.style.display='block';
+      corrWarn.innerHTML=`<div style="background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.5);border-radius:var(--rs);padding:12px 16px;margin-top:10px;display:flex;align-items:center;gap:14px">
+        <span style="font-size:42px;line-height:1">⚠️</span>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#ef4444;margin-bottom:3px">DO NOT SWAP — Low Correlation (${corr90.toFixed(2)})</div>
+          <div style="font-size:12px;color:var(--text2)">These coins are not moving together reliably. The ratio may not revert. Pick a more correlated pair.</div>
+        </div>
+      </div>`;
+    } else if(corr90<0.92){
+      corrWarn.style.display='block';
+      corrWarn.innerHTML=`<div style="background:rgba(245,166,35,0.08);border:2px solid rgba(245,166,35,0.5);border-radius:var(--rs);padding:12px 16px;margin-top:10px;display:flex;align-items:center;gap:14px">
+        <span style="font-size:42px;line-height:1">⚠️</span>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#f5a623;margin-bottom:3px">Lower Correlation — Higher Risk (${corr90.toFixed(2)})</div>
+          <div style="font-size:12px;color:var(--text2)">These coins don't always move together. Consider picking another crypto with correlation above 0.92.</div>
+        </div>
+      </div>`;
+    } else {
+      corrWarn.style.display='none';
+    }
+  }
 
   /* Checklist pills */
   const cl=document.getElementById('maChecklist');
@@ -2836,7 +2868,7 @@ function initTabs(){
       document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-'+tab).classList.add('active');
-      if(tab==='tracker'){ initTrackerUI(); startTrackerLiveRefresh(); }
+      if(tab==='tracker'){ Object.keys(_scoreCache).forEach(k=>{delete _scoreCache[k]; delete _scoreCacheTime[k];}); initTrackerUI(); startTrackerLiveRefresh(); }
       if(tab==='alerts'&&!window._alertsInited){ initAlerts(); window._alertsInited=true; }
     });
   });
@@ -2914,15 +2946,34 @@ function checkOpportunityBanner(){
 function renderTrackerList(){
   const trackers=loadTrackers();
   const cards=document.getElementById('stTrackerCards');
+  const closedSection=document.getElementById('stClosedSection');
+  const closedCards=document.getElementById('stClosedCards');
   if(!cards) return;
 
   if(!trackers.length){
     cards.innerHTML='<div class="st-empty" style="margin-top:.5rem">No trackers yet. Create your first tracker to start measuring swap performance.</div>';
+    if(closedSection) closedSection.style.display='none';
     return;
   }
 
-  cards.innerHTML='';
+  // Split into active (open position) and closed (back to base, no more swaps needed)
+  const activeTrackers=[], closedTrackers=[];
   trackers.forEach(tr=>{
+    const swaps=tr.swaps||[];
+    if(!swaps.length){ activeTrackers.push(tr); return; }
+    let curAsset=tr.assetA;
+    swaps.forEach(sw=>{ if(sw.fromAsset===curAsset) curAsset=sw.toAsset; });
+    // A tracker is "closed" if it's back to base AND has at least one completed round trip
+    const hasRoundTrip=swaps.some(sw=>sw.toAsset===tr.assetA);
+    if(curAsset===tr.assetA && hasRoundTrip) closedTrackers.push(tr);
+    else activeTrackers.push(tr);
+  });
+
+  cards.innerHTML='';
+  if(closedSection) closedSection.style.display=closedTrackers.length?'block':'none';
+  if(closedCards) closedCards.innerHTML='';
+
+  const renderCard=(tr, isClosed)=>{
     const swaps=tr.swaps||[];
     const baseAmt=calcBaseAmount(tr);
     // Find current holding
@@ -2931,8 +2982,8 @@ function renderTrackerList(){
 
     // If closed (back to base) → real profit, fees already baked in
     // If open (holding non-base) → estimate with fee deduction
-    const isClosed=curAsset===tr.assetA;
-    const fgc=isClosed?0:calcTotalFees(tr);
+    const isBackToBase=curAsset===tr.assetA;
+    const fgc=isBackToBase?0:calcTotalFees(tr);
     const growth=baseAmt!==null?((baseAmt-tr.startAmount-fgc)/tr.startAmount*100):null;
     const col=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
 
@@ -2946,16 +2997,18 @@ function renderTrackerList(){
     // Build card with placeholder score — will be updated async
     const card=document.createElement('div');
     card.className='st-tracker-card';
-    card.style.borderColor='var(--border)';
+    card.style.borderColor=isClosed?'rgba(0,192,118,0.25)':'var(--border)';
     card.style.borderWidth='2px';
+    card.style.opacity=isClosed?'0.75':'1';
     const scoreId='card-score-'+tr.id.replace(/[^a-z0-9]/gi,'_');
+    const closedBadge=isClosed?`<span style="font-size:10px;font-family:monospace;font-weight:700;padding:2px 7px;border-radius:8px;background:rgba(0,192,118,0.12);color:#00c076;border:1px solid rgba(0,192,118,0.3);margin-left:6px">✅ CLOSED</span>`:'';
     const holdingLabel=curAsset!==tr.assetA
       ?`<span style="font-size:10px;color:var(--text3);font-family:monospace">holding <strong style="color:var(--amber)">${curAsset}</strong></span>`
       :`<span style="font-size:10px;color:var(--text3);font-family:monospace">holding <strong style="color:var(--green)">${tr.assetA}</strong></span>`;
 
     card.innerHTML=`
       <div class="stc-left">
-        <div class="stc-name">${tr.name||tr.assetA+'↔'+tr.assetB}</div>
+        <div class="stc-name">${tr.name||tr.assetA+'↔'+tr.assetB}${closedBadge}</div>
         <div class="stc-pair">${tr.assetA} ↔ ${tr.assetB} &nbsp;·&nbsp; ${holdingLabel}</div>
         <div class="stc-meta">${swaps.length} swap${swaps.length!==1?'s':''} &middot; started with ${tr.startAmount} ${tr.assetA}</div>
       </div>
@@ -2973,7 +3026,7 @@ function renderTrackerList(){
         </div>
       </div>
     `;
-    cards.appendChild(card);
+    // card will be appended after score fetch
 
     if(curAsset!==tr.assetA){
       // Score paired/base (assetB/assetA)
@@ -3028,18 +3081,28 @@ function renderTrackerList(){
         cardEl.style.background='transparent';
       }).catch(()=>{});
     }
-  });
 
-  cards.querySelectorAll('.st-view-btn').forEach(btn=>{
-    btn.onclick=()=>openTracker(btn.dataset.id);
-  });
-  cards.querySelectorAll('.st-del-tracker-btn').forEach(btn=>{
-    btn.onclick=()=>{
-      if(!confirm('Delete this tracker and all its swaps?')) return;
-      const t=loadTrackers().filter(x=>x.id!==btn.dataset.id);
-      saveTrackers(t);
-      renderTrackerList();
-    };
+    // Append to correct container
+    const container=isClosed?closedCards:cards;
+    if(container) container.appendChild(card);
+  }; // end renderCard
+
+  activeTrackers.forEach(tr=>renderCard(tr, false));
+  closedTrackers.forEach(tr=>renderCard(tr, true));
+
+  [cards, closedCards].forEach(container=>{
+    if(!container) return;
+    container.querySelectorAll('.st-view-btn').forEach(btn=>{
+      btn.onclick=()=>openTracker(btn.dataset.id);
+    });
+    container.querySelectorAll('.st-del-tracker-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        if(!confirm('Delete this tracker and all its swaps?')) return;
+        const t=loadTrackers().filter(x=>x.id!==btn.dataset.id);
+        saveTrackers(t);
+        renderTrackerList();
+      };
+    });
   });
 }
 
