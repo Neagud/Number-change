@@ -1045,8 +1045,6 @@ const COINS=[
   {sym:'SUI', name:'Sui',          cat:'L1'},
   {sym:'HBAR',name:'Hedera',       cat:'L1'},
   // L2
-  {sym:'OP',  name:'Optimism',     cat:'L2'},
-  {sym:'ARB', name:'Arbitrum',     cat:'L2'},
   // Payments (ISO 20022)
   {sym:'XRP', name:'XRP',          cat:'Payments'},
   {sym:'XLM', name:'Stellar',      cat:'Payments'},
@@ -1061,6 +1059,9 @@ const COINS=[
   // AI/GPU
   {sym:'RNDR',name:'Render',       cat:'AI/GPU'},
   {sym:'TAO', name:'Bittensor',    cat:'AI/GPU'},
+  {sym:'ATOM',name:'Cosmos',       cat:'L1'},
+  {sym:'IOTA',name:'IOTA',          cat:'Payments'},
+  {sym:'DOT', name:'Polkadot',      cat:'L1'},
 ];
 function loadPrefs(){try{return JSON.parse(localStorage.getItem('swapPrefs')||'{}');}catch(e){return{};}}
 function savePrefs(){try{localStorage.setItem('swapPrefs',JSON.stringify({fromSym,toSym,activeTF,chartType,activeTab:_activeTab,activeTrackerId}));}catch(e){}}
@@ -2880,7 +2881,7 @@ function initTabs(){
    Format: [ { id, name, assetA, assetB, startAmount, swaps:[] }, ... ]
    Each swap: { date, fromAsset, fromAmt, toAsset, toAmt, score, notes }
 ══════════════════════════════════════ */
-const COINS_LIST=['BTC','ETH','SOL','BNB','ADA','AVAX','NEAR','SUI','HBAR','OP','ARB','XRP','XLM','ALGO','COTI','QNT','UNI','AAVE','LINK','RNDR','TAO'];
+const COINS_LIST=['BTC','ETH','SOL','BNB','ADA','AVAX','NEAR','SUI','HBAR','XRP','XLM','ALGO','COTI','QNT','UNI','AAVE','LINK','RNDR','TAO','ATOM','IOTA','DOT'];
 
 function loadTrackers(){
   try{return JSON.parse(localStorage.getItem('swapTrackers')||'[]');}catch(e){return[];}
@@ -4069,7 +4070,7 @@ function initBestSwapNow(){
 
     sortedFrom.forEach(fromSym=>{
       const best=byFrom[fromSym][0];
-      const top3=byFrom[fromSym].slice(0,3);
+      const top5=byFrom[fromSym].slice(0,5);
       if(!best) return;
 
       const col=best.score>=70?'#00c076':best.score<=30?'#ef4444':'#f5a623';
@@ -4080,11 +4081,11 @@ function initBestSwapNow(){
       card.className='bsn-result-item';
       card.style.cssText=`border-color:${best.score>=70?'rgba(0,192,118,0.3)':'var(--border)'};margin-bottom:.5rem`;
 
-      // Alt options
-      const altHtml=top3.length>1?
+      // Alt options — show up to 4 alternatives
+      const altHtml=top5.length>1?
         '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">'+
         '<span style="font-size:10px;color:var(--text3);font-family:monospace;align-self:center">Also:</span>'+
-        top3.slice(1).map(x=>{
+        top5.slice(1).map(x=>{
           const xc=x.score>=70?'#00c076':x.score<=30?'#ef4444':'#f5a623';
           return `<button onclick="switchAnalyzerPair('${x.from}','${x.to}')" style="font-size:11px;font-family:monospace;padding:3px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer">${x.to} <span style="color:${xc};font-weight:700">${x.score}</span></button>`;
         }).join('')+
