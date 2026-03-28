@@ -2624,7 +2624,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v10'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v11'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2752,37 +2752,68 @@ async function runAIScore(s, forceRefresh){
     const rTxt=s.rsi<40?` RSI is oversold (${s.rsi.toFixed(0)}) — a bounce may be coming.`
       :s.rsi>60?` RSI is high (${s.rsi.toFixed(0)}) — may slow soon.`:'';
     const corrTxt=corr90<0.80
-      ?' ⚠️ Low correlation between these coins — consider picking a more correlated pair.'
+      ?' ⚠️ Low correlation — consider picking a more correlated pair.'
       :corr90<0.87?' ⚠️ Moderate correlation — higher risk of decoupling.'
       :corr90<0.92?' Note: correlation slightly below ideal.'
       :'';
-    return tTxt+' '+mTxt+rTxt+corrTxt;
+    const rkTxt=rankWarning?' '+rankWarning:'';
+    return tTxt+' '+mTxt+rTxt+corrTxt+rkTxt;
   };
 
   /* Show math score + risk dashboard immediately */
-  // ── Apply penalties to raw math score before rendering ──
+  // ── Apply unified adjustments to raw math score ──
   let adjustedMs = ms;
 
-  // 1. Consecutive down days penalty (streak is negative when ratio falling)
-  const streak = freshS.streak || 0;
-  if(streak <= -7)      adjustedMs -= 20;  // 7+ consecutive down days — strong trend
-  else if(streak <= -5) adjustedMs -= 15;  // 5-6 days
-  else if(streak <= -4) adjustedMs -= 12;  // 4 days
-  else if(streak <= -3) adjustedMs -= 8;   // 3 days
+  // 1. Trend confirmation gate — both 3d AND 7d negative = extra penalty
+  if(freshS.trend3<-2&&freshS.trend7<-2)  adjustedMs-=10;
+  if(freshS.trend3<-4&&freshS.trend7<-4)  adjustedMs-=6;  // stacks with above
 
-  // 2. Correlation penalty — baked directly into score
-  // Below 0.80: -25 points (very low correlation, pairs can decouple badly)
-  // 0.80-0.87: -15 points (meaningful warning zone)
-  // 0.87-0.92: -8 points (moderate caution)
-  // 0.92-0.95: -3 points (minor note)
-  // 0.95+: no penalty (highly correlated, reliable pair)
+  // 2. Consecutive down days penalty
+  const streak = freshS.streak || 0;
+  if(streak <= -7)      adjustedMs -= 20;
+  else if(streak <= -5) adjustedMs -= 15;
+  else if(streak <= -4) adjustedMs -= 12;
+  else if(streak <= -3) adjustedMs -= 8;
+
+  // 3. Correlation penalty/reward
   if(corr90 < 0.80)      adjustedMs -= 25;
   else if(corr90 < 0.87) adjustedMs -= 15;
   else if(corr90 < 0.92) adjustedMs -= 8;
   else if(corr90 < 0.95) adjustedMs -= 3;
-  // 0.95+ = no penalty
+  else                   adjustedMs += 3; // 0.95+ = small reward
 
-  // 3. Risk filter penalty — count green filters
+  // 4. Tier bonus for TO coin
+  const toTier=COIN_TIERS[toSym]||3;
+  if(toTier===1) adjustedMs+=4;
+  else if(toTier===2) adjustedMs+=2;
+
+  // 5. Market rank cap for TO coin — don't swap into broadly weak coin
+  // Fetch rank in background for next time, use cached if available
+  getMarketRank(toSym).catch(()=>{}); // fire and forget for next render
+  const rankData=_mktRankCache[toSym];
+  let rankWarning='';
+  if(rankData){
+    if(rankData.losingPct>=0.90){
+      adjustedMs=Math.min(adjustedMs,35);
+      rankWarning=`⚠️ ${toSym} is losing vs 90%+ of coins right now — structural weakness, avoid swapping in.`;
+    } else if(rankData.losingPct>=0.80){
+      adjustedMs=Math.min(adjustedMs,50);
+      rankWarning=`⚠️ ${toSym} is one of the weakest coins in the market right now — high risk target.`;
+    } else if(rankData.losingPct>=0.70){
+      adjustedMs=Math.min(adjustedMs,65);
+      rankWarning=`Note: ${toSym} is underperforming most coins this week.`;
+    } else if(rankData.rank>=0.75){
+      adjustedMs+=3;
+    } else if(rankData.rank>=0.60){
+      adjustedMs+=1;
+    }
+  } else {
+    adjustedMs=Math.min(adjustedMs,82); // no rank data yet — conservative cap
+    // Trigger background fetch so it's ready next time
+    getMarketRank(toSym).catch(()=>{});
+  }
+
+  // 6. Risk filter penalty
   const riskForPenalty = buildRiskAnalysis({
     score: adjustedMs, corr90, atrPct,
     bollWidth: freshS.bollWidth || 5,
@@ -2794,7 +2825,6 @@ async function runAIScore(s, forceRefresh){
   if(greenCount <= 3)       adjustedMs -= 25;
   else if(greenCount === 4) adjustedMs -= 12;
   else if(greenCount === 5) adjustedMs -= 5;
-  // 6 green = no penalty
 
   adjustedMs = Math.min(100, Math.max(0, Math.round(adjustedMs)));
 
@@ -2811,7 +2841,10 @@ async function runAIScore(s, forceRefresh){
       :`No clear signal yet — keep monitoring`,
     plain_explanation:buildPlainExplanation(finalMs,freshS),
     market_situation:`${fromSym}/${toSym} ratio: ${freshS.cur>=1?freshS.cur.toFixed(4):freshS.cur.toFixed(7)} · ${freshS.trend7>=0?'▲ +':'▼ '}${freshS.trend7.toFixed(2)}% this week`,
-    prediction:finalMs>30&&finalMs<70?(freshS.trend7>0?`Slowly improving. Watch for a score above 70.`:`Slight downtrend. Consider waiting.`):'',
+    prediction:finalMs>=70
+      ?`Before swapping, do a 30-second check on ${toSym} — any recent hacks, delistings, or major bad news? If nothing alarming, proceed.`
+      :finalMs>30?(freshS.trend7>0?`Slowly improving. Watch for a score above 70.`:`Slight downtrend. Consider waiting.`)
+      :'',
     _stats:{cur:freshS.cur,trend7:freshS.trend7,trend1:freshS.trend1||0},
     _risk:{corr90,atrPct,bollWidth:freshS.bollWidth,confirmed}
   };
@@ -3059,6 +3092,49 @@ function initTabs(){
    Each swap: { date, fromAsset, fromAmt, toAsset, toAmt, score, notes }
 ══════════════════════════════════════ */
 const COINS_LIST=['BTC','ETH','SOL','BNB','ADA','AVAX','NEAR','SUI','HBAR','XRP','XLM','ALGO','COTI','QNT','UNI','AAVE','LINK','RNDR','TAO','ATOM','IOTA','DOT','DUSK'];
+
+/* Coin quality tiers — reliability as a swap TARGET, not USD performance
+   Tier 1: Top cap + all ISO 20022 coins → small bonus when swapping INTO these
+   Tier 2: Solid mid-large cap → tiny bonus
+   Tier 3: Smaller/niche → no bonus */
+const COIN_TIERS={
+  BTC:1,ETH:1,SOL:1,BNB:1,XRP:1,XLM:1,ALGO:1,QNT:1,IOTA:1,HBAR:1,
+  ADA:2,AVAX:2,LINK:2,UNI:2,AAVE:2,NEAR:2,ATOM:2,SUI:2,
+  COTI:3,RNDR:3,TAO:3,DOT:3,DUSK:3
+};
+
+/* Market rank cache — how many coins is the TO coin losing against */
+const _mktRankCache={};
+const _mktRankTime={};
+const MKT_RANK_TTL=10*60*1000; // 10 min
+
+async function getMarketRank(sym){
+  const now=Date.now();
+  if(_mktRankCache[sym]&&(now-_mktRankTime[sym])<MKT_RANK_TTL) return _mktRankCache[sym];
+  try{
+    // Fetch 7d performance for sym vs all other coins
+    const others=COINS_LIST.filter(c=>c!==sym);
+    const prices=await Promise.all([sym,...others].map(c=>
+      fetch('https://api.binance.com/api/v3/klines?symbol='+c+'USDT&interval=1d&limit=9').then(r=>r.json()).catch(()=>null)
+    ));
+    const symData=prices[0];
+    if(!symData||symData.length<2) return null;
+    const symChange=((+symData[symData.length-1][4])-(+symData[0][4]))/(+symData[0][4])*100;
+    let beating=0,total=0;
+    for(let i=1;i<prices.length;i++){
+      const d=prices[i];
+      if(!d||d.length<2) continue;
+      const ch=((+d[d.length-1][4])-(+d[0][4]))/(+d[0][4])*100;
+      total++;
+      if(symChange>ch) beating++;
+    }
+    const rank=total>0?beating/total:0.5; // 0=worst, 1=best
+    const losingPct=1-rank; // fraction of market sym is losing against
+    _mktRankCache[sym]={rank,losingPct,symChange,total};
+    _mktRankTime[sym]=now;
+    return _mktRankCache[sym];
+  }catch(e){return null;}
+}
 
 function loadTrackers(){
   try{return JSON.parse(localStorage.getItem('swapTrackers')||'[]');}catch(e){return[];}
@@ -3539,7 +3615,7 @@ function renderDetailStats(tr){
   `;
 
   // Async: fetch scores for all relevant pairs and render signal
-  buildTrackerSignal(tr, curAsset, signalId);
+  buildTrackerSignal(tr, curAsset, signalId, growth);
 }
 
 /* Cache for pair scores so we don't re-fetch too often */
@@ -3552,7 +3628,6 @@ async function getScoreForPair(a,b){
   const now=Date.now();
   if(_scoreCache[key]&&(now-_scoreCacheTime[key])<SCORE_TTL) return _scoreCache[key];
   try{
-    /* Fetch klines for both assets */
     const[fk,tk,fp,tp]=await Promise.all([
       fetch(`https://api.binance.com/api/v3/klines?symbol=${a}USDT&interval=1d&limit=92`).then(r=>r.json()),
       fetch(`https://api.binance.com/api/v3/klines?symbol=${b}USDT&interval=1d&limit=92`).then(r=>r.json()),
@@ -3562,9 +3637,6 @@ async function getScoreForPair(a,b){
     const kA=fk.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
     const kB=tk.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
     const n=Math.min(kA.length,kB.length);
-    const ratio=Array.from({length:n},(_,i)=>({c:kA[kA.length-n+i].c/kB[kB.length-n+i].c}));
-    const closes=ratio.map(r=>r.c);
-    /* Use same mathScore formula as main analyzer — consistent scores everywhere */
     const ratioSeries=Array.from({length:n},(_,i)=>({
       t:kA[kA.length-n+i].t,
       o:kA[kA.length-n+i].o/kB[kB.length-n+i].o,
@@ -3573,31 +3645,69 @@ async function getScoreForPair(a,b){
       c:kA[kA.length-n+i].c/kB[kB.length-n+i].c
     }));
     const stats=getStats(ratioSeries);
-    const sc=stats?mathScore(stats):50;
+    let sc=stats?mathScore(stats):50;
+
+    // ── Apply unified adjustments (same as runAIScore) ──
+
+    // 1. Trend confirmation gate — both 3d and 7d negative = extra penalty
+    if(stats){
+      if(stats.trend3<-2&&stats.trend7<-2)       sc-=10; // both negative, mild
+      if(stats.trend3<-4&&stats.trend7<-4)       sc-=6;  // both strongly negative (stacks)
+    }
+
+    // 2. Correlation adjustment
+    const closes90A=kA.slice(-90).map(k=>k.c);
+    const closes90B=kB.slice(-90).map(k=>k.c);
+    const corr=calcCorrelation(closes90A,closes90B);
+    if(corr<0.80)      sc-=25;
+    else if(corr<0.87) sc-=15;
+    else if(corr<0.92) sc-=8;
+    else if(corr<0.95) sc-=3;
+    else               sc+=3; // 0.95+ = small reward
+
+    // 3. Tier bonus for TO coin (b)
+    const tier=COIN_TIERS[b]||3;
+    if(tier===1) sc+=4;
+    else if(tier===2) sc+=2;
+
+    // 4. Consecutive down days penalty
+    const streak=stats?stats.streak||0:0;
+    if(streak<=-7)      sc-=20;
+    else if(streak<=-5) sc-=15;
+    else if(streak<=-4) sc-=12;
+    else if(streak<=-3) sc-=8;
+
+    // 5. Market rank cap for TO coin — don't swap into broadly weak coin
+    const rankData=_mktRankCache[b]; // use cached only, don't block on fetch
+    if(rankData){
+      if(rankData.losingPct>=0.90)     sc=Math.min(sc,35); // structural collapse
+      else if(rankData.losingPct>=0.80) sc=Math.min(sc,50); // broadly weakest
+      else if(rankData.losingPct>=0.70) sc=Math.min(sc,65); // clearly weak
+      else if(rankData.rank>=0.75)      sc+=3;              // strong coin bonus
+      else if(rankData.rank>=0.60)      sc+=1;
+    } else {
+      sc=Math.min(sc,82); // no rank data yet — conservative cap
+    }
+
+    sc=Math.min(100,Math.max(0,Math.round(sc)));
+
     const rsi=stats?stats.rsi:50;
-    const md=stats?{h:[stats.macdHist]}:{h:[0]};
     const trend7=stats?stats.trend7:0;
-    const bollPos=stats?stats.bollPos:50;
-    // Simple plain-English reason for BSN display
-    const rsiDesc=rsi<35?'oversold (cheap entry)':rsi>65?'overbought (risky)':'neutral range';
-    const macdDesc=md.h[md.h.length-1]>0?'gaining momentum':'losing momentum';
-    const trend7Desc=trend7>3?`ratio up ${trend7.toFixed(1)}% this week`:trend7<-3?`ratio down ${Math.abs(trend7).toFixed(1)}% this week`:'ratio flat this week';
-    const rsiPlain=rsi<35?`${a} looks cheap compared to its recent price — often a good entry point`
-      :rsi>65?`${a} has been rising fast and may be overpriced right now`
-      :`${a} is trading normally with no extreme readings`;
-    const macdPlain=md.h[md.h.length-1]>0?'Momentum is currently building — favorable for swapping'
-      :'Momentum is fading — the market isn\'t strongly in favor of this swap right now';
-    const trendPlain=trend7>2?`The swap rate improved ${trend7.toFixed(1)}% this week, meaning you\'d get more ${b} for your ${a} today than last week`
-      :trend7<-2?`The swap rate dropped ${Math.abs(trend7).toFixed(1)}% this week, meaning you\'d get less ${b} for your ${a} than last week`
+    const trendPlain=trend7>2?`The swap rate improved ${trend7.toFixed(1)}% this week, meaning you'd get more ${b} for your ${a} today than last week`
+      :trend7<-2?`The swap rate dropped ${Math.abs(trend7).toFixed(1)}% this week`
       :`The swap rate between ${a} and ${b} has been stable this week`;
-    const plain_explanation=rsiPlain+'. '+macdPlain+'. '+trendPlain+'.'
-    const result={score:sc,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation};
+    const rsiPlain=rsi<35?`${a} looks relatively cheap vs ${b} — often a good entry`
+      :rsi>65?`${a} has been rising fast vs ${b} — may be overextended`
+      :`${a} is trading at normal levels vs ${b}`;
+    const plain_explanation=rsiPlain+'. '+trendPlain+'.';
+
+    const result={score:sc,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation,corr};
     _scoreCache[key]=result; _scoreCacheTime[key]=now;
     return result;
   }catch(e){return null;}
 }
 
-async function buildTrackerSignal(tr, curAsset, signalId){
+async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
   const sigEl=document.getElementById(signalId);
   if(!sigEl) return;
 
@@ -3610,26 +3720,42 @@ async function buildTrackerSignal(tr, curAsset, signalId){
   const orderedCandidates=[tr.assetB,...usedCoins.filter(c=>c!==tr.assetB),...candidates.filter(c=>c!==tr.assetB&&!usedCoins.includes(c))];
 
   if(!holdingBase){
-    // Currently holding curAsset (e.g. UNI), want to know when to swap back to base (e.g. ALGO)
-    // We need score on curAsset/base pair: high score = curAsset gaining vs base = good time to swap curAsset→base
     const res=await getScoreForPair(tr.assetB, tr.assetA);
     if(!sigEl.isConnected) return;
     const sc=res?res.score:0;
-    const col=sc>=70?'#00c076':sc<=30?'#ef4444':'#f5a623';
-    const bg=sc>=70?'rgba(0,192,118,0.1)':sc<=30?'rgba(239,68,68,0.1)':'rgba(245,166,35,0.1)';
-    const border=sc>=70?'rgba(0,192,118,0.4)':sc<=30?'rgba(239,68,68,0.3)':'rgba(245,166,35,0.3)';
-    const verdict=sc>=70
-      ?'✅ SWAP BACK NOW — '+curAsset+' → '+tr.assetA
-      :sc<=30
-        ?'❌ DO NOT SWAP — hold '+curAsset+' for now'
-        :'⏳ WATCH — not the right moment yet';
-    const explanation=sc>=70
-      ?curAsset+' is gaining vs '+tr.assetA+'. Good time to swap your '+curAsset+' back to '+tr.assetA+' — you get more '+tr.assetA+' per '+curAsset+' than you would later.'
-      :sc<=30
-        ?curAsset+' is weakening vs '+tr.assetA+'. Do not swap back yet — wait for '+curAsset+' to recover so you get more '+tr.assetA+' per '+curAsset+'.'
-        :'Mixed signal. '+curAsset+'/'+tr.assetA+' ratio has no clear direction yet. Check back tomorrow.';
+    const profit=currentGrowth||0;
+
+    // ── Profit gate (Gate 1): below 1% or in loss → always HOLD ──
+    if(profit<1){
+      const situationTxt=sc>=60?'Ratio is recovering — momentum building.'
+        :sc>=40?'Ratio is mixed — no clear direction yet.'
+        :'Ratio is under pressure — '+curAsset+' weakening vs '+tr.assetA+'.';
+      sigEl.innerHTML=`<div style="background:rgba(239,68,68,0.06);border:2px solid rgba(239,68,68,0.3);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
+        <div style="font-size:10px;font-family:monospace;color:#ef4444;font-weight:700;margin-bottom:4px">OPEN POSITION: holding ${curAsset}</div>
+        <div style="font-size:16px;font-weight:700;color:#ef4444">⏳ HOLD — profit below 1%</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">Never close on a loss or thin profit. Fees would eat your gains. Wait for at least +1% before considering a swap back.<br><span style="color:var(--text3)">${situationTxt} Ratio score: ${sc}/100.</span></div>
+        <button onclick="switchAnalyzerPair('${tr.assetB}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid rgba(239,68,68,0.4);cursor:pointer;background:transparent;color:#ef4444">Analyze ${tr.assetB}/${tr.assetA} →</button>
+      </div>`;
+      return;
+    }
+
+    // ── Gate 2: profit ≥ 1% → assess based on ratio score ──
+    let verdict, explanation, col, bg, border;
+    if(sc<=35){
+      col='#00c076'; bg='rgba(0,192,118,0.1)'; border='rgba(0,192,118,0.4)';
+      verdict=profit>=2?'✅ GOOD TIME TO SWAP BACK — take the profit':'✅ CONSIDER SWAPPING BACK';
+      explanation=curAsset+' is weakening vs '+tr.assetA+'. You have +'+profit.toFixed(2)+'% profit. Good time to close this position and lock in the gain.';
+    } else if(sc<=55){
+      col='#f5a623'; bg='rgba(245,166,35,0.1)'; border='rgba(245,166,35,0.3)';
+      verdict='⏳ WATCH CLOSELY — profit is building';
+      explanation='You have +'+profit.toFixed(2)+'% profit. The ratio is mixed. Consider closing soon or wait for a clearer signal.';
+    } else {
+      col='#f5a623'; bg='rgba(245,166,35,0.08)'; border='rgba(245,166,35,0.3)';
+      verdict='⏳ HOLD — profit still growing';
+      explanation=curAsset+' is still gaining vs '+tr.assetA+'. You have +'+profit.toFixed(2)+'% profit. Hold for now — the ratio may continue in your favor.';
+    }
     sigEl.innerHTML=`<div style="background:${bg};border:2px solid ${border};border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-      <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">OPEN POSITION: holding ${curAsset}</div>
+      <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">OPEN POSITION: holding ${curAsset} · +${profit.toFixed(2)}% profit</div>
       <div style="font-size:16px;font-weight:700;color:${col}">${verdict}</div>
       <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">${explanation}</div>
       <button onclick="switchAnalyzerPair('${tr.assetB}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Analyze ${tr.assetB}/${tr.assetA} in detail →</button>
