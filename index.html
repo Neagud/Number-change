@@ -2661,7 +2661,9 @@ async function scanBestPartners(baseSym){
           const stats=ratioSeries.length>15?getStats(ratioSeries):null;
           const rawScore=stats?mathScore(stats):50;
           const toHealthBSN=calcCoinHealth(klines);
-          let scoreBSN=Math.min(100,Math.max(0,rawScore-toHealthBSN.penalty));
+          const toTierBSN=getCoinTier(sym);
+          const tierBonusBSN=toTierBSN===1?12:toTierBSN===2?6:0;
+          let scoreBSN=Math.min(100,Math.max(0,rawScore-toHealthBSN.penalty+tierBonusBSN));
           // Cache-only market rank for BSN (no extra fetches)
           const oppsBSN=COINS_LIST.filter(c=>c!==sym&&c!==baseSym);
           let weakBSN=0,cachedBSN=0;
@@ -2806,7 +2808,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v18'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v22'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -3022,6 +3024,14 @@ async function runAIScore(s, forceRefresh){
   // 2. TO coin health — structural collapse detection (rare, high impact)
   const toHealth=calcCoinHealth(toKlines90);
   if(toHealth.penalty>0) adjustedMs-=toHealth.penalty;
+
+  // 2b. TO coin quality tier — reward swapping INTO stable, established coins
+  // Tier 1 (BTC/ETH/SOL/BNB/XRP): strong reward — very reliable swap targets
+  // Tier 2 (ADA/AVAX/LINK etc): moderate reward — solid established coins
+  // Tier 3: no quality reward — rely on ratio signal alone
+  const toTier=getCoinTier(toSym);
+  if(toTier===1)      adjustedMs+=12; // top tier — high confidence target
+  else if(toTier===2) adjustedMs+=6;  // solid mid-large cap
 
   // 3. Market rank of TO coin — penalise weakest, reward strongest
   const marketRankTO=await calcMarketRank(toSym, fromSym);
@@ -3319,6 +3329,23 @@ function initTabs(){
    Each swap: { date, fromAsset, fromAmt, toAsset, toAmt, score, notes }
 ══════════════════════════════════════ */
 const COINS_LIST=['BTC','ETH','SOL','BNB','ADA','AVAX','NEAR','SUI','HBAR','XRP','XLM','ALGO','COTI','QNT','UNI','AAVE','LINK','RNDR','TAO','ATOM','IOTA','DOT','DUSK'];
+
+/* ── COIN QUALITY TIERS ──
+   Used to reward swapping INTO stable, established coins.
+   Tier 1: Top market cap, highest liquidity, most reliable — strong reward as TO coin
+   Tier 2: Mid-large cap, well established, good liquidity — moderate reward
+   Tier 3: Smaller/newer, higher risk — no quality reward (rely on ratio signal alone)
+*/
+const COIN_TIER={
+  1: ['BTC','ETH','SOL','BNB','XRP','XLM','ALGO','QNT','IOTA','HBAR'], // top cap + all ISO 20022
+  2: ['ADA','AVAX','LINK','UNI','AAVE','NEAR','ATOM','SUI'],           // solid mid-large cap
+  // everything else = tier 3 (no bonus)
+};
+function getCoinTier(sym){
+  if(COIN_TIER[1].includes(sym)) return 1;
+  if(COIN_TIER[2].includes(sym)) return 2;
+  return 3;
+}
 
 function loadTrackers(){
   try{return JSON.parse(localStorage.getItem('swapTrackers')||'[]');}catch(e){return[];}
@@ -3886,9 +3913,13 @@ async function getScoreForPair(a,b){
     const plain_explanation=rsiPlain+'. '+macdPlain+'. '+trendPlain+'.'
     // Coin health penalty on TO coin (b) — tk is already the 90d klines for b
     const toHealthGSP=calcCoinHealth(tk);
+    // TO coin quality tier reward
+    const toTierGSP=getCoinTier(b);
+    const tierBonusGSP=toTierGSP===1?12:toTierGSP===2?6:0;
+
     // Market rank — cache-only check (no extra fetches to avoid API explosion in parallel calls)
     const now2=Date.now();
-    let scCapped=Math.min(100,Math.max(0,sc-toHealthGSP.penalty)); // start with health-adjusted score
+    let scCapped=Math.min(100,Math.max(0,sc-toHealthGSP.penalty+tierBonusGSP)); // health + tier adjusted
     // TO coin rank
     const opponentsTO=COINS_LIST.filter(c=>c!==b&&c!==a);
     let weakCountTO=0, cachedTO=0;
@@ -4650,15 +4681,38 @@ function initBestSwapNow(){
 
     scored.sort((a,b)=>b.score-a.score);
 
-    // Group by FROM coin — best swap for each held coin
+    // ── Filter broadly weak TO coins from top recommendations ──
+    // Uses cached market rank data to suppress DOT/OP-style traps
+    const now_bsn=Date.now();
+    const toCoinsInResults=[...new Set(scored.map(s=>s.to))];
+    const weakToCoins=new Set();
+    toCoinsInResults.forEach(toCoin=>{
+      const opponents=COINS_LIST.filter(c=>c!==toCoin);
+      let weakCount=0, cached=0;
+      opponents.forEach(opp=>{
+        const k=opp+'_'+toCoin;
+        if(_scoreCache[k]&&(now_bsn-(_scoreCacheTime[k]||0))<SCORE_TTL){
+          if(_scoreCache[k].score>=55) weakCount++;
+          cached++;
+        }
+      });
+      // Filter if we have enough cached data AND coin is broadly weak (68%+)
+      if(cached>=8&&weakCount/opponents.length>=0.80) weakToCoins.add(toCoin);
+    });
+
+    // Remove broadly weak TO coins from recommendations
+    const scoredFiltered=scored.filter(s=>!weakToCoins.has(s.to));
+    const scoredForDisplay=scoredFiltered.length>0?scoredFiltered:scored;
+
+    // Group by FROM coin — top 5 targets per held coin
     const byFrom={};
-    scored.forEach(item=>{
-      if(!byFrom[item.from]) byFrom[item.from]=[]; 
+    scoredForDisplay.forEach(item=>{
+      if(!byFrom[item.from]) byFrom[item.from]=[];
       byFrom[item.from].push(item);
     });
 
-    // Overall top swap (absolute best)
-    const topOverall=scored[0];
+    // Overall top swap (absolute best from filtered results)
+    const topOverall=scoredForDisplay[0]||scored[0];
 
     if(!topOverall){
       results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1rem;text-align:center">Could not fetch data. Check your connection.</div>`;
@@ -4713,32 +4767,39 @@ function initBestSwapNow(){
       card.className='bsn-result-item';
       card.style.cssText=`border-color:${best.score>=70?'rgba(0,192,118,0.3)':'var(--border)'};margin-bottom:.5rem`;
 
-      // Alt options — show up to 4 alternatives
+      // Show note if any weak coins were filtered out for this FROM coin
+      const filteredForThis=scored.filter(s=>s.from===fromSym&&weakToCoins.has(s.to));
+      const filteredNote=filteredForThis.length>0
+        ? '<div style="margin-top:6px;font-size:10px;color:var(--text3);font-family:monospace">⚠️ Excluded from recommendations (broadly weak): '
+          +[...new Set(filteredForThis.map(s=>s.to))].join(', ')+'</div>'
+        : '';
+
+      // Top 5 alternatives
       const altHtml=top5.length>1?
         '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">'+
-        '<span style="font-size:10px;color:var(--text3);font-family:monospace;align-self:center">Also:</span>'+
+        '<span style="font-size:10px;color:var(--text3);font-family:monospace;align-self:center">Next best:</span>'+
         top5.slice(1).map(x=>{
           const xc=x.score>=70?'#00c076':x.score<=30?'#ef4444':'#f5a623';
-          return `<button onclick="switchAnalyzerPair('${x.from}','${x.to}')" style="font-size:11px;font-family:monospace;padding:3px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer">${x.to} <span style="color:${xc};font-weight:700">${x.score}</span></button>`;
+          return '<button onclick="switchAnalyzerPair(\''+x.from+'\',\''+x.to+'\')" style="font-size:11px;font-family:monospace;padding:3px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer">'+x.to+' <span style="color:'+xc+';font-weight:700">'+x.score+'</span></button>';
         }).join('')+
         '</div>':'';
 
-      card.innerHTML=`
-        <div style="display:flex;align-items:flex-start;gap:12px;width:100%;flex-wrap:wrap">
-          <div style="flex:1;min-width:180px">
-            <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:3px">Best swap for <strong style="color:var(--text)">${fromSym}</strong></div>
-            <div style="font-size:18px;font-weight:700;color:var(--text)">${best.from} → ${best.to}</div>
-            <div style="font-size:11px;color:var(--text3)">${best.toName}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <span style="font-family:monospace;font-weight:700;font-size:24px;color:${col}">${best.score}<span style="font-size:11px;color:var(--text2)">/100</span></span>
-            <span style="font-size:10px;font-family:monospace;font-weight:700;padding:3px 10px;border-radius:10px;background:${verdictBg};color:${col}">${verdict}</span>
-            <button class="bsn-analyze-btn" onclick="switchAnalyzerPair('${best.from}','${best.to}')">Analyze →</button>
-          </div>
-        </div>
-        ${best.plain_explanation?`<div style="font-size:11px;color:var(--text2);line-height:1.6;margin-top:6px;width:100%">${best.plain_explanation}</div>`:''}
-        ${altHtml}
-      `;
+      card.innerHTML=
+        '<div style="display:flex;align-items:flex-start;gap:12px;width:100%;flex-wrap:wrap">'+
+          '<div style="flex:1;min-width:180px">'+
+            '<div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:3px">Best swap for <strong style="color:var(--text)">'+fromSym+'</strong></div>'+
+            '<div style="font-size:18px;font-weight:700;color:var(--text)">'+best.from+' → '+best.to+'</div>'+
+            '<div style="font-size:11px;color:var(--text3)">'+best.toName+'</div>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+            '<span style="font-family:monospace;font-weight:700;font-size:24px;color:'+col+'">'+best.score+'<span style="font-size:11px;color:var(--text2)">/100</span></span>'+
+            '<span style="font-size:10px;font-family:monospace;font-weight:700;padding:3px 10px;border-radius:10px;background:'+verdictBg+';color:'+col+'">'+verdict+'</span>'+
+            '<button class="bsn-analyze-btn" onclick="switchAnalyzerPair(\''+best.from+'\',\''+best.to+'\')" >Analyze →</button>'+
+          '</div>'+
+        '</div>'+
+        (best.plain_explanation?'<div style="font-size:11px;color:var(--text2);line-height:1.6;margin-top:6px;width:100%">'+best.plain_explanation+'</div>':'')+
+        altHtml+
+        filteredNote;
       results.appendChild(card);
     });
 
