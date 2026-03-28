@@ -2083,14 +2083,15 @@ function mathScore(s){
   else if(s.pos30<15)               sc+=6;   // at bottom, neutral trend = possible bounce
 
   // ── Trend confirmation gate ──
-  // If both trend3 AND trend7 are negative simultaneously, the ratio is actively
-  // falling — penalise so score cannot reach 70 during a live downswing.
+  // Extra check: if both trend3 AND trend7 are negative, the ratio is actively falling.
+  // Small additional penalty — trend is already captured by the indicators above,
+  // this just adds a small extra push to keep score below 70 during live downswings.
   if(s.trend3<0&&s.trend7<0){
-    if(s.trend3<-3&&s.trend7<-3)  sc-=18; // strong confirmed drop
-    else if(s.trend3<-1)           sc-=10; // mild but consistent
-    else                           sc-=6;  // just turning negative
+    if(s.trend3<-3&&s.trend7<-3)  sc-=10; // strong confirmed drop
+    else if(s.trend3<-1)           sc-=6;  // mild but consistent
+    else                           sc-=3;  // just turning negative
   } else if(s.trend3<0&&s.trend7>=0){
-    sc-=3; // only 3d negative — light penalty
+    sc-=2; // only 3d negative — very light penalty
   }
 
   return Math.min(100,Math.max(0,Math.round(sc)));
@@ -2671,7 +2672,18 @@ async function scanBestPartners(baseSym){
               cachedBSN++;
             }
           }
-          const rankPenaltyBSN=cachedBSN>=10?(weakBSN>=20?25:weakBSN>=18?15:weakBSN>=15?6:0):0;
+          let rankPenaltyBSN=0;
+          if(cachedBSN>=10){
+            if(weakBSN>=20)      rankPenaltyBSN=15;
+            else if(weakBSN>=18) rankPenaltyBSN=8;
+            else if(weakBSN>=15) rankPenaltyBSN=3;
+            else {
+              const winBSN=oppsBSN.length-weakBSN;
+              const winPctBSN=winBSN/oppsBSN.length;
+              if(winPctBSN>=0.75)      rankPenaltyBSN=-12;
+              else if(winPctBSN>=0.60) rankPenaltyBSN=-6;
+            }
+          }
           const score=Math.min(100,Math.max(0,rawScore-toHealthBSN.penalty-rankPenaltyBSN));
           return {sym,corr,score,healthLabel:toHealthBSN.label,healthDetail:toHealthBSN.detail,healthPenalty:toHealthBSN.penalty,rankPenalty:rankPenaltyBSN,weakCount:weakBSN};
         })
@@ -2793,7 +2805,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v11'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v14'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2993,54 +3005,46 @@ async function runAIScore(s, forceRefresh){
   };
 
   /* Show math score + risk dashboard immediately */
-  // ── Apply penalties to raw math score before rendering ──
+  // ── SCORE ADJUSTMENTS ──
+  // Philosophy: mathScore() already does the heavy lifting with 11 indicators.
+  // Adjustments REFINE the raw score with external context — they never override it.
+  // Max total adjustment: ~±20 in normal conditions. Extreme cases can go higher.
   let adjustedMs = ms;
 
-  // 1. Consecutive down days penalty (streak is negative when ratio falling)
-  const streak = freshS.streak || 0;
-  if(streak <= -7)      adjustedMs -= 20;  // 7+ consecutive down days — strong trend
-  else if(streak <= -5) adjustedMs -= 15;  // 5-6 days
-  else if(streak <= -4) adjustedMs -= 12;  // 4 days
-  else if(streak <= -3) adjustedMs -= 8;   // 3 days
+  // 1. Correlation — penalty for dangerous pairs, meaningful reward for safe pairs
+  if(corr90 < 0.80)      adjustedMs -= 15; // dangerous — pairs can decouple badly
+  else if(corr90 < 0.87) adjustedMs -= 8;  // warning zone
+  else if(corr90 < 0.92) adjustedMs -= 3;  // slight caution
+  else if(corr90 < 0.95) adjustedMs += 4;  // good pair — reward reliability
+  else                   adjustedMs += 8;  // very safe pair — strong reward
 
-  // 2. Correlation penalty — baked directly into score
-  // Below 0.80: -25 points (very low correlation, pairs can decouple badly)
-  // 0.80-0.87: -15 points (meaningful warning zone)
-  // 0.87-0.92: -8 points (moderate caution)
-  // 0.92-0.95: -3 points (minor note)
-  // 0.95+: no penalty (highly correlated, reliable pair)
-  if(corr90 < 0.80)      adjustedMs -= 25;
-  else if(corr90 < 0.87) adjustedMs -= 15;
-  else if(corr90 < 0.92) adjustedMs -= 8;
-  else if(corr90 < 0.95) adjustedMs -= 3;
-  // 0.95+ = no penalty
-
-  // 4. TO coin health penalty — structural collapse detection on the coin we swap INTO
+  // 2. TO coin health — structural collapse detection (rare, high impact)
   const toHealth=calcCoinHealth(toKlines90);
   if(toHealth.penalty>0) adjustedMs-=toHealth.penalty;
 
-  // 5. Market rank penalty — TO coin broadly weak vs entire coin list?
-  // Catches the "chain weakness" problem: swapping into the weakest coin in the market.
+  // 3. Market rank of TO coin — penalise weakest, reward strongest
   const marketRankTO=await calcMarketRank(toSym, fromSym);
-  if(marketRankTO.penalty>0) adjustedMs-=marketRankTO.penalty;
+  const winningAgainst=marketRankTO.total-marketRankTO.weakCount;
+  const winPct=marketRankTO.total>0?winningAgainst/marketRankTO.total:0.5;
+  if(marketRankTO.weakCount>=20)      adjustedMs -= 15; // losing vs 90%+ = structural outlier
+  else if(marketRankTO.weakCount>=18) adjustedMs -= 8;  // losing vs 82%+
+  else if(marketRankTO.weakCount>=15) adjustedMs -= 3;  // losing vs 68%+
+  else if(winPct>=0.75)               adjustedMs += 12; // beating 75%+ = strong target coin
+  else if(winPct>=0.60)               adjustedMs += 6;  // beating 60%+ = above average
 
-  // FROM coin market rank check intentionally removed.
-  // The TO coin penalty already protects against the chain weakness problem.
-  // FROM coin being broadly weak is handled by the ratio score itself.
-
-  // 3. Risk filter penalty — count green filters
+  // 4. Risk filters — use RAW ms to avoid circular dependency
   const riskForPenalty = buildRiskAnalysis({
-    score: adjustedMs, corr90, atrPct,
+    score: ms, corr90, atrPct,
     bollWidth: freshS.bollWidth || 5,
     confirmed, btcDom,
     trend7: freshS.trend7, trend14: freshS.trend14,
     fromSym, toSym
   });
   const greenCount = riskForPenalty.passes;
-  if(greenCount <= 3)       adjustedMs -= 25;
-  else if(greenCount === 4) adjustedMs -= 12;
-  else if(greenCount === 5) adjustedMs -= 5;
-  // 6 green = no penalty
+  if(greenCount <= 3)       adjustedMs -= 15; // dangerous conditions
+  else if(greenCount === 4) adjustedMs -= 5;  // one warning
+  else if(greenCount === 5) adjustedMs += 8;  // good conditions
+  else if(greenCount === 6) adjustedMs += 15; // perfect conditions
 
   adjustedMs = Math.min(100, Math.max(0, Math.round(adjustedMs)));
 
@@ -3886,9 +3890,15 @@ async function getScoreForPair(a,b){
     }
     let rankPenaltyTO=0;
     if(cachedTO>=10){
-      if(weakCountTO>=20)      rankPenaltyTO=25;
-      else if(weakCountTO>=18) rankPenaltyTO=15;
-      else if(weakCountTO>=15) rankPenaltyTO=6;
+      if(weakCountTO>=20)      rankPenaltyTO=15;
+      else if(weakCountTO>=18) rankPenaltyTO=8;
+      else if(weakCountTO>=15) rankPenaltyTO=3;
+      else {
+        const winTO=opponentsTO.length-weakCountTO;
+        const winPctTO=winTO/opponentsTO.length;
+        if(winPctTO>=0.75)      rankPenaltyTO=-12; // negative = bonus
+        else if(winPctTO>=0.60) rankPenaltyTO=-6;
+      }
     }
     const rankPenaltyGSP=rankPenaltyTO;
     const scFinal=Math.min(100,Math.max(0,sc-toHealthGSP.penalty-rankPenaltyGSP));
