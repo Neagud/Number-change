@@ -2151,6 +2151,80 @@ function calcCoinHealth(klines90){
   return {penalty,label,detail,change90:change90.toFixed(1),posIn90:posIn90.toFixed(0),bounces};
 }
 
+/* ════════════════════════════════════════════════════════
+   MARKET RANK CHECK
+   Checks how the TO coin (the one you swap INTO) performs
+   against ALL other coins in the list right now.
+   If a coin is losing against most of the market, it is
+   broadly weak — not just weak vs the FROM coin.
+   This catches the "chain weakness" problem: swapping into
+   the weakest coin in the entire market.
+
+   Uses _scoreCache first (free, instant).
+   Only fetches klines for pairs not yet cached.
+   Returns { penalty, weakAgainst, total, label }
+════════════════════════════════════════════════════════ */
+async function calcMarketRank(toCoin, skipCoin){
+  // Check toCoin against all coins except itself and the FROM coin
+  const opponents=COINS_LIST.filter(c=>c!==toCoin&&c!==skipCoin);
+  const now=Date.now();
+  let weakCount=0;
+  const fetchPromises=[];
+
+  for(const opp of opponents){
+    // Score direction: opp/toCoin — high score = opp gaining vs toCoin = toCoin is weak vs opp
+    const key=opp+'_'+toCoin;
+    if(_scoreCache[key]&&(now-_scoreCacheTime[key])<SCORE_TTL){
+      // Use cached score instantly
+      if(_scoreCache[key].score>=55) weakCount++;
+    } else {
+      // Need to fetch — queue it
+      fetchPromises.push(
+        fetch('https://api.binance.com/api/v3/klines?symbol='+opp+'USDT&interval=1d&limit=92').then(r=>r.json())
+          .then(async fk=>{
+            const tk=await fetch('https://api.binance.com/api/v3/klines?symbol='+toCoin+'USDT&interval=1d&limit=92').then(r=>r.json());
+            const kA=fk.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
+            const kB=tk.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
+            const n=Math.min(kA.length,kB.length);
+            const ratioSeries=Array.from({length:n},(_,i)=>({
+              t:kA[kA.length-n+i].t,
+              o:kA[kA.length-n+i].o/kB[kB.length-n+i].o,
+              h:kA[kA.length-n+i].h/kB[kB.length-n+i].h,
+              l:kA[kA.length-n+i].l/kB[kB.length-n+i].l,
+              c:kA[kA.length-n+i].c/kB[kB.length-n+i].c
+            }));
+            const stats=getStats(ratioSeries);
+            const sc=stats?mathScore(stats):50;
+            // Cache it for future use
+            _scoreCache[key]={score:sc,from:opp,to:toCoin};
+            _scoreCacheTime[key]=now;
+            if(sc>=55) weakCount++;
+          }).catch(()=>{})
+      );
+    }
+  }
+
+  // Wait for any uncached fetches
+  if(fetchPromises.length>0) await Promise.allSettled(fetchPromises);
+
+  const total=opponents.length;
+  let penalty=0, label='';
+
+  // How many coins is toCoin losing against?
+  const ratio=weakCount/total;
+  if(weakCount>=15){
+    penalty=20; label='⚠️ BROADLY WEAKEST COIN — losing vs '+weakCount+'/'+total+' coins';
+  } else if(weakCount>=12){
+    penalty=12; label='⚠️ BROADLY WEAK — losing vs '+weakCount+'/'+total+' coins';
+  } else if(weakCount>=9){
+    penalty=6;  label='';
+  } else if(weakCount>=6){
+    penalty=3;  label='';
+  }
+
+  return {penalty, weakCount, total, label};
+}
+
 function calcCorrelation(a, b){
   const n=Math.min(a.length,b.length);
   if(n<10) return 0;
@@ -2586,10 +2660,22 @@ async function scanBestPartners(baseSym){
           const stats=ratioSeries.length>15?getStats(ratioSeries):null;
           const rawScore=stats?mathScore(stats):50;
           const toHealthBSN=calcCoinHealth(klines);
-          const score=Math.min(100,Math.max(0,rawScore-toHealthBSN.penalty));
-          return {sym,corr,score,healthLabel:toHealthBSN.label,healthDetail:toHealthBSN.detail,healthPenalty:toHealthBSN.penalty};
+          // Cache-only market rank for BSN (no extra fetches)
+          const oppsBSN=COINS_LIST.filter(c=>c!==sym&&c!==baseSym);
+          let weakBSN=0,cachedBSN=0;
+          const nowBSN=Date.now();
+          for(const opp of oppsBSN){
+            const kb=opp+'_'+sym;
+            if(_scoreCache[kb]&&(nowBSN-(_scoreCacheTime[kb]||0))<SCORE_TTL){
+              if(_scoreCache[kb].score>=55) weakBSN++;
+              cachedBSN++;
+            }
+          }
+          const rankPenaltyBSN=cachedBSN>=10?(weakBSN>=15?20:weakBSN>=12?12:weakBSN>=9?6:weakBSN>=6?3:0):0;
+          const score=Math.min(100,Math.max(0,rawScore-toHealthBSN.penalty-rankPenaltyBSN));
+          return {sym,corr,score,healthLabel:toHealthBSN.label,healthDetail:toHealthBSN.detail,healthPenalty:toHealthBSN.penalty,rankPenalty:rankPenaltyBSN,weakCount:weakBSN};
         })
-        .catch(()=>({sym:batch[i],corr:0,score:50,healthLabel:'',healthDetail:'',healthPenalty:0}))
+        .catch(()=>({sym:batch[i],corr:0,score:50,healthLabel:'',healthDetail:'',healthPenalty:0,rankPenalty:0,weakCount:0}))
     );
     const batchResults=await Promise.all(fetches);
     results.push(...batchResults);
@@ -2643,6 +2729,7 @@ function renderBestPartners(baseSym, results, isPartial){
       '<div class="bp-corr" style="color:'+corrCol+'">Corr: '+r.corr.toFixed(2)+'</div>'+
       '<div class="bp-label">Score: <span style="color:'+scoreCol+'">'+r.score+'</span> '+scoreEmoji+'</div>'+
       (hasHealthRisk?'<div style="font-size:9px;color:#ef4444;font-family:monospace;margin-top:2px">'+r.healthLabel+'</div>':'')+
+      (r.rankPenalty>=12?'<div style="font-size:9px;color:#ef4444;font-family:monospace;margin-top:2px">⚠️ BROADLY WEAK</div>':'')+
       (isBest&&!hasHealthRisk?'<div class="bp-score-badge" style="background:rgba(0,192,118,.12);color:#00c076">Best match</div>':'');
 
     card.title='Click to analyze '+baseSym+'/'+r.sym;
@@ -2841,7 +2928,15 @@ async function runAIScore(s, forceRefresh){
     const healthTxt=toHealth&&toHealth.penalty>=10
       ?' ⚠️ '+toSym+' health warning: '+toHealth.detail
       :'';
-    return tTxt+' '+mTxt+rTxt+corrTxt+healthTxt;
+    const rankTxt=marketRankTO&&marketRankTO.penalty>=12
+      ?' ⚠️ '+toSym+' is losing vs '+marketRankTO.weakCount+'/'+marketRankTO.total+' coins right now — broadly the weakest in the market.'
+      :marketRankTO&&marketRankTO.penalty>=6
+      ?' Note: '+toSym+' is underperforming '+marketRankTO.weakCount+'/'+marketRankTO.total+' coins currently.'
+      :'';
+    const fromRankTxt=marketRankFROM&&marketRankFROM.weakCount>=12
+      ?' ⚠️ '+fromSym+' itself is underperforming '+marketRankFROM.weakCount+'/'+marketRankFROM.total+' coins — consider holding it and waiting for it to gain market strength first.'
+      :'';
+    return tTxt+' '+mTxt+rTxt+corrTxt+healthTxt+rankTxt+fromRankTxt;
   };
 
   /* Show math score + risk dashboard immediately */
@@ -2870,6 +2965,23 @@ async function runAIScore(s, forceRefresh){
   // 4. TO coin health penalty — structural collapse detection on the coin we swap INTO
   const toHealth=calcCoinHealth(toKlines90);
   if(toHealth.penalty>0) adjustedMs-=toHealth.penalty;
+
+  // 5. Market rank penalty — TO coin broadly weak vs entire coin list?
+  // Catches the "chain weakness" problem: swapping into the weakest coin in the market.
+  const marketRankTO=await calcMarketRank(toSym, fromSym);
+  if(marketRankTO.penalty>0) adjustedMs-=marketRankTO.penalty;
+
+  // 6. FROM coin market rank — is the FROM coin itself broadly weak vs the market?
+  // If FROM coin is losing vs most coins, best move is to HOLD it and wait for it to
+  // gain strength first — not swap it into anything yet.
+  // Smaller penalty than TO coin — FROM being weak is less dangerous than TO being weakest.
+  const marketRankFROM=await calcMarketRank(fromSym, toSym);
+  // Scaled penalty: FROM coin weakness is penalised at half rate vs TO coin
+  // because FROM being strong is good for ratio — but FROM being broadly weak
+  // means you're moving out of a coin that may recover vs the market soon.
+  if(marketRankFROM.weakCount>=15)      adjustedMs-=10;
+  else if(marketRankFROM.weakCount>=12) adjustedMs-=6;
+  else if(marketRankFROM.weakCount>=9)  adjustedMs-=3;
 
   // 3. Risk filter penalty — count green filters
   const riskForPenalty = buildRiskAnalysis({
@@ -3725,9 +3837,46 @@ async function getScoreForPair(a,b){
     const plain_explanation=rsiPlain+'. '+macdPlain+'. '+trendPlain+'.'
     // Coin health penalty on TO coin (b) — tk is already the 90d klines for b
     const toHealthGSP=calcCoinHealth(tk);
-    const scFinal=Math.min(100,Math.max(0,sc-toHealthGSP.penalty));
+    // Market rank — cache-only check (no extra fetches to avoid API explosion in parallel calls)
+    const now2=Date.now();
+    // TO coin rank
+    const opponentsTO=COINS_LIST.filter(c=>c!==b&&c!==a);
+    let weakCountTO=0, cachedTO=0;
+    for(const opp of opponentsTO){
+      const k2=opp+'_'+b;
+      if(_scoreCache[k2]&&(now2-(_scoreCacheTime[k2]||0))<SCORE_TTL){
+        if(_scoreCache[k2].score>=55) weakCountTO++;
+        cachedTO++;
+      }
+    }
+    let rankPenaltyTO=0;
+    if(cachedTO>=10){
+      if(weakCountTO>=15)      rankPenaltyTO=20;
+      else if(weakCountTO>=12) rankPenaltyTO=12;
+      else if(weakCountTO>=9)  rankPenaltyTO=6;
+      else if(weakCountTO>=6)  rankPenaltyTO=3;
+    }
+    // FROM coin rank — half penalty (moving out of weak coin, not into weakest)
+    const opponentsFROM=COINS_LIST.filter(c=>c!==a&&c!==b);
+    let weakCountFROM=0, cachedFROM=0;
+    for(const opp of opponentsFROM){
+      const kf=opp+'_'+a;
+      if(_scoreCache[kf]&&(now2-(_scoreCacheTime[kf]||0))<SCORE_TTL){
+        if(_scoreCache[kf].score>=55) weakCountFROM++;
+        cachedFROM++;
+      }
+    }
+    let rankPenaltyFROM=0;
+    if(cachedFROM>=10){
+      if(weakCountFROM>=15)      rankPenaltyFROM=10;
+      else if(weakCountFROM>=12) rankPenaltyFROM=6;
+      else if(weakCountFROM>=9)  rankPenaltyFROM=3;
+    }
+    const rankPenaltyGSP=rankPenaltyTO+rankPenaltyFROM;
+    const scFinal=Math.min(100,Math.max(0,sc-toHealthGSP.penalty-rankPenaltyGSP));
     const result={score:scFinal,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation,
-      healthLabel:toHealthGSP.label,healthDetail:toHealthGSP.detail,healthPenalty:toHealthGSP.penalty};
+      healthLabel:toHealthGSP.label,healthDetail:toHealthGSP.detail,healthPenalty:toHealthGSP.penalty,
+      rankPenalty:rankPenaltyGSP,weakCount:weakCount2};
     _scoreCache[key]=result; _scoreCacheTime[key]=now;
     return result;
   }catch(e){return null;}
