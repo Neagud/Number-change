@@ -2182,7 +2182,7 @@ function applyScoreAdjustments(rawSc, corr, toSym, fromSym, health, rankWeak, ra
   else if(corr < 0.95) sc += 2;
   else                 sc += 8;
 
-  // 2. Health penalty
+  // 2. Health penalty — applied always, no cache needed
   if(health && health.penalty>0) sc -= health.penalty;
 
   // 3. Tier bonus
@@ -2191,16 +2191,26 @@ function applyScoreAdjustments(rawSc, corr, toSym, fromSym, health, rankWeak, ra
 
   // 4. Market rank — hard cap for broadly weak, bonus for strong
   const winPct=rankTotal>0?(rankTotal-rankWeak)/rankTotal:0.5;
-  if(rankWeak>=20)      sc=Math.min(sc,35);
-  else if(rankWeak>=18) sc=Math.min(sc,50);
-  else if(rankWeak>=15) sc=Math.min(sc,62);
-  else if(winPct>=0.75) sc+=5;
-  else if(winPct>=0.60) sc+=3;
+  if(rankTotal>0){
+    if(rankWeak>=20)      sc=Math.min(sc,35);
+    else if(rankWeak>=18) sc=Math.min(sc,50);
+    else if(rankWeak>=15) sc=Math.min(sc,62);
+    else if(winPct>=0.75) sc+=5;
+    else if(winPct>=0.60) sc+=3;
+  }
 
-  // 5. Final caps — prevent misleading perfect scores
-  if(health && health.penalty>0)  sc=Math.min(sc,88); // health warning = not perfect
-  if(greenFilters>=0 && greenFilters<=4) sc=Math.min(sc,84); // filter failing
-  if(corr<0.92)                   sc=Math.min(sc,82); // correlation not ideal
+  // 5. Health-based cap even without rank data
+  // If coin has structural decline, cap it regardless of rank cache state
+  if(health){
+    if(health.penalty>=25)      sc=Math.min(sc,35); // structural collapse
+    else if(health.penalty>=18) sc=Math.min(sc,50); // high decline risk
+    else if(health.penalty>=10) sc=Math.min(sc,72); // sustained decline
+  }
+
+  // 6. Final caps — prevent misleading perfect scores
+  if(health && health.penalty>0)             sc=Math.min(sc,88);
+  if(greenFilters>=0 && greenFilters<=4)     sc=Math.min(sc,84);
+  if(corr<0.92)                              sc=Math.min(sc,82);
 
   return Math.min(100, Math.max(0, Math.round(sc)));
 }
@@ -2725,8 +2735,8 @@ async function scanBestPartners(baseSym){
               cachedBSN++;
             }
           }
-          const rankWeakBSN=cachedBSN>=8?weakBSN:0;
-          const rankTotalBSN=cachedBSN>=8?oppsBSN.length:0;
+          const rankWeakBSN=cachedBSN>=4?weakBSN:0;
+          const rankTotalBSN=cachedBSN>=4?oppsBSN.length:0;
           // Use same unified scoring — no filter count in BSN (-1 = unknown)
           const score=applyScoreAdjustments(rawScore,corr,sym,baseSym,toHealthBSN,rankWeakBSN,rankTotalBSN,-1);
           return {sym,corr,score,healthLabel:toHealthBSN.label,healthDetail:toHealthBSN.detail,healthPenalty:toHealthBSN.penalty,rankPenalty:0,weakCount:weakBSN};
@@ -2849,7 +2859,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v29'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v30'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -3934,8 +3944,8 @@ async function getScoreForPair(a,b){
       }
     }
     // Use cached rank if enough data, else skip rank adjustment
-    const rankWeak=cachedTO>=8?weakCountTO:0;
-    const rankTotal=cachedTO>=8?opponentsTO.length:0;
+    const rankWeak=cachedTO>=4?weakCountTO:0;
+    const rankTotal=cachedTO>=4?opponentsTO.length:0;
     const scFinal=applyScoreAdjustments(sc, calcCorr, b, a, toHealthGSP, rankWeak, rankTotal, -1);
     const result={score:scFinal,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation,
       healthLabel:toHealthGSP.label,healthDetail:toHealthGSP.detail,healthPenalty:toHealthGSP.penalty,
