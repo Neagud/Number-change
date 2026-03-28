@@ -3929,16 +3929,23 @@ async function buildTrackerSignal(tr, curAsset, signalId){
       +'<div style="font-size:12px;color:var(--text2)">Scanning market position of '+curAsset+'...</div>'
       +'</div>';
 
-    // Fetch ratio score AND full market rank in parallel
+    // Step 1: fetch ratio score FIRST before any market rank calls
+    // This prevents Binance rate limiting from killing the main score fetch
+    const res=await getScoreForPair(tr.assetB, tr.assetA);
+    if(!sigEl.isConnected) return;
+
+    // Step 2: fetch curAsset klines once — reused for all comparisons
     const allOpponents=COINS_LIST.filter(c=>c!==curAsset);
-    const toKlinesCache={};
-    // Pre-fetch curAsset klines once — reused for all comparisons
     const curKlines=await fetch('https://api.binance.com/api/v3/klines?symbol='+curAsset+'USDT&interval=1d&limit=92').then(r=>r.json()).catch(()=>[]);
     const kB=curKlines.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
 
-    const [res, ...rankResults]=await Promise.all([
-      getScoreForPair(tr.assetB, tr.assetA),
-      ...allOpponents.map(opp=>
+    // Step 3: fetch all opponents in small batches to avoid rate limiting
+    const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+    const rankResults=[];
+    const batchSize=5;
+    for(let i=0;i<allOpponents.length;i+=batchSize){
+      const batch=allOpponents.slice(i,i+batchSize);
+      const batchRes=await Promise.all(batch.map(opp=>
         fetch('https://api.binance.com/api/v3/klines?symbol='+opp+'USDT&interval=1d&limit=92').then(r=>r.json())
           .then(fk=>{
             const kA=fk.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
@@ -3959,8 +3966,10 @@ async function buildTrackerSignal(tr, curAsset, signalId){
             _scoreCacheTime[key]=Date.now();
             return {opp,score:sc,winning:sc>=55};
           }).catch(()=>({opp,score:50,winning:false}))
-      )
-    ]);
+      ));
+      rankResults.push(...batchRes);
+      if(i+batchSize<allOpponents.length) await sleep(150); // small pause between batches
+    }
 
     if(!sigEl.isConnected) return;
 
