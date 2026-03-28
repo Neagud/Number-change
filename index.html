@@ -2859,7 +2859,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v30'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v31'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -3932,7 +3932,7 @@ async function getScoreForPair(a,b){
 
     // ── Score adjustments — same unified function as analyzer ──
     const toHealthGSP=calcCoinHealth(tk);
-    // Cache-only market rank (no extra fetches to avoid rate limiting in parallel calls)
+    // Market rank — use cache if warm, fetch if cold (same as analyzer)
     const now2=Date.now();
     const opponentsTO=COINS_LIST.filter(c=>c!==b&&c!==a);
     let weakCountTO=0, cachedTO=0;
@@ -3943,9 +3943,15 @@ async function getScoreForPair(a,b){
         cachedTO++;
       }
     }
-    // Use cached rank if enough data, else skip rank adjustment
-    const rankWeak=cachedTO>=4?weakCountTO:0;
-    const rankTotal=cachedTO>=4?opponentsTO.length:0;
+    let rankWeak=0, rankTotal=0;
+    if(cachedTO>=8){
+      // Enough cache — use it
+      rankWeak=weakCountTO; rankTotal=opponentsTO.length;
+    } else {
+      // Cache cold — fetch full rank (same as analyzer does)
+      const rankResult=await calcMarketRank(b, a);
+      rankWeak=rankResult.weakCount; rankTotal=rankResult.total;
+    }
     const scFinal=applyScoreAdjustments(sc, calcCorr, b, a, toHealthGSP, rankWeak, rankTotal, -1);
     const result={score:scFinal,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation,
       healthLabel:toHealthGSP.label,healthDetail:toHealthGSP.detail,healthPenalty:toHealthGSP.penalty,
