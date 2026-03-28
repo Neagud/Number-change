@@ -2808,7 +2808,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v22'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v23'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -3911,16 +3911,20 @@ async function getScoreForPair(a,b){
       :trend7<-2?`The swap rate dropped ${Math.abs(trend7).toFixed(1)}% this week, meaning you\'d get less ${b} for your ${a} than last week`
       :`The swap rate between ${a} and ${b} has been stable this week`;
     const plain_explanation=rsiPlain+'. '+macdPlain+'. '+trendPlain+'.'
-    // Coin health penalty on TO coin (b) — tk is already the 90d klines for b
-    const toHealthGSP=calcCoinHealth(tk);
-    // TO coin quality tier reward
-    const toTierGSP=getCoinTier(b);
-    const tierBonusGSP=toTierGSP===1?12:toTierGSP===2?6:0;
 
-    // Market rank — cache-only check (no extra fetches to avoid API explosion in parallel calls)
+    // ── Score adjustments for TO coin (b) ──
+    let scAdj=sc;
+
+    // 1. Health penalty (structural collapse)
+    const toHealthGSP=calcCoinHealth(tk);
+    scAdj-=toHealthGSP.penalty;
+
+    // 2. Tier reward (stable/reliable coins get bonus)
+    const toTierGSP=getCoinTier(b);
+    scAdj+=(toTierGSP===1?12:toTierGSP===2?6:0);
+
+    // 3. Market rank — cache-only, hard cap for broadly weak coins
     const now2=Date.now();
-    let scCapped=Math.min(100,Math.max(0,sc-toHealthGSP.penalty+tierBonusGSP)); // health + tier adjusted
-    // TO coin rank
     const opponentsTO=COINS_LIST.filter(c=>c!==b&&c!==a);
     let weakCountTO=0, cachedTO=0;
     for(const opp of opponentsTO){
@@ -3930,24 +3934,21 @@ async function getScoreForPair(a,b){
         cachedTO++;
       }
     }
-    let rankPenaltyTO=0;
+    let scFinal=Math.min(100,Math.max(0,scAdj));
     if(cachedTO>=10){
-      // Hard cap approach — weak TO coins capped regardless of ratio signal
-      if(weakCountTO>=20)      { scCapped=Math.min(scCapped,35); }
-      else if(weakCountTO>=18) { scCapped=Math.min(scCapped,50); }
-      else if(weakCountTO>=15) { scCapped=Math.min(scCapped,62); }
+      if(weakCountTO>=20)      scFinal=Math.min(scFinal,35);
+      else if(weakCountTO>=18) scFinal=Math.min(scFinal,50);
+      else if(weakCountTO>=15) scFinal=Math.min(scFinal,62);
       else {
-        const winTO=opponentsTO.length-weakCountTO;
-        const winPctTO=winTO/opponentsTO.length;
-        if(winPctTO>=0.75)      rankPenaltyTO=-12;
-        else if(winPctTO>=0.60) rankPenaltyTO=-6;
+        const winPctTO=(opponentsTO.length-weakCountTO)/opponentsTO.length;
+        if(winPctTO>=0.75)      scFinal=Math.min(100,scFinal+12);
+        else if(winPctTO>=0.60) scFinal=Math.min(100,scFinal+6);
       }
     }
-    const rankPenaltyGSP=rankPenaltyTO;
-    const scFinal=Math.min(100,Math.max(0,scCapped-toHealthGSP.penalty-rankPenaltyGSP));
+    scFinal=Math.min(100,Math.max(0,Math.round(scFinal)));
     const result={score:scFinal,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation,
       healthLabel:toHealthGSP.label,healthDetail:toHealthGSP.detail,healthPenalty:toHealthGSP.penalty,
-      rankPenalty:rankPenaltyGSP,weakCount:weakCount2};
+      rankPenalty:0,weakCount:weakCountTO};
     _scoreCache[key]=result; _scoreCacheTime[key]=now;
     return result;
   }catch(e){return null;}
