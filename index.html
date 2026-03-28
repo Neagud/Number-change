@@ -2153,6 +2153,59 @@ function calcCoinHealth(klines90){
 }
 
 /* ════════════════════════════════════════════════════════
+   UNIFIED SCORE ADJUSTMENT
+   Single function used by ALL scoring paths:
+   - runAIScore (analyzer)
+   - getScoreForPair (tracker cards, opportunity signals)
+   - BSN scanner
+   This guarantees the same number everywhere.
+
+   Inputs:
+     rawSc   — raw mathScore output
+     corr    — 90-day correlation (0-1)
+     toSym   — the coin being swapped INTO
+     fromSym — the coin being swapped FROM
+     health  — result of calcCoinHealth(toKlines)
+     rankWeak — how many coins TO is losing against (from cache or fetch)
+     rankTotal — total coins compared against
+     greenFilters — number of green risk filters (0-6), -1 if unknown
+
+   Returns final clamped score.
+════════════════════════════════════════════════════════ */
+function applyScoreAdjustments(rawSc, corr, toSym, fromSym, health, rankWeak, rankTotal, greenFilters){
+  let sc = rawSc;
+
+  // 1. Correlation
+  if(corr < 0.80)      sc -= 15;
+  else if(corr < 0.87) sc -= 8;
+  else if(corr < 0.92) sc -= 3;
+  else if(corr < 0.95) sc += 2;
+  else                 sc += 8;
+
+  // 2. Health penalty
+  if(health && health.penalty>0) sc -= health.penalty;
+
+  // 3. Tier bonus
+  const tier=getCoinTier(toSym);
+  sc += (TIER_BONUS[tier]||0);
+
+  // 4. Market rank — hard cap for broadly weak, bonus for strong
+  const winPct=rankTotal>0?(rankTotal-rankWeak)/rankTotal:0.5;
+  if(rankWeak>=20)      sc=Math.min(sc,35);
+  else if(rankWeak>=18) sc=Math.min(sc,50);
+  else if(rankWeak>=15) sc=Math.min(sc,62);
+  else if(winPct>=0.75) sc+=5;
+  else if(winPct>=0.60) sc+=3;
+
+  // 5. Final caps — prevent misleading perfect scores
+  if(health && health.penalty>0)  sc=Math.min(sc,88); // health warning = not perfect
+  if(greenFilters>=0 && greenFilters<=4) sc=Math.min(sc,84); // filter failing
+  if(corr<0.92)                   sc=Math.min(sc,82); // correlation not ideal
+
+  return Math.min(100, Math.max(0, Math.round(sc)));
+}
+
+/* ════════════════════════════════════════════════════════
    MARKET RANK CHECK
    Checks how the TO coin (the one you swap INTO) performs
    against ALL other coins in the list right now.
@@ -2661,10 +2714,7 @@ async function scanBestPartners(baseSym){
           const stats=ratioSeries.length>15?getStats(ratioSeries):null;
           const rawScore=stats?mathScore(stats):50;
           const toHealthBSN=calcCoinHealth(klines);
-          const toTierBSN=getCoinTier(sym);
-          const tierBonusBSN=TIER_BONUS[toTierBSN]||0;
-          let scoreBSN=Math.min(100,Math.max(0,rawScore-toHealthBSN.penalty+tierBonusBSN));
-          // Cache-only market rank for BSN (no extra fetches)
+          // Cache-only market rank
           const oppsBSN=COINS_LIST.filter(c=>c!==sym&&c!==baseSym);
           let weakBSN=0,cachedBSN=0;
           const nowBSN=Date.now();
@@ -2675,20 +2725,11 @@ async function scanBestPartners(baseSym){
               cachedBSN++;
             }
           }
-          let rankPenaltyBSN=0;
-          if(cachedBSN>=10){
-            if(weakBSN>=20)      { scoreBSN=Math.min(scoreBSN,35); }
-            else if(weakBSN>=18) { scoreBSN=Math.min(scoreBSN,50); }
-            else if(weakBSN>=15) { scoreBSN=Math.min(scoreBSN,62); }
-            else {
-              const winBSN=oppsBSN.length-weakBSN;
-              const winPctBSN=winBSN/oppsBSN.length;
-              if(winPctBSN>=0.75)      rankPenaltyBSN=-5;
-              else if(winPctBSN>=0.60) rankPenaltyBSN=-3;
-            }
-          }
-          const score=Math.min(100,Math.max(0,scoreBSN-rankPenaltyBSN));
-          return {sym,corr,score,healthLabel:toHealthBSN.label,healthDetail:toHealthBSN.detail,healthPenalty:toHealthBSN.penalty,rankPenalty:rankPenaltyBSN,weakCount:weakBSN};
+          const rankWeakBSN=cachedBSN>=8?weakBSN:0;
+          const rankTotalBSN=cachedBSN>=8?oppsBSN.length:0;
+          // Use same unified scoring — no filter count in BSN (-1 = unknown)
+          const score=applyScoreAdjustments(rawScore,corr,sym,baseSym,toHealthBSN,rankWeakBSN,rankTotalBSN,-1);
+          return {sym,corr,score,healthLabel:toHealthBSN.label,healthDetail:toHealthBSN.detail,healthPenalty:toHealthBSN.penalty,rankPenalty:0,weakCount:weakBSN};
         })
         .catch(()=>({sym:batch[i],corr:0,score:50,healthLabel:'',healthDetail:'',healthPenalty:0,rankPenalty:0,weakCount:0}))
     );
@@ -2808,7 +2849,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v28'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v29'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -3008,36 +3049,11 @@ async function runAIScore(s, forceRefresh){
   };
 
   /* Show math score + risk dashboard immediately */
-  // ── SCORE ADJUSTMENTS — identical logic to getScoreForPair for consistency ──
-  let adjustedMs = ms;
-
-  // 1. Correlation
-  if(corr90 < 0.80)      adjustedMs -= 15;
-  else if(corr90 < 0.87) adjustedMs -= 8;
-  else if(corr90 < 0.92) adjustedMs -= 3;
-  else if(corr90 < 0.95) adjustedMs += 2;
-  else                   adjustedMs += 8;
-
-  // 2. TO coin health
+    // ── SCORE ADJUSTMENTS — uses unified applyScoreAdjustments ──
   const toHealth=calcCoinHealth(toKlines90);
-  adjustedMs -= toHealth.penalty;
-
-  // 3. TO coin tier
-  const toTier=getCoinTier(toSym);
-  adjustedMs += (TIER_BONUS[toTier]||0);
-
-  // 4. Market rank — await full fetch, then also store in cache so getScoreForPair
-  // picks up the same data. This ensures analyzer and scanner scores match.
   const marketRankTO=await calcMarketRank(toSym, fromSym);
-  const winPct=marketRankTO.total>0?(marketRankTO.total-marketRankTO.weakCount)/marketRankTO.total:0.5;
-  if(marketRankTO.weakCount>=20)      adjustedMs=Math.min(adjustedMs,35);
-  else if(marketRankTO.weakCount>=18) adjustedMs=Math.min(adjustedMs,50);
-  else if(marketRankTO.weakCount>=15) adjustedMs=Math.min(adjustedMs,62);
-  else if(winPct>=0.75)               adjustedMs+=5;
-  else if(winPct>=0.60)               adjustedMs+=3;
 
-  // 5. Risk filters — still calculated for UI display, but NOT added to score
-  // Score consistency: getScoreForPair has no filter adjustment so we remove it here too
+  // Risk filters — for UI display only
   const riskForPenalty = buildRiskAnalysis({
     score: ms, corr90, atrPct,
     bollWidth: freshS.bollWidth || 5,
@@ -3046,15 +3062,13 @@ async function runAIScore(s, forceRefresh){
     fromSym, toSym
   });
   const greenCount = riskForPenalty.passes;
-  // Risk filters shown in UI only — do not modify score to keep consistency with scanner
 
-  // ── Final score caps — prevent misleading perfect scores ──
-  // 100 should only be possible when truly everything is ideal
-  if(toHealth.penalty>0)   adjustedMs=Math.min(adjustedMs, 88); // health warning = can't be perfect
-  if(greenCount<=4)        adjustedMs=Math.min(adjustedMs, 84); // filter failing = not perfect
-  if(corr90<0.92)          adjustedMs=Math.min(adjustedMs, 82); // correlation not ideal = not perfect
-
-  adjustedMs = Math.min(100, Math.max(0, Math.round(adjustedMs)));
+  const adjustedMs = applyScoreAdjustments(
+    ms, corr90, toSym, fromSym,
+    toHealth,
+    marketRankTO.weakCount, marketRankTO.total,
+    greenCount
+  );
 
   // Use adjustedMs everywhere
   const finalMs = adjustedMs;
@@ -3884,6 +3898,10 @@ async function getScoreForPair(a,b){
     }));
     const stats=getStats(ratioSeries);
     const sc=stats?mathScore(stats):50;
+    // Calculate 90-day correlation for applyScoreAdjustments
+    const closesA=fk.map(k=>+k[4]);
+    const closesB=tk.map(k=>+k[4]);
+    const calcCorr=closesA.length>=10&&closesB.length>=10?calcCorrelation(closesA,closesB):0.9;
     const rsi=stats?stats.rsi:50;
     const md=stats?{h:[stats.macdHist]}:{h:[0]};
     const trend7=stats?stats.trend7:0;
@@ -3902,18 +3920,9 @@ async function getScoreForPair(a,b){
       :`The swap rate between ${a} and ${b} has been stable this week`;
     const plain_explanation=rsiPlain+'. '+macdPlain+'. '+trendPlain+'.'
 
-    // ── Score adjustments for TO coin (b) ──
-    let scAdj=sc;
-
-    // 1. Health penalty (structural collapse)
+    // ── Score adjustments — same unified function as analyzer ──
     const toHealthGSP=calcCoinHealth(tk);
-    scAdj-=toHealthGSP.penalty;
-
-    // 2. Tier reward (stable/reliable coins get bonus)
-    const toTierGSP=getCoinTier(b);
-    scAdj+=(TIER_BONUS[toTierGSP]||0);
-
-    // 3. Market rank — cache-only, hard cap for broadly weak coins
+    // Cache-only market rank (no extra fetches to avoid rate limiting in parallel calls)
     const now2=Date.now();
     const opponentsTO=COINS_LIST.filter(c=>c!==b&&c!==a);
     let weakCountTO=0, cachedTO=0;
@@ -3924,18 +3933,10 @@ async function getScoreForPair(a,b){
         cachedTO++;
       }
     }
-    let scFinal=Math.min(100,Math.max(0,scAdj));
-    if(cachedTO>=10){
-      if(weakCountTO>=20)      scFinal=Math.min(scFinal,35);
-      else if(weakCountTO>=18) scFinal=Math.min(scFinal,50);
-      else if(weakCountTO>=15) scFinal=Math.min(scFinal,62);
-      else {
-        const winPctTO=(opponentsTO.length-weakCountTO)/opponentsTO.length;
-        if(winPctTO>=0.75)      scFinal=Math.min(100,scFinal+5);
-        else if(winPctTO>=0.60) scFinal=Math.min(100,scFinal+3);
-      }
-    }
-    scFinal=Math.min(100,Math.max(0,Math.round(scFinal)));
+    // Use cached rank if enough data, else skip rank adjustment
+    const rankWeak=cachedTO>=8?weakCountTO:0;
+    const rankTotal=cachedTO>=8?opponentsTO.length:0;
+    const scFinal=applyScoreAdjustments(sc, calcCorr, b, a, toHealthGSP, rankWeak, rankTotal, -1);
     const result={score:scFinal,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation,
       healthLabel:toHealthGSP.label,healthDetail:toHealthGSP.detail,healthPenalty:toHealthGSP.penalty,
       rankPenalty:0,weakCount:weakCountTO};
