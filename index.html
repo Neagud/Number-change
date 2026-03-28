@@ -1846,6 +1846,7 @@ function renderMain(series){
       <div class="ma-instruction" id="maInstruction">Fetching market data...</div>
       <div class="ma-reason" id="maReason"></div>
       <div class="ma-checklist" id="maChecklist"></div>
+      <div id="maNewsCheck" style="display:none"></div>
       <div class="swap-size-rec" id="swapSizeRec" style="display:none!important">
         <span class="swap-size-label">Recommended swap size</span>
         <span class="swap-size-val" id="swapSizeVal">—</span>
@@ -2081,6 +2082,17 @@ function mathScore(s){
   else if(s.pos30<15&&s.trend7<-2)  sc-=4;   // at bottom in downtrend = falling knife
   else if(s.pos30<15)               sc+=6;   // at bottom, neutral trend = possible bounce
 
+  // ── Trend confirmation gate ──
+  // If both trend3 AND trend7 are negative simultaneously, the ratio is actively
+  // falling — penalise so score cannot reach 70 during a live downswing.
+  if(s.trend3<0&&s.trend7<0){
+    if(s.trend3<-3&&s.trend7<-3)  sc-=18; // strong confirmed drop
+    else if(s.trend3<-1)           sc-=10; // mild but consistent
+    else                           sc-=6;  // just turning negative
+  } else if(s.trend3<0&&s.trend7>=0){
+    sc-=3; // only 3d negative — light penalty
+  }
+
   return Math.min(100,Math.max(0,Math.round(sc)));
 }
 /* ── Score cache: key = pair+timeframe, TTL = 5 min, stored in localStorage ── */
@@ -2092,6 +2104,53 @@ const _SCORE_TTL = 5 * 60 * 1000;
 ════════════════════════════════════════════════════════ */
 
 /* Pearson correlation coefficient between two arrays */
+/* ════════════════════════════════════════════════════════
+   COIN HEALTH CHECK
+   Detects structural collapse vs temporary weakness in the TO coin.
+   Uses 90-day USDT klines. Applied only to the coin you swap INTO.
+   Dying coin: sustained USD decline + no bounces + near 90d low.
+   Temporarily weak coin: recent dip but history of recovering.
+════════════════════════════════════════════════════════ */
+function calcCoinHealth(klines90){
+  if(!klines90||klines90.length<30) return {penalty:0,label:'',detail:''};
+  const closes=klines90.map(k=>+k[4]);
+  const n=closes.length;
+  const first=closes[0];
+  const last=closes[n-1];
+  const low90=Math.min(...closes);
+  const high90=Math.max(...closes);
+  // 90-day USD price change
+  const change90=first>0?((last-first)/first)*100:0;
+  // Position within 90d range (0=at low, 100=at high)
+  const range90=high90-low90;
+  const posIn90=range90>0?((last-low90)/range90)*100:50;
+  // Count meaningful bounces (recovered >5% from a local low within 5 days)
+  let bounces=0;
+  for(let i=5;i<n;i++){
+    const localLow=Math.min(...closes.slice(i-5,i));
+    if(localLow>0&&closes[i]>localLow*1.05) bounces++;
+  }
+  // Is recent trend accelerating downward?
+  const avg60=closes.slice(0,Math.min(60,n)).reduce((a,b)=>a+b,0)/Math.min(60,n);
+  const avg30=closes.slice(-30).reduce((a,b)=>a+b,0)/30;
+  const recentWeaker=avg30<avg60*0.85;
+
+  let penalty=0, label='', detail='';
+  if(change90<-50&&bounces<3&&posIn90<15){
+    penalty=25; label='⚠️ STRUCTURAL RISK';
+    detail='Down '+Math.abs(change90).toFixed(0)+'% in 90 days, near 90-day low, almost no recovery bounces.';
+  } else if(change90<-35&&posIn90<25&&recentWeaker){
+    penalty=18; label='⚠️ HIGH DECLINE RISK';
+    detail='Down '+Math.abs(change90).toFixed(0)+'% in 90 days with accelerating decline near 90-day lows.';
+  } else if(change90<-20&&recentWeaker){
+    penalty=10; label='⚠️ SUSTAINED DECLINE';
+    detail='Down '+Math.abs(change90).toFixed(0)+'% in 90 days with worsening recent momentum.';
+  } else if(change90<-10){
+    penalty=5; label=''; detail='';
+  }
+  return {penalty,label,detail,change90:change90.toFixed(1),posIn90:posIn90.toFixed(0),bounces};
+}
+
 function calcCorrelation(a, b){
   const n=Math.min(a.length,b.length);
   if(n<10) return 0;
@@ -2403,6 +2462,25 @@ function renderRiskDashboard(opts){
   document.getElementById('maReason').textContent=maReason;
   document.getElementById('maScoreBadge').textContent='Score: '+score+'/100';
 
+  /* News check reminder — only shown when action is to swap */
+  const newsEl=document.getElementById('maNewsCheck');
+  if(newsEl){
+    const isSwapAction=maClass==='go'||(maClass==='wait'&&maTitle.includes('CAUTION'));
+    if(isSwapAction){
+      newsEl.style.display='block';
+      newsEl.innerHTML=`<div style="margin-top:10px;padding:8px 12px;background:rgba(59,143,255,0.07);border:1px solid rgba(59,143,255,0.2);border-radius:var(--rs);display:flex;align-items:flex-start;gap:8px">
+        <span style="font-size:14px;flex-shrink:0">✋</span>
+        <div style="font-size:11px;color:var(--text2);line-height:1.6">
+          <strong style="color:var(--text)">Before swapping:</strong> do a quick 30-second check on
+          <strong style="color:var(--blue)">${toSym}</strong> — any recent hacks, delistings, major partner exits, or protocol collapses?
+          If yes, skip this swap. If nothing alarming, proceed.
+        </div>
+      </div>`;
+    } else {
+      newsEl.style.display='none';
+    }
+  }
+
   /* Correlation warning banner — shown below master action */
   const corrWarn=document.getElementById('corrWarningBanner');
   if(corrWarn){
@@ -2506,10 +2584,12 @@ async function scanBestPartners(baseSym){
           const symObj=klines.map(toObj);
           const ratioSeries=buildRatio(baseObj.slice(-Math.min(baseObj.length,symObj.length)), symObj.slice(-Math.min(baseObj.length,symObj.length)));
           const stats=ratioSeries.length>15?getStats(ratioSeries):null;
-          const score=stats?mathScore(stats):50;
-          return {sym, corr, score};
+          const rawScore=stats?mathScore(stats):50;
+          const toHealthBSN=calcCoinHealth(klines);
+          const score=Math.min(100,Math.max(0,rawScore-toHealthBSN.penalty));
+          return {sym,corr,score,healthLabel:toHealthBSN.label,healthDetail:toHealthBSN.detail,healthPenalty:toHealthBSN.penalty};
         })
-        .catch(()=>({sym:batch[i], corr:0, score:50}))
+        .catch(()=>({sym:batch[i],corr:0,score:50,healthLabel:'',healthDetail:'',healthPenalty:0}))
     );
     const batchResults=await Promise.all(fetches);
     results.push(...batchResults);
@@ -2551,17 +2631,19 @@ function renderBestPartners(baseSym, results, isPartial){
     const isBest=idx===0;
     const isWarn=r.corr<0.6;
     const isBad=r.corr<0.4;
-    card.className='bp-card'+(isBest?' bp-best':isWarn&&!isBad?' bp-warn':isBad?' bp-bad':'');
+    const hasHealthRisk=r.healthPenalty>=10;
+    card.className='bp-card'+(isBest&&!hasHealthRisk?' bp-best':isWarn&&!isBad?' bp-warn':isBad||hasHealthRisk?' bp-bad':'');
 
     const corrCol=r.corr>=0.75?'#00c076':r.corr>=0.55?'#f5a623':'#ef4444';
     const scoreCol=r.score>=70?'#00c076':r.score<=30?'#ef4444':'#f5a623';
     const scoreEmoji=r.score>=70?'✅':r.score<=30?'🔴':'⏳';
 
     card.innerHTML=
-      '<div class="bp-sym">'+(isBest?'⭐ ':'')+r.sym+'</div>'+
+      '<div class="bp-sym">'+(isBest&&!hasHealthRisk?'⭐ ':'')+r.sym+'</div>'+
       '<div class="bp-corr" style="color:'+corrCol+'">Corr: '+r.corr.toFixed(2)+'</div>'+
       '<div class="bp-label">Score: <span style="color:'+scoreCol+'">'+r.score+'</span> '+scoreEmoji+'</div>'+
-      (isBest?'<div class="bp-score-badge" style="background:rgba(0,192,118,.12);color:#00c076">Best match</div>':'');
+      (hasHealthRisk?'<div style="font-size:9px;color:#ef4444;font-family:monospace;margin-top:2px">'+r.healthLabel+'</div>':'')+
+      (isBest&&!hasHealthRisk?'<div class="bp-score-badge" style="background:rgba(0,192,118,.12);color:#00c076">Best match</div>':'');
 
     card.title='Click to analyze '+baseSym+'/'+r.sym;
     card.onclick=()=>{
@@ -2624,7 +2706,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v10'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v11'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2756,7 +2838,10 @@ async function runAIScore(s, forceRefresh){
       :corr90<0.87?' ⚠️ Moderate correlation — higher risk of decoupling.'
       :corr90<0.92?' Note: correlation slightly below ideal.'
       :'';
-    return tTxt+' '+mTxt+rTxt+corrTxt;
+    const healthTxt=toHealth&&toHealth.penalty>=10
+      ?' ⚠️ '+toSym+' health warning: '+toHealth.detail
+      :'';
+    return tTxt+' '+mTxt+rTxt+corrTxt+healthTxt;
   };
 
   /* Show math score + risk dashboard immediately */
@@ -2781,6 +2866,10 @@ async function runAIScore(s, forceRefresh){
   else if(corr90 < 0.92) adjustedMs -= 8;
   else if(corr90 < 0.95) adjustedMs -= 3;
   // 0.95+ = no penalty
+
+  // 4. TO coin health penalty — structural collapse detection on the coin we swap INTO
+  const toHealth=calcCoinHealth(toKlines90);
+  if(toHealth.penalty>0) adjustedMs-=toHealth.penalty;
 
   // 3. Risk filter penalty — count green filters
   const riskForPenalty = buildRiskAnalysis({
@@ -3207,20 +3296,63 @@ function renderTrackerList(){
     // card will be appended after score fetch
 
     if(curAsset!==tr.assetA){
-      // Score paired/base (assetB/assetA)
-      // High = paired outperforming base = good time to swap paired→base
-      // Low = paired underperforming = hold, wait
+      // ── TRACKER CLOSE SIGNAL — independent from analyzer ──
+      // Question answered: "Should I close this position now?"
+      // Gate 1: profit check — never show close signal without profit
+      // Gate 2: if in profit, use ratio direction to judge if profit is safe or at risk
       getScoreForPair(tr.assetB, tr.assetA).then(res=>{
-        const sc=res?res.score:0;
         const scoreEl=document.getElementById(scoreId);
         const cardEl=scoreEl?.closest('.st-tracker-card');
         if(!scoreEl||!cardEl) return;
-        const scCol=sc>=70?'#00c076':sc<=30?'#ef4444':'#f5a623';
-        const scBg=sc>=70?'rgba(0,192,118,0.12)':sc<=30?'rgba(239,68,68,0.1)':'rgba(245,166,35,0.1)';
-        const scLabel=sc>=70?'↩ SWAP BACK':sc<=30?'⛔ HOLD':'⏳ WATCH';
-        scoreEl.innerHTML=`<span style="font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:${scBg};color:${scCol}">${scLabel} ${sc}/100</span>`;
-        cardEl.style.borderColor=sc>=70?'rgba(0,192,118,0.6)':sc<=30?'rgba(239,68,68,0.5)':'rgba(245,166,35,0.5)';
-        cardEl.style.background=sc>=70?'rgba(0,192,118,0.03)':sc<=30?'rgba(239,68,68,0.03)':'transparent';
+
+        const profitPct = growth; // calculated above with fees deducted
+        const ratioScore = res ? res.score : 50;
+
+        // Gate 1: not enough profit — always hold, but show score for context
+        if(profitPct===null || profitPct < 1.0){
+          const inLoss = profitPct!==null && profitPct < 0;
+          const lbl = inLoss ? '⛔ HOLD — IN LOSS' : (profitPct!==null ? '⛔ HOLD — <1% PROFIT' : '⛔ HOLD');
+          const scCol = ratioScore>=60?'#00c076':ratioScore<=35?'#ef4444':'#f5a623';
+          let situation;
+          if(ratioScore>=70)      situation='Score '+ratioScore+'/100 — reversal forming. Recovery may be near.';
+          else if(ratioScore>=55) situation='Score '+ratioScore+'/100 — momentum improving. Watch closely.';
+          else if(ratioScore>=40) situation='Score '+ratioScore+'/100 — mixed signals. Keep holding.';
+          else if(ratioScore>=25) situation='Score '+ratioScore+'/100 — still weak. Patience needed.';
+          else                    situation='Score '+ratioScore+'/100 — under pressure. Hold firm, this will turn.';
+          scoreEl.innerHTML='<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">'+
+            '<span style="font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:rgba(239,68,68,0.1);color:#ef4444">'+lbl+'</span>'+
+            '<span style="font-size:10px;font-family:monospace;color:'+scCol+';text-align:right">'+situation+'</span>'+
+            '</div>';
+          cardEl.style.borderColor='rgba(239,68,68,0.5)';
+          cardEl.style.background='rgba(239,68,68,0.03)';
+          return;
+        }
+
+        // Gate 2: in profit — assess market conditions
+        let closeLabel, closeCol, closeBg, borderCol, bgCol;
+        if(ratioScore<=35){
+          // Ratio reversing — close before profit shrinks
+          closeLabel = profitPct>=3
+            ? '✅ CLOSE NOW  +'+profitPct.toFixed(1)+'%'
+            : '⚠️ CLOSE SOON  +'+profitPct.toFixed(1)+'%';
+          closeCol='#00c076'; closeBg='rgba(0,192,118,0.15)';
+          borderCol='rgba(0,192,118,0.7)'; bgCol='rgba(0,192,118,0.04)';
+        } else if(ratioScore<=55){
+          // Momentum fading
+          closeLabel = profitPct>=3
+            ? '⏳ WATCH — +'+profitPct.toFixed(1)+'% — momentum fading'
+            : '⚠️ CONSIDER CLOSING  +'+profitPct.toFixed(1)+'%';
+          closeCol='#f5a623'; closeBg='rgba(245,166,35,0.12)';
+          borderCol='rgba(245,166,35,0.5)'; bgCol='transparent';
+        } else {
+          // Still running strong
+          closeLabel='📈 HOLD — GROWING  +'+profitPct.toFixed(1)+'%';
+          closeCol='#3b8fff'; closeBg='rgba(59,143,255,0.12)';
+          borderCol='rgba(59,143,255,0.4)'; bgCol='transparent';
+        }
+        scoreEl.innerHTML='<span style="font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:'+closeBg+';color:'+closeCol+'">'+closeLabel+'</span>';
+        cardEl.style.borderColor=borderCol;
+        cardEl.style.background=bgCol;
       }).catch(()=>{});
     } else {
       // ── Closed position (holding base): scan top 3 swap opportunities ──
@@ -3591,7 +3723,11 @@ async function getScoreForPair(a,b){
       :trend7<-2?`The swap rate dropped ${Math.abs(trend7).toFixed(1)}% this week, meaning you\'d get less ${b} for your ${a} than last week`
       :`The swap rate between ${a} and ${b} has been stable this week`;
     const plain_explanation=rsiPlain+'. '+macdPlain+'. '+trendPlain+'.'
-    const result={score:sc,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation};
+    // Coin health penalty on TO coin (b) — tk is already the 90d klines for b
+    const toHealthGSP=calcCoinHealth(tk);
+    const scFinal=Math.min(100,Math.max(0,sc-toHealthGSP.penalty));
+    const result={score:scFinal,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation,
+      healthLabel:toHealthGSP.label,healthDetail:toHealthGSP.detail,healthPenalty:toHealthGSP.penalty};
     _scoreCache[key]=result; _scoreCacheTime[key]=now;
     return result;
   }catch(e){return null;}
@@ -3610,30 +3746,68 @@ async function buildTrackerSignal(tr, curAsset, signalId){
   const orderedCandidates=[tr.assetB,...usedCoins.filter(c=>c!==tr.assetB),...candidates.filter(c=>c!==tr.assetB&&!usedCoins.includes(c))];
 
   if(!holdingBase){
-    // Currently holding curAsset (e.g. UNI), want to know when to swap back to base (e.g. ALGO)
-    // We need score on curAsset/base pair: high score = curAsset gaining vs base = good time to swap curAsset→base
+    // ── DETAIL VIEW CLOSE SIGNAL — same independent logic as card ──
     const res=await getScoreForPair(tr.assetB, tr.assetA);
     if(!sigEl.isConnected) return;
-    const sc=res?res.score:0;
-    const col=sc>=70?'#00c076':sc<=30?'#ef4444':'#f5a623';
-    const bg=sc>=70?'rgba(0,192,118,0.1)':sc<=30?'rgba(239,68,68,0.1)':'rgba(245,166,35,0.1)';
-    const border=sc>=70?'rgba(0,192,118,0.4)':sc<=30?'rgba(239,68,68,0.3)':'rgba(245,166,35,0.3)';
-    const verdict=sc>=70
-      ?'✅ SWAP BACK NOW — '+curAsset+' → '+tr.assetA
-      :sc<=30
-        ?'❌ DO NOT SWAP — hold '+curAsset+' for now'
-        :'⏳ WATCH — not the right moment yet';
-    const explanation=sc>=70
-      ?curAsset+' is gaining vs '+tr.assetA+'. Good time to swap your '+curAsset+' back to '+tr.assetA+' — you get more '+tr.assetA+' per '+curAsset+' than you would later.'
-      :sc<=30
-        ?curAsset+' is weakening vs '+tr.assetA+'. Do not swap back yet — wait for '+curAsset+' to recover so you get more '+tr.assetA+' per '+curAsset+'.'
-        :'Mixed signal. '+curAsset+'/'+tr.assetA+' ratio has no clear direction yet. Check back tomorrow.';
-    sigEl.innerHTML=`<div style="background:${bg};border:2px solid ${border};border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-      <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">OPEN POSITION: holding ${curAsset}</div>
-      <div style="font-size:16px;font-weight:700;color:${col}">${verdict}</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">${explanation}</div>
-      <button onclick="switchAnalyzerPair('${tr.assetB}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Analyze ${tr.assetB}/${tr.assetA} in detail →</button>
-    </div>`;
+    const ratioSc=res?res.score:50;
+
+    // Calculate current profit with fees
+    const _baseAmt=calcBaseAmount(tr);
+    const _fees=calcTotalFees(tr);
+    const _profitPct=(_baseAmt!==null&&tr.startAmount>0)?((_baseAmt-tr.startAmount-_fees)/tr.startAmount*100):null;
+    const _profitAmt=_baseAmt!==null?_baseAmt-tr.startAmount-_fees:null;
+    const _profitStr=_profitAmt!==null?(_profitAmt>=0?'+':'')+_profitAmt.toFixed(4)+' '+tr.assetA:'—';
+
+    let verdict, explanation, col, bg, border;
+
+    // Gate 1: no profit — always hold, show situation for context
+    if(_profitPct===null || _profitPct < 1.0){
+      const inLoss=_profitPct!==null&&_profitPct<0;
+      col='#ef4444'; bg='rgba(239,68,68,0.1)'; border='rgba(239,68,68,0.4)';
+      verdict=inLoss
+        ? '⛔ HOLD — IN LOSS ('+(_profitPct!==null?_profitPct.toFixed(2)+'%':'—')+')'
+        : '⛔ HOLD — NOT ENOUGH PROFIT YET ('+(_profitPct!==null?'+'+_profitPct.toFixed(2)+'%':'—')+')';
+      let situationCtx;
+      if(ratioSc>=70)      situationCtx='Ratio score: '+ratioSc+'/100 — reversal signal forming. '+curAsset+' is starting to recover vs '+tr.assetA+'. Keep holding.';
+      else if(ratioSc>=55) situationCtx='Ratio score: '+ratioSc+'/100 — momentum improving. Watch closely, direction is turning.';
+      else if(ratioSc>=40) situationCtx='Ratio score: '+ratioSc+'/100 — mixed signals. No clear direction yet, hold.';
+      else if(ratioSc>=25) situationCtx='Ratio score: '+ratioSc+'/100 — still weak. No reversal signal yet. Patience required.';
+      else                 situationCtx='Ratio score: '+ratioSc+'/100 — under pressure. Hold firm. Every downtrend eventually reverses.';
+      explanation=(inLoss
+        ? 'Never close on a loss. Wait for '+curAsset+' to recover vs '+tr.assetA+'. '
+        : 'Profit below 1% minimum — fees would eat the gain. Keep holding. ')
+        + situationCtx;
+    }
+    // Gate 2: in profit — assess if it is safe to keep holding
+    else if(ratioSc<=35){
+      col='#00c076'; bg='rgba(0,192,118,0.12)'; border='rgba(0,192,118,0.6)';
+      verdict=_profitPct>=3
+        ? '✅ CLOSE NOW — '+_profitStr+' (+'+_profitPct.toFixed(2)+'%)'
+        : '⚠️ CLOSE SOON — '+_profitStr+' (+'+_profitPct.toFixed(2)+'%)';
+      explanation=curAsset+' is losing momentum vs '+tr.assetA+'. Profit of +'+_profitPct.toFixed(2)+'% is at risk of shrinking. '
+        +(_profitPct>=3 ? 'Good profit secured — close now and lock it in.' : 'Thin but positive — close before it reverses.');
+    }
+    else if(ratioSc<=55){
+      col='#f5a623'; bg='rgba(245,166,35,0.1)'; border='rgba(245,166,35,0.5)';
+      verdict=_profitPct>=3
+        ? '⏳ WATCH CLOSELY — '+_profitStr+' (+'+_profitPct.toFixed(2)+'%) — momentum slowing'
+        : '⚠️ CONSIDER CLOSING — '+_profitStr+' (+'+_profitPct.toFixed(2)+'%)';
+      explanation=_profitPct>=3
+        ? curAsset+'/'+tr.assetA+' momentum is fading but profit is solid. Watch one more day — if it keeps weakening, close.'
+        : 'Thin profit and momentum fading. Not urgent yet but check again tomorrow.';
+    }
+    else {
+      col='#3b8fff'; bg='rgba(59,143,255,0.1)'; border='rgba(59,143,255,0.4)';
+      verdict='📈 HOLD — PROFIT GROWING — '+_profitStr+' (+'+_profitPct.toFixed(2)+'%)';
+      explanation=curAsset+' is still outperforming '+tr.assetA+'. Hold and let the profit grow. Check back tomorrow.';
+    }
+
+    sigEl.innerHTML='<div style="background:'+bg+';border:2px solid '+border+';border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">'
+      +'<div style="font-size:10px;font-family:monospace;color:'+col+';font-weight:700;margin-bottom:4px">POSITION STATUS — holding '+curAsset+'</div>'
+      +'<div style="font-size:15px;font-weight:700;color:'+col+';margin-bottom:4px">'+verdict+'</div>'
+      +'<div style="font-size:11px;color:var(--text2);line-height:1.5">'+explanation+'</div>'
+      +'<button onclick="switchAnalyzerPair(\''+tr.assetB+'\',\''+tr.assetA+'\')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid rgba(255,255,255,0.15);cursor:pointer;background:transparent;color:var(--text2)">View full ratio analysis →</button>'
+      +'</div>';
     return;
   }
 
