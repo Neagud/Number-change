@@ -2487,7 +2487,7 @@ async function scanBestPartners(baseSym){
   }catch(e){ grid.innerHTML='<div class="bp-loading">Could not fetch data</div>'; return; }
 
   // Scan all other coins in batches
-  const candidates=COINS_LIST.filter(c=>c!==baseSym);
+  const candidates=COINS_LIST.filter(c=>c!==baseSym&&!_weakCoins.has(c));
   const results=[];
 
   // Fetch all in parallel (max 8 at once)
@@ -2624,7 +2624,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v11'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v12'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2782,36 +2782,8 @@ async function runAIScore(s, forceRefresh){
   else if(corr90 < 0.95) adjustedMs -= 3;
   else                   adjustedMs += 3; // 0.95+ = small reward
 
-  // 4. Tier bonus for TO coin
-  const toTier=COIN_TIERS[toSym]||3;
-  if(toTier===1) adjustedMs+=4;
-  else if(toTier===2) adjustedMs+=2;
-
-  // 5. Market rank cap for TO coin — don't swap into broadly weak coin
-  // Fetch rank in background for next time, use cached if available
-  getMarketRank(toSym).catch(()=>{}); // fire and forget for next render
-  const rankData=_mktRankCache[toSym];
-  let rankWarning='';
-  if(rankData){
-    if(rankData.losingPct>=0.90){
-      adjustedMs=Math.min(adjustedMs,35);
-      rankWarning=`⚠️ ${toSym} is losing vs 90%+ of coins right now — structural weakness, avoid swapping in.`;
-    } else if(rankData.losingPct>=0.80){
-      adjustedMs=Math.min(adjustedMs,50);
-      rankWarning=`⚠️ ${toSym} is one of the weakest coins in the market right now — high risk target.`;
-    } else if(rankData.losingPct>=0.70){
-      adjustedMs=Math.min(adjustedMs,65);
-      rankWarning=`Note: ${toSym} is underperforming most coins this week.`;
-    } else if(rankData.rank>=0.75){
-      adjustedMs+=3;
-    } else if(rankData.rank>=0.60){
-      adjustedMs+=1;
-    }
-  } else {
-    adjustedMs=Math.min(adjustedMs,82); // no rank data yet — conservative cap
-    // Trigger background fetch so it's ready next time
-    getMarketRank(toSym).catch(()=>{});
-  }
+  // 4. Weak coin warning in explanation (no score penalty — just info)
+  const rankWarning=_weakCoins.has(toSym)?`⚠️ ${toSym} is one of the 4 weakest coins this week — consider a stronger target.`:'';
 
   // 6. Risk filter penalty
   const riskForPenalty = buildRiskAnalysis({
@@ -3093,48 +3065,32 @@ function initTabs(){
 ══════════════════════════════════════ */
 const COINS_LIST=['BTC','ETH','SOL','BNB','ADA','AVAX','NEAR','SUI','HBAR','XRP','XLM','ALGO','COTI','QNT','UNI','AAVE','LINK','RNDR','TAO','ATOM','IOTA','DOT','DUSK'];
 
-/* Coin quality tiers — reliability as a swap TARGET, not USD performance
-   Tier 1: Top cap + all ISO 20022 coins → small bonus when swapping INTO these
-   Tier 2: Solid mid-large cap → tiny bonus
-   Tier 3: Smaller/niche → no bonus */
-const COIN_TIERS={
-  BTC:1,ETH:1,SOL:1,BNB:1,XRP:1,XLM:1,ALGO:1,QNT:1,IOTA:1,HBAR:1,
-  ADA:2,AVAX:2,LINK:2,UNI:2,AAVE:2,NEAR:2,ATOM:2,SUI:2,
-  COTI:3,RNDR:3,TAO:3,DOT:3,DUSK:3
-};
+/* Weak coins exclusion — bottom 4 by 7-day performance are hidden from recommendations.
+   They still appear in the coin selector but won't show up in BSN scanner results.
+   Refreshed every 30 minutes. */
+let _weakCoins=new Set();
+let _weakCoinsTime=0;
+const WEAK_COINS_TTL=30*60*1000;
 
-/* Market rank cache — how many coins is the TO coin losing against */
-const _mktRankCache={};
-const _mktRankTime={};
-const MKT_RANK_TTL=10*60*1000; // 10 min
-
-async function getMarketRank(sym){
+async function refreshWeakCoins(){
   const now=Date.now();
-  if(_mktRankCache[sym]&&(now-_mktRankTime[sym])<MKT_RANK_TTL) return _mktRankCache[sym];
+  if(_weakCoinsTime&&(now-_weakCoinsTime)<WEAK_COINS_TTL) return;
   try{
-    // Fetch 7d performance for sym vs all other coins
-    const others=COINS_LIST.filter(c=>c!==sym);
-    const prices=await Promise.all([sym,...others].map(c=>
-      fetch('https://api.binance.com/api/v3/klines?symbol='+c+'USDT&interval=1d&limit=9').then(r=>r.json()).catch(()=>null)
-    ));
-    const symData=prices[0];
-    if(!symData||symData.length<2) return null;
-    const symChange=((+symData[symData.length-1][4])-(+symData[0][4]))/(+symData[0][4])*100;
-    let beating=0,total=0;
-    for(let i=1;i<prices.length;i++){
-      const d=prices[i];
-      if(!d||d.length<2) continue;
-      const ch=((+d[d.length-1][4])-(+d[0][4]))/(+d[0][4])*100;
-      total++;
-      if(symChange>ch) beating++;
-    }
-    const rank=total>0?beating/total:0.5; // 0=worst, 1=best
-    const losingPct=1-rank; // fraction of market sym is losing against
-    _mktRankCache[sym]={rank,losingPct,symChange,total};
-    _mktRankTime[sym]=now;
-    return _mktRankCache[sym];
-  }catch(e){return null;}
+    const perfs=await Promise.all(COINS_LIST.map(async sym=>{
+      try{
+        const d=await fetch('https://api.binance.com/api/v3/klines?symbol='+sym+'USDT&interval=1d&limit=9').then(r=>r.json());
+        if(!d||d.length<2) return{sym,ch:0};
+        const ch=((+d[d.length-1][4])-(+d[0][4]))/(+d[0][4])*100;
+        return{sym,ch};
+      }catch(e){return{sym,ch:0};}
+    }));
+    perfs.sort((a,b)=>a.ch-b.ch);
+    _weakCoins=new Set(perfs.slice(0,4).map(x=>x.sym));
+    _weakCoinsTime=now;
+    console.log('[WeakCoins] Excluded this week:',[..._weakCoins].join(', '));
+  }catch(e){}
 }
+refreshWeakCoins(); // fire on page load
 
 function loadTrackers(){
   try{return JSON.parse(localStorage.getItem('swapTrackers')||'[]');}catch(e){return[];}
@@ -3665,29 +3621,14 @@ async function getScoreForPair(a,b){
     else if(corr<0.95) sc-=3;
     else               sc+=3; // 0.95+ = small reward
 
-    // 3. Tier bonus for TO coin (b)
-    const tier=COIN_TIERS[b]||3;
-    if(tier===1) sc+=4;
-    else if(tier===2) sc+=2;
-
-    // 4. Consecutive down days penalty
+    // 3. Consecutive down days penalty
     const streak=stats?stats.streak||0:0;
     if(streak<=-7)      sc-=20;
     else if(streak<=-5) sc-=15;
     else if(streak<=-4) sc-=12;
     else if(streak<=-3) sc-=8;
 
-    // 5. Market rank cap for TO coin — don't swap into broadly weak coin
-    const rankData=_mktRankCache[b]; // use cached only, don't block on fetch
-    if(rankData){
-      if(rankData.losingPct>=0.90)     sc=Math.min(sc,35); // structural collapse
-      else if(rankData.losingPct>=0.80) sc=Math.min(sc,50); // broadly weakest
-      else if(rankData.losingPct>=0.70) sc=Math.min(sc,65); // clearly weak
-      else if(rankData.rank>=0.75)      sc+=3;              // strong coin bonus
-      else if(rankData.rank>=0.60)      sc+=1;
-    } else {
-      sc=Math.min(sc,82); // no rank data yet — conservative cap
-    }
+
 
     sc=Math.min(100,Math.max(0,Math.round(sc)));
 
@@ -3714,7 +3655,7 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
   const holdingBase=curAsset===tr.assetA;
 
   // Which coins to scan — always assetB first (tracker pair), then all others except base
-  const candidates=COINS_LIST.filter(c=>c!==tr.assetA);
+  const candidates=COINS_LIST.filter(c=>c!==tr.assetA&&!_weakCoins.has(c));
   // Put tracker's assetB first, history coins next, then rest
   const usedCoins=[...new Set((tr.swaps||[]).map(s=>s.toAsset).filter(c=>c!==tr.assetA))];
   const orderedCandidates=[tr.assetB,...usedCoins.filter(c=>c!==tr.assetB),...candidates.filter(c=>c!==tr.assetB&&!usedCoins.includes(c))];
