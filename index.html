@@ -3846,7 +3846,7 @@ async function buildTrackerSignal(tr, curAsset, signalId){
       } else if(ratioSc>=40){
         situationCtx='Ratio score: '+ratioSc+'/100 — mixed signals, no clear direction. Hold and check back in a few days.';
       } else if(ratioSc>=25){
-        situationCtx='Ratio score: '+ratioSc+'/100 — ratio still weak. '+curAsset+' hasn't found its bottom yet vs '+tr.assetA+'. Patience required.';
+        situationCtx='Ratio score: '+ratioSc+'/100 — ratio still weak. '+curAsset+' has not found its bottom yet vs '+tr.assetA+'. Patience required.';
       } else {
         situationCtx='Ratio score: '+ratioSc+'/100 — '+curAsset+' under pressure vs '+tr.assetA+'. Hold firm — every downtrend eventually reverses. No action needed.';
       }
