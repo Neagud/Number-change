@@ -2182,35 +2182,30 @@ function applyScoreAdjustments(rawSc, corr, toSym, fromSym, health, rankWeak, ra
   else if(corr < 0.95) sc += 2;
   else                 sc += 8;
 
-  // 2. Health penalty — applied always, no cache needed
-  if(health && health.penalty>0) sc -= health.penalty;
+  // 2. Health check removed — USD price decline is irrelevant to ratio trading.
+  // Market rank already catches weak coins by measuring vs other cryptos directly.
+  // (health parameter kept for API compatibility but not used in scoring)
 
   // 3. Tier bonus
   const tier=getCoinTier(toSym);
   sc += (TIER_BONUS[tier]||0);
 
-  // 4. Market rank — hard cap for broadly weak, bonus for strong
+  // 4. Market rank — use percentage thresholds so count differences don't cause gaps
   const winPct=rankTotal>0?(rankTotal-rankWeak)/rankTotal:0.5;
+  const losePct=rankTotal>0?rankWeak/rankTotal:0;
   if(rankTotal>0){
-    if(rankWeak>=20)      sc=Math.min(sc,35);
-    else if(rankWeak>=18) sc=Math.min(sc,50);
-    else if(rankWeak>=15) sc=Math.min(sc,62);
-    else if(winPct>=0.75) sc+=5;
-    else if(winPct>=0.60) sc+=3;
+    if(losePct>=0.90)      sc=Math.min(sc,35); // losing 90%+ = structural collapse
+    else if(losePct>=0.80) sc=Math.min(sc,50); // losing 80%+ = broadly weakest
+    else if(winPct>=0.75)  sc+=5;              // beating 75%+ = strong coin
+    else if(winPct>=0.60)  sc+=3;              // beating 60%+ = above average
+    // 68-80% losing = normal bear market weakness, no cap (health handles it for Tier 3)
   }
 
-  // 5. Health-based cap even without rank data
-  // If coin has structural decline, cap it regardless of rank cache state
-  if(health){
-    if(health.penalty>=25)      sc=Math.min(sc,35); // structural collapse
-    else if(health.penalty>=18) sc=Math.min(sc,50); // high decline risk
-    else if(health.penalty>=10) sc=Math.min(sc,72); // sustained decline
-  }
+  // 5. (health caps removed — market rank handles weak coin detection)
 
-  // 6. Final caps — prevent misleading perfect scores
-  if(health && health.penalty>0)             sc=Math.min(sc,88);
-  if(greenFilters>=0 && greenFilters<=4)     sc=Math.min(sc,84);
-  if(corr<0.92)                              sc=Math.min(sc,82);
+  // 6. Final caps — prevent perfect scores when conditions not ideal
+  if(greenFilters>=0 && greenFilters<=4) sc=Math.min(sc,84); // filter failing
+  if(corr<0.92)                         sc=Math.min(sc,82); // correlation not ideal
 
   return Math.min(100, Math.max(0, Math.round(sc)));
 }
@@ -2702,49 +2697,27 @@ async function scanBestPartners(baseSym){
     baseCloses=bk.map(k=>+k[4]);
   }catch(e){ grid.innerHTML='<div class="bp-loading">Could not fetch data</div>'; return; }
 
-  // Scan all other coins in batches
+  // Scan all coins using getScoreForPair — guarantees identical scores everywhere
   const candidates=COINS_LIST.filter(c=>c!==baseSym);
   const results=[];
 
-  // Fetch all in parallel (max 8 at once)
-  const batchSize=8;
+  const batchSize=5;
   for(let i=0;i<candidates.length;i+=batchSize){
     const batch=candidates.slice(i,i+batchSize);
-    const fetches=batch.map(sym=>
-      fetch('https://api.binance.com/api/v3/klines?symbol='+sym+'USDT&interval=1d&limit=91')
-        .then(r=>r.json())
-        .then(klines=>{
-          const closes=klines.map(k=>+k[4]);
-          const corr=calcCorrelation(baseCloses, closes);
-          // Quick math score on the ratio
-          const toObj=k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],live:false});
-          const baseObj=klines.map((_,ii)=>({t:ii,o:baseCloses[ii]||baseCloses[0],h:baseCloses[ii]||baseCloses[0],l:baseCloses[ii]||baseCloses[0],c:baseCloses[ii]||baseCloses[0],live:false}));
-          const symObj=klines.map(toObj);
-          const ratioSeries=buildRatio(baseObj.slice(-Math.min(baseObj.length,symObj.length)), symObj.slice(-Math.min(baseObj.length,symObj.length)));
-          const stats=ratioSeries.length>15?getStats(ratioSeries):null;
-          const rawScore=stats?mathScore(stats):50;
-          const toHealthBSN=calcCoinHealth(klines);
-          // Cache-only market rank
-          const oppsBSN=COINS_LIST.filter(c=>c!==sym&&c!==baseSym);
-          let weakBSN=0,cachedBSN=0;
-          const nowBSN=Date.now();
-          for(const opp of oppsBSN){
-            const kb=opp+'_'+sym;
-            if(_scoreCache[kb]&&(nowBSN-(_scoreCacheTime[kb]||0))<SCORE_TTL){
-              if(_scoreCache[kb].score>=55) weakBSN++;
-              cachedBSN++;
-            }
-          }
-          const rankWeakBSN=cachedBSN>=4?weakBSN:0;
-          const rankTotalBSN=cachedBSN>=4?oppsBSN.length:0;
-          // Use same unified scoring — no filter count in BSN (-1 = unknown)
-          const score=applyScoreAdjustments(rawScore,corr,sym,baseSym,toHealthBSN,rankWeakBSN,rankTotalBSN,-1);
-          return {sym,corr,score,healthLabel:toHealthBSN.label,healthDetail:toHealthBSN.detail,healthPenalty:toHealthBSN.penalty,rankPenalty:0,weakCount:weakBSN};
-        })
-        .catch(()=>({sym:batch[i],corr:0,score:50,healthLabel:'',healthDetail:'',healthPenalty:0,rankPenalty:0,weakCount:0}))
-    );
-    const batchResults=await Promise.all(fetches);
-    results.push(...batchResults);
+    const batchRes=await Promise.all(batch.map(async sym=>{
+      try{
+        // Fetch sym klines for correlation display
+        const symKlines=await fetch('https://api.binance.com/api/v3/klines?symbol='+sym+'USDT&interval=1d&limit=91').then(r=>r.json());
+        const symCloses=symKlines.map(k=>+k[4]);
+        const corr=baseCloses.length>=10&&symCloses.length>=10?calcCorrelation(baseCloses,symCloses):0.9;
+        // Score via getScoreForPair — same function used everywhere
+        const r=await getScoreForPair(baseSym,sym);
+        if(!r) return {sym,corr,score:50,healthLabel:'',healthDetail:'',healthPenalty:0,rankPenalty:0,weakCount:0};
+        return {sym,corr,score:r.score,healthLabel:r.healthLabel||'',healthDetail:r.healthDetail||'',
+          healthPenalty:r.healthPenalty||0,rankPenalty:0,weakCount:r.weakCount||0};
+      }catch(e){return {sym,corr:0,score:50,healthLabel:'',healthDetail:'',healthPenalty:0,rankPenalty:0,weakCount:0};}
+    }));
+    results.push(...batchRes);
 
     // Update grid progressively
     const sorted=results.filter(r=>r.corr>0.3).sort((a,b)=>{
@@ -2859,7 +2832,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v31'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v35'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -3032,12 +3005,6 @@ async function runAIScore(s, forceRefresh){
       factors.push({good:null,  txt:'Correlation is slightly below ideal ('+corr90.toFixed(2)+') — generally fine but worth noting.'});
     else
       factors.push({good:true,  txt:'Strong correlation ('+corr90.toFixed(2)+') — coins move together reliably. Ratio will likely revert.'});
-
-    // ── TO coin health ──
-    if(toHealth&&toHealth.penalty>=18)
-      factors.push({good:false, txt:'⚠️ '+toSym+' structural risk: '+toHealth.detail});
-    else if(toHealth&&toHealth.penalty>=10)
-      factors.push({good:false, txt:'⚠️ '+toSym+' health warning: '+toHealth.detail});
 
     // ── Market rank of TO coin ──
     if(marketRankTO&&marketRankTO.penalty>=15)
