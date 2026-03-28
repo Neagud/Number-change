@@ -2808,7 +2808,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v24'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v25'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -3008,50 +3008,42 @@ async function runAIScore(s, forceRefresh){
   };
 
   /* Show math score + risk dashboard immediately */
-  // ── SCORE ADJUSTMENTS ──
-  // Philosophy: mathScore() already does the heavy lifting with 11 indicators.
-  // Adjustments REFINE the raw score with external context — they never override it.
-  // Max total adjustment: ~±20 in normal conditions. Extreme cases can go higher.
+  // ── SCORE ADJUSTMENTS — identical logic to getScoreForPair for consistency ──
   let adjustedMs = ms;
 
-  // 1. Correlation — penalty for dangerous pairs, reward for reliable pairs
-  if(corr90 < 0.80)      adjustedMs -= 15; // dangerous — pairs can decouple badly
-  else if(corr90 < 0.87) adjustedMs -= 8;  // warning zone
-  else if(corr90 < 0.92) adjustedMs -= 3;  // slight caution
-  else if(corr90 < 0.95) adjustedMs += 2;  // good — small reward for reliability
-  else                   adjustedMs += 8;  // very safe pair — strong reward
+  // 1. Correlation
+  if(corr90 < 0.80)      adjustedMs -= 15;
+  else if(corr90 < 0.87) adjustedMs -= 8;
+  else if(corr90 < 0.92) adjustedMs -= 3;
+  else if(corr90 < 0.95) adjustedMs += 2;
+  else                   adjustedMs += 8;
 
-  // 2. TO coin health — structural collapse detection (rare, high impact)
+  // 2. TO coin health
   const toHealth=calcCoinHealth(toKlines90);
-  if(toHealth.penalty>0) adjustedMs-=toHealth.penalty;
+  adjustedMs -= toHealth.penalty;
 
-  // 2b. TO coin quality tier — reward swapping INTO stable, established coins
-  // Tier 1 (BTC/ETH/SOL/BNB/XRP): strong reward — very reliable swap targets
-  // Tier 2 (ADA/AVAX/LINK etc): moderate reward — solid established coins
-  // Tier 3: no quality reward — rely on ratio signal alone
+  // 3. TO coin tier
   const toTier=getCoinTier(toSym);
-  adjustedMs+=TIER_BONUS[toTier]||0;
+  adjustedMs += (TIER_BONUS[toTier]||0);
 
-  // 3. Market rank of TO coin — penalise weakest, reward strongest
+  // 4. Market rank — hard cap for broadly weak coins, small bonus for strong
   const marketRankTO=await calcMarketRank(toSym, fromSym);
   const winningAgainst=marketRankTO.total-marketRankTO.weakCount;
   const winPct=marketRankTO.total>0?winningAgainst/marketRankTO.total:0.5;
-  // TO coin rank — hard cap approach for weak coins
-  // If TO coin is broadly the weakest in market, cap the score regardless of ratio signal
-  // This prevents "XRP strong vs DOT" from recommending DOT as a swap target
   if(marketRankTO.weakCount>=20){
-    adjustedMs = Math.min(adjustedMs, 35);  // 90%+ losing — hard cap at 35, DO NOT SWAP
+    adjustedMs = Math.min(adjustedMs, 35);
   } else if(marketRankTO.weakCount>=18){
-    adjustedMs = Math.min(adjustedMs, 50);  // 82%+ losing — cap at 50, WATCH only
+    adjustedMs = Math.min(adjustedMs, 50);
   } else if(marketRankTO.weakCount>=15){
-    adjustedMs = Math.min(adjustedMs, 62);  // 68%+ losing — cap at 62, below swap threshold
+    adjustedMs = Math.min(adjustedMs, 62);
   } else if(winPct>=0.75){
-    adjustedMs += 5; // beating 75%+ = strong coin
+    adjustedMs += 5;
   } else if(winPct>=0.60){
-    adjustedMs += 3; // beating 60%+ = above average
+    adjustedMs += 3;
   }
 
-  // 4. Risk filters — use RAW ms to avoid circular dependency
+  // 5. Risk filters — still calculated for UI display, but NOT added to score
+  // Score consistency: getScoreForPair has no filter adjustment so we remove it here too
   const riskForPenalty = buildRiskAnalysis({
     score: ms, corr90, atrPct,
     bollWidth: freshS.bollWidth || 5,
@@ -3060,10 +3052,7 @@ async function runAIScore(s, forceRefresh){
     fromSym, toSym
   });
   const greenCount = riskForPenalty.passes;
-  if(greenCount <= 3)       adjustedMs -= 15; // genuinely dangerous
-  else if(greenCount === 4) adjustedMs += 0;  // acceptable — no penalty
-  else if(greenCount === 5) adjustedMs += 8;  // good conditions
-  else if(greenCount === 6) adjustedMs += 15; // perfect conditions
+  // Risk filters shown in UI only — do not modify score to keep consistency with scanner
 
   adjustedMs = Math.min(100, Math.max(0, Math.round(adjustedMs)));
 
