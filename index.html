@@ -2661,6 +2661,7 @@ async function scanBestPartners(baseSym){
           const stats=ratioSeries.length>15?getStats(ratioSeries):null;
           const rawScore=stats?mathScore(stats):50;
           const toHealthBSN=calcCoinHealth(klines);
+          let scoreBSN=Math.min(100,Math.max(0,rawScore-toHealthBSN.penalty));
           // Cache-only market rank for BSN (no extra fetches)
           const oppsBSN=COINS_LIST.filter(c=>c!==sym&&c!==baseSym);
           let weakBSN=0,cachedBSN=0;
@@ -2674,9 +2675,9 @@ async function scanBestPartners(baseSym){
           }
           let rankPenaltyBSN=0;
           if(cachedBSN>=10){
-            if(weakBSN>=20)      rankPenaltyBSN=15;
-            else if(weakBSN>=18) rankPenaltyBSN=8;
-            else if(weakBSN>=15) rankPenaltyBSN=3;
+            if(weakBSN>=20)      { scoreBSN=Math.min(scoreBSN,35); }
+            else if(weakBSN>=18) { scoreBSN=Math.min(scoreBSN,50); }
+            else if(weakBSN>=15) { scoreBSN=Math.min(scoreBSN,62); }
             else {
               const winBSN=oppsBSN.length-weakBSN;
               const winPctBSN=winBSN/oppsBSN.length;
@@ -2684,7 +2685,7 @@ async function scanBestPartners(baseSym){
               else if(winPctBSN>=0.60) rankPenaltyBSN=-6;
             }
           }
-          const score=Math.min(100,Math.max(0,rawScore-toHealthBSN.penalty-rankPenaltyBSN));
+          const score=Math.min(100,Math.max(0,scoreBSN-rankPenaltyBSN));
           return {sym,corr,score,healthLabel:toHealthBSN.label,healthDetail:toHealthBSN.detail,healthPenalty:toHealthBSN.penalty,rankPenalty:rankPenaltyBSN,weakCount:weakBSN};
         })
         .catch(()=>({sym:batch[i],corr:0,score:50,healthLabel:'',healthDetail:'',healthPenalty:0,rankPenalty:0,weakCount:0}))
@@ -2805,7 +2806,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v14'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v18'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -3011,11 +3012,11 @@ async function runAIScore(s, forceRefresh){
   // Max total adjustment: ~±20 in normal conditions. Extreme cases can go higher.
   let adjustedMs = ms;
 
-  // 1. Correlation — penalty for dangerous pairs, meaningful reward for safe pairs
+  // 1. Correlation — penalty for dangerous pairs, reward for reliable pairs
   if(corr90 < 0.80)      adjustedMs -= 15; // dangerous — pairs can decouple badly
   else if(corr90 < 0.87) adjustedMs -= 8;  // warning zone
   else if(corr90 < 0.92) adjustedMs -= 3;  // slight caution
-  else if(corr90 < 0.95) adjustedMs += 4;  // good pair — reward reliability
+  else if(corr90 < 0.95) adjustedMs += 2;  // good — small reward for reliability
   else                   adjustedMs += 8;  // very safe pair — strong reward
 
   // 2. TO coin health — structural collapse detection (rare, high impact)
@@ -3026,11 +3027,20 @@ async function runAIScore(s, forceRefresh){
   const marketRankTO=await calcMarketRank(toSym, fromSym);
   const winningAgainst=marketRankTO.total-marketRankTO.weakCount;
   const winPct=marketRankTO.total>0?winningAgainst/marketRankTO.total:0.5;
-  if(marketRankTO.weakCount>=20)      adjustedMs -= 15; // losing vs 90%+ = structural outlier
-  else if(marketRankTO.weakCount>=18) adjustedMs -= 8;  // losing vs 82%+
-  else if(marketRankTO.weakCount>=15) adjustedMs -= 3;  // losing vs 68%+
-  else if(winPct>=0.75)               adjustedMs += 12; // beating 75%+ = strong target coin
-  else if(winPct>=0.60)               adjustedMs += 6;  // beating 60%+ = above average
+  // TO coin rank — hard cap approach for weak coins
+  // If TO coin is broadly the weakest in market, cap the score regardless of ratio signal
+  // This prevents "XRP strong vs DOT" from recommending DOT as a swap target
+  if(marketRankTO.weakCount>=20){
+    adjustedMs = Math.min(adjustedMs, 35);  // 90%+ losing — hard cap at 35, DO NOT SWAP
+  } else if(marketRankTO.weakCount>=18){
+    adjustedMs = Math.min(adjustedMs, 50);  // 82%+ losing — cap at 50, WATCH only
+  } else if(marketRankTO.weakCount>=15){
+    adjustedMs = Math.min(adjustedMs, 62);  // 68%+ losing — cap at 62, below swap threshold
+  } else if(winPct>=0.75){
+    adjustedMs += 12; // beating 75%+ = strong target coin
+  } else if(winPct>=0.60){
+    adjustedMs += 6;  // beating 60%+ = above average
+  }
 
   // 4. Risk filters — use RAW ms to avoid circular dependency
   const riskForPenalty = buildRiskAnalysis({
@@ -3041,8 +3051,8 @@ async function runAIScore(s, forceRefresh){
     fromSym, toSym
   });
   const greenCount = riskForPenalty.passes;
-  if(greenCount <= 3)       adjustedMs -= 15; // dangerous conditions
-  else if(greenCount === 4) adjustedMs -= 5;  // one warning
+  if(greenCount <= 3)       adjustedMs -= 15; // genuinely dangerous
+  else if(greenCount === 4) adjustedMs += 0;  // acceptable — no penalty
   else if(greenCount === 5) adjustedMs += 8;  // good conditions
   else if(greenCount === 6) adjustedMs += 15; // perfect conditions
 
@@ -3878,6 +3888,7 @@ async function getScoreForPair(a,b){
     const toHealthGSP=calcCoinHealth(tk);
     // Market rank — cache-only check (no extra fetches to avoid API explosion in parallel calls)
     const now2=Date.now();
+    let scCapped=Math.min(100,Math.max(0,sc-toHealthGSP.penalty)); // start with health-adjusted score
     // TO coin rank
     const opponentsTO=COINS_LIST.filter(c=>c!==b&&c!==a);
     let weakCountTO=0, cachedTO=0;
@@ -3890,18 +3901,19 @@ async function getScoreForPair(a,b){
     }
     let rankPenaltyTO=0;
     if(cachedTO>=10){
-      if(weakCountTO>=20)      rankPenaltyTO=15;
-      else if(weakCountTO>=18) rankPenaltyTO=8;
-      else if(weakCountTO>=15) rankPenaltyTO=3;
+      // Hard cap approach — weak TO coins capped regardless of ratio signal
+      if(weakCountTO>=20)      { scCapped=Math.min(scCapped,35); }
+      else if(weakCountTO>=18) { scCapped=Math.min(scCapped,50); }
+      else if(weakCountTO>=15) { scCapped=Math.min(scCapped,62); }
       else {
         const winTO=opponentsTO.length-weakCountTO;
         const winPctTO=winTO/opponentsTO.length;
-        if(winPctTO>=0.75)      rankPenaltyTO=-12; // negative = bonus
+        if(winPctTO>=0.75)      rankPenaltyTO=-12;
         else if(winPctTO>=0.60) rankPenaltyTO=-6;
       }
     }
     const rankPenaltyGSP=rankPenaltyTO;
-    const scFinal=Math.min(100,Math.max(0,sc-toHealthGSP.penalty-rankPenaltyGSP));
+    const scFinal=Math.min(100,Math.max(0,scCapped-toHealthGSP.penalty-rankPenaltyGSP));
     const result={score:scFinal,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation,
       healthLabel:toHealthGSP.label,healthDetail:toHealthGSP.detail,healthPenalty:toHealthGSP.penalty,
       rankPenalty:rankPenaltyGSP,weakCount:weakCount2};
