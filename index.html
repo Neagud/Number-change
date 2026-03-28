@@ -2808,7 +2808,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v27'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v28'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -3047,6 +3047,12 @@ async function runAIScore(s, forceRefresh){
   });
   const greenCount = riskForPenalty.passes;
   // Risk filters shown in UI only — do not modify score to keep consistency with scanner
+
+  // ── Final score caps — prevent misleading perfect scores ──
+  // 100 should only be possible when truly everything is ideal
+  if(toHealth.penalty>0)   adjustedMs=Math.min(adjustedMs, 88); // health warning = can't be perfect
+  if(greenCount<=4)        adjustedMs=Math.min(adjustedMs, 84); // filter failing = not perfect
+  if(corr90<0.92)          adjustedMs=Math.min(adjustedMs, 82); // correlation not ideal = not perfect
 
   adjustedMs = Math.min(100, Math.max(0, Math.round(adjustedMs)));
 
