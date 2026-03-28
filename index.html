@@ -2107,6 +2107,80 @@ const _SCORE_TTL = 5 * 60 * 1000;
 ════════════════════════════════════════════════════════ */
 
 /* Pearson correlation coefficient between two arrays */
+/* ════════════════════════════════════════════════════════
+   COIN HEALTH CHECK
+   Detects structural collapse vs temporary weakness in the TO coin.
+   Uses 90-day USDT price klines — already fetched for correlation.
+   Returns { penalty, label, detail } — penalty applied to score.
+
+   ONLY applied to the TO coin (the one you're swapping INTO).
+   A dying coin shows: sustained USDT decline + no bounces + near 90d low.
+   A temporarily weak coin shows: recent dip but history of recovering.
+════════════════════════════════════════════════════════ */
+function calcCoinHealth(klines90){
+  // klines90: raw Binance kline arrays [t,o,h,l,c,v,...]
+  if(!klines90 || klines90.length < 30) return { penalty:0, label:'', detail:'' };
+
+  const closes = klines90.map(k => +k[4]);
+  const highs   = klines90.map(k => +k[2]);
+  const n = closes.length;
+
+  const first  = closes[0];
+  const last   = closes[n-1];
+  const low90  = Math.min(...closes);
+  const high90 = Math.max(...closes);
+
+  // 1. 90-day USDT price change
+  const change90 = first > 0 ? ((last - first) / first) * 100 : 0;
+
+  // 2. Proximity to 90-day low (0% = at the low, 100% = at the high)
+  const range90 = high90 - low90;
+  const posIn90 = range90 > 0 ? ((last - low90) / range90) * 100 : 50;
+
+  // 3. Count meaningful bounces (days where price recovered >5% from a recent low)
+  // A healthy coin bounces. A dying coin just slides.
+  let bounces = 0;
+  for(let i = 5; i < n; i++){
+    const localLow = Math.min(...closes.slice(i-5, i));
+    if(localLow > 0 && closes[i] > localLow * 1.05) bounces++;
+  }
+
+  // 4. Last-30-day trend vs first-60-day trend — is it accelerating down?
+  const avg60 = closes.slice(0, 60).reduce((a,b)=>a+b,0) / Math.min(60, n);
+  const avg30 = closes.slice(-30).reduce((a,b)=>a+b,0) / 30;
+  const recentWeaker = avg30 < avg60 * 0.85; // last 30d average is >15% below first 60d
+
+  // ── Determine penalty ──
+  let penalty = 0;
+  let label   = '';
+  let detail  = '';
+
+  if(change90 < -50 && bounces < 3 && posIn90 < 15){
+    // Severe: down >50%, barely any bounces, near 90d low — structural collapse signal
+    penalty = 25;
+    label   = '⚠️ STRUCTURAL RISK';
+    detail  = `Down ${Math.abs(change90).toFixed(0)}% in 90 days, near 90-day low, almost no recovery bounces.`;
+  } else if(change90 < -35 && posIn90 < 25 && recentWeaker){
+    // Strong warning: down >35%, near lows, accelerating decline
+    penalty = 18;
+    label   = '⚠️ HIGH STRUCTURAL RISK';
+    detail  = `Down ${Math.abs(change90).toFixed(0)}% in 90 days with accelerating decline and near 90-day lows.`;
+  } else if(change90 < -20 && recentWeaker){
+    // Moderate: down >20% and getting worse
+    penalty = 10;
+    label   = '⚠️ SUSTAINED DECLINE';
+    detail  = `Down ${Math.abs(change90).toFixed(0)}% in 90 days. Recent momentum worse than earlier period.`;
+  } else if(change90 < -10){
+    // Mild: general weakness but not alarming
+    penalty = 5;
+    label   = '';
+    detail  = '';
+  }
+  // Positive or flat = no penalty
+
+  return { penalty, label, detail, change90: change90.toFixed(1), posIn90: posIn90.toFixed(0), bounces };
+}
+
 function calcCorrelation(a, b){
   const n=Math.min(a.length,b.length);
   if(n<10) return 0;
@@ -2521,10 +2595,13 @@ async function scanBestPartners(baseSym){
           const symObj=klines.map(toObj);
           const ratioSeries=buildRatio(baseObj.slice(-Math.min(baseObj.length,symObj.length)), symObj.slice(-Math.min(baseObj.length,symObj.length)));
           const stats=ratioSeries.length>15?getStats(ratioSeries):null;
-          const score=stats?mathScore(stats):50;
-          return {sym, corr, score};
+          const rawScore=stats?mathScore(stats):50;
+          // Apply coin health penalty to TO coin (sym) in BSN scanner
+          const toHealthBSN=calcCoinHealth(klines);
+          const score=Math.min(100,Math.max(0,rawScore-toHealthBSN.penalty));
+          return {sym, corr, score, healthLabel:toHealthBSN.label, healthDetail:toHealthBSN.detail, healthPenalty:toHealthBSN.penalty};
         })
-        .catch(()=>({sym:batch[i], corr:0, score:50}))
+        .catch(()=>({sym:batch[i], corr:0, score:50, healthLabel:'', healthDetail:'', healthPenalty:0}))
     );
     const batchResults=await Promise.all(fetches);
     results.push(...batchResults);
@@ -2566,17 +2643,20 @@ function renderBestPartners(baseSym, results, isPartial){
     const isBest=idx===0;
     const isWarn=r.corr<0.6;
     const isBad=r.corr<0.4;
-    card.className='bp-card'+(isBest?' bp-best':isWarn&&!isBad?' bp-warn':isBad?' bp-bad':'');
+    // Also flag structural health risk in card style
+    const hasHealthRisk=r.healthPenalty>=10;
+    card.className='bp-card'+(isBest&&!hasHealthRisk?' bp-best':isWarn&&!isBad?' bp-warn':isBad?' bp-bad':hasHealthRisk?' bp-bad':'');
 
     const corrCol=r.corr>=0.75?'#00c076':r.corr>=0.55?'#f5a623':'#ef4444';
     const scoreCol=r.score>=70?'#00c076':r.score<=30?'#ef4444':'#f5a623';
     const scoreEmoji=r.score>=70?'✅':r.score<=30?'🔴':'⏳';
 
     card.innerHTML=
-      '<div class="bp-sym">'+(isBest?'⭐ ':'')+r.sym+'</div>'+
+      '<div class="bp-sym">'+(isBest&&!hasHealthRisk?'⭐ ':'')+r.sym+'</div>'+
       '<div class="bp-corr" style="color:'+corrCol+'">Corr: '+r.corr.toFixed(2)+'</div>'+
       '<div class="bp-label">Score: <span style="color:'+scoreCol+'">'+r.score+'</span> '+scoreEmoji+'</div>'+
-      (isBest?'<div class="bp-score-badge" style="background:rgba(0,192,118,.12);color:#00c076">Best match</div>':'');
+      (hasHealthRisk?'<div style="font-size:9px;color:#ef4444;font-family:monospace;margin-top:2px">'+r.healthLabel+'</div>':'')+
+      (isBest&&!hasHealthRisk?'<div class="bp-score-badge" style="background:rgba(0,192,118,.12);color:#00c076">Best match</div>':'');
 
     card.title='Click to analyze '+baseSym+'/'+r.sym;
     card.onclick=()=>{
@@ -2639,7 +2719,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v11'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v12'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2771,7 +2851,11 @@ async function runAIScore(s, forceRefresh){
       :corr90<0.87?' ⚠️ Moderate correlation — higher risk of decoupling.'
       :corr90<0.92?' Note: correlation slightly below ideal.'
       :'';
-    return tTxt+' '+mTxt+rTxt+corrTxt;
+    // Coin health warning in explanation
+    const healthTxt=toHealth&&toHealth.penalty>=10
+      ?' ⚠️ '+toSym+' health warning: '+toHealth.detail
+      :'';
+    return tTxt+' '+mTxt+rTxt+corrTxt+healthTxt;
   };
 
   /* Show math score + risk dashboard immediately */
@@ -2796,6 +2880,14 @@ async function runAIScore(s, forceRefresh){
   else if(corr90 < 0.92) adjustedMs -= 8;
   else if(corr90 < 0.95) adjustedMs -= 3;
   // 0.95+ = no penalty
+
+  // 4. TO coin health penalty — structural collapse detection
+  // Only penalises the coin you're swapping INTO (toSym).
+  // Uses already-fetched 90-day USDT klines — no extra API calls.
+  const toHealth = calcCoinHealth(toKlines90);
+  if(toHealth.penalty > 0){
+    adjustedMs -= toHealth.penalty;
+  }
 
   // 3. Risk filter penalty — count green filters
   const riskForPenalty = buildRiskAnalysis({
@@ -3687,7 +3779,22 @@ async function getScoreForPair(a,b){
       :trend7<-2?`The swap rate dropped ${Math.abs(trend7).toFixed(1)}% this week, meaning you\'d get less ${b} for your ${a} than last week`
       :`The swap rate between ${a} and ${b} has been stable this week`;
     const plain_explanation=rsiPlain+'. '+macdPlain+'. '+trendPlain+'.'
-    const result={score:sc,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation};
+
+    // ── Coin health penalty on TO coin (b) ──
+    // tk is already the 90-day klines for coin b (the one we're swapping INTO)
+    // Penalise here so BSN scanner + tracker cards all reflect structural risk
+    const toHealthGSP = calcCoinHealth(tk);
+    const scWithHealth = Math.min(100, Math.max(0, sc - toHealthGSP.penalty));
+
+    const result={
+      score:scWithHealth,
+      from:a, to:b,
+      price:+fp.price, toPrice:+tp.price,
+      plain_explanation,
+      healthLabel: toHealthGSP.label,
+      healthDetail: toHealthGSP.detail,
+      healthPenalty: toHealthGSP.penalty
+    };
     _scoreCache[key]=result; _scoreCacheTime[key]=now;
     return result;
   }catch(e){return null;}
