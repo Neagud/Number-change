@@ -2933,10 +2933,7 @@ async function runAIScore(s, forceRefresh){
       :marketRankTO&&marketRankTO.penalty>=6
       ?' Note: '+toSym+' is underperforming '+marketRankTO.weakCount+'/'+marketRankTO.total+' coins currently.'
       :'';
-    const fromRankTxt=marketRankFROM&&marketRankFROM.weakCount>=12
-      ?' ⚠️ '+fromSym+' itself is underperforming '+marketRankFROM.weakCount+'/'+marketRankFROM.total+' coins — consider holding it and waiting for it to gain market strength first.'
-      :'';
-    return tTxt+' '+mTxt+rTxt+corrTxt+healthTxt+rankTxt+fromRankTxt;
+    return tTxt+' '+mTxt+rTxt+corrTxt+healthTxt+rankTxt;
   };
 
   /* Show math score + risk dashboard immediately */
@@ -2971,17 +2968,9 @@ async function runAIScore(s, forceRefresh){
   const marketRankTO=await calcMarketRank(toSym, fromSym);
   if(marketRankTO.penalty>0) adjustedMs-=marketRankTO.penalty;
 
-  // 6. FROM coin market rank — is the FROM coin itself broadly weak vs the market?
-  // If FROM coin is losing vs most coins, best move is to HOLD it and wait for it to
-  // gain strength first — not swap it into anything yet.
-  // Smaller penalty than TO coin — FROM being weak is less dangerous than TO being weakest.
-  const marketRankFROM=await calcMarketRank(fromSym, toSym);
-  // Scaled penalty: FROM coin weakness is penalised at half rate vs TO coin
-  // because FROM being strong is good for ratio — but FROM being broadly weak
-  // means you're moving out of a coin that may recover vs the market soon.
-  if(marketRankFROM.weakCount>=15)      adjustedMs-=10;
-  else if(marketRankFROM.weakCount>=12) adjustedMs-=6;
-  else if(marketRankFROM.weakCount>=9)  adjustedMs-=3;
+  // FROM coin market rank check intentionally removed.
+  // The TO coin penalty already protects against the chain weakness problem.
+  // FROM coin being broadly weak is handled by the ratio score itself.
 
   // 3. Risk filter penalty — count green filters
   const riskForPenalty = buildRiskAnalysis({
@@ -3856,23 +3845,7 @@ async function getScoreForPair(a,b){
       else if(weakCountTO>=9)  rankPenaltyTO=6;
       else if(weakCountTO>=6)  rankPenaltyTO=3;
     }
-    // FROM coin rank — half penalty (moving out of weak coin, not into weakest)
-    const opponentsFROM=COINS_LIST.filter(c=>c!==a&&c!==b);
-    let weakCountFROM=0, cachedFROM=0;
-    for(const opp of opponentsFROM){
-      const kf=opp+'_'+a;
-      if(_scoreCache[kf]&&(now2-(_scoreCacheTime[kf]||0))<SCORE_TTL){
-        if(_scoreCache[kf].score>=55) weakCountFROM++;
-        cachedFROM++;
-      }
-    }
-    let rankPenaltyFROM=0;
-    if(cachedFROM>=10){
-      if(weakCountFROM>=15)      rankPenaltyFROM=10;
-      else if(weakCountFROM>=12) rankPenaltyFROM=6;
-      else if(weakCountFROM>=9)  rankPenaltyFROM=3;
-    }
-    const rankPenaltyGSP=rankPenaltyTO+rankPenaltyFROM;
+    const rankPenaltyGSP=rankPenaltyTO;
     const scFinal=Math.min(100,Math.max(0,sc-toHealthGSP.penalty-rankPenaltyGSP));
     const result={score:scFinal,from:a,to:b,price:+fp.price,toPrice:+tp.price,plain_explanation,
       healthLabel:toHealthGSP.label,healthDetail:toHealthGSP.detail,healthPenalty:toHealthGSP.penalty,
