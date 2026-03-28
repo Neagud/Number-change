@@ -3465,21 +3465,11 @@ function renderTrackerList(){
         const profitPct = growth; // calculated above with fees deducted
         const ratioScore = res ? res.score : 50;
 
-        // Gate 1: not enough profit — always hold, but show score for context
+        // Gate 1: not enough profit — always hold, just show the label
         if(profitPct===null || profitPct < 1.0){
           const inLoss = profitPct!==null && profitPct < 0;
           const lbl = inLoss ? '⛔ HOLD — IN LOSS' : (profitPct!==null ? '⛔ HOLD — <1% PROFIT' : '⛔ HOLD');
-          const scCol = ratioScore>=60?'#00c076':ratioScore<=35?'#ef4444':'#f5a623';
-          let situation;
-          if(ratioScore>=70)      situation='Score '+ratioScore+'/100 — reversal forming. Recovery may be near.';
-          else if(ratioScore>=55) situation='Score '+ratioScore+'/100 — momentum improving. Watch closely.';
-          else if(ratioScore>=40) situation='Score '+ratioScore+'/100 — mixed signals. Keep holding.';
-          else if(ratioScore>=25) situation='Score '+ratioScore+'/100 — still weak. Patience needed.';
-          else                    situation='Score '+ratioScore+'/100 — under pressure. Hold firm, this will turn.';
-          scoreEl.innerHTML='<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">'+
-            '<span style="font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:rgba(239,68,68,0.1);color:#ef4444">'+lbl+'</span>'+
-            '<span style="font-size:10px;font-family:monospace;color:'+scCol+';text-align:right">'+situation+'</span>'+
-            '</div>';
+          scoreEl.innerHTML='<span style="font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:rgba(239,68,68,0.1);color:#ef4444">'+lbl+'</span>';
           cardEl.style.borderColor='rgba(239,68,68,0.5)';
           cardEl.style.background='rgba(239,68,68,0.03)';
           return;
