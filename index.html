@@ -2212,15 +2212,15 @@ async function calcMarketRank(toCoin, skipCoin){
 
   // How many coins is toCoin losing against?
   const ratio=weakCount/total;
-  if(weakCount>=15){
-    penalty=20; label='⚠️ BROADLY WEAKEST COIN — losing vs '+weakCount+'/'+total+' coins';
-  } else if(weakCount>=12){
-    penalty=12; label='⚠️ BROADLY WEAK — losing vs '+weakCount+'/'+total+' coins';
-  } else if(weakCount>=9){
+  // Thresholds: 90%+ (20+/22), 82%+ (18+/22), 68%+ (15+/22), below 68% = no penalty
+  if(weakCount>=20){
+    penalty=25; label='⚠️ STRUCTURAL WEAKNESS — losing vs '+weakCount+'/'+total+' coins ('+Math.round(weakCount/total*100)+'%)';
+  } else if(weakCount>=18){
+    penalty=15; label='⚠️ CLEARLY THE LAGGARD — losing vs '+weakCount+'/'+total+' coins ('+Math.round(weakCount/total*100)+'%)';
+  } else if(weakCount>=15){
     penalty=6;  label='';
-  } else if(weakCount>=6){
-    penalty=3;  label='';
   }
+  // below 15/22 (68%) = normal variance, no penalty
 
   return {penalty, weakCount, total, label};
 }
@@ -2671,7 +2671,7 @@ async function scanBestPartners(baseSym){
               cachedBSN++;
             }
           }
-          const rankPenaltyBSN=cachedBSN>=10?(weakBSN>=15?20:weakBSN>=12?12:weakBSN>=9?6:weakBSN>=6?3:0):0;
+          const rankPenaltyBSN=cachedBSN>=10?(weakBSN>=20?25:weakBSN>=18?15:weakBSN>=15?6:0):0;
           const score=Math.min(100,Math.max(0,rawScore-toHealthBSN.penalty-rankPenaltyBSN));
           return {sym,corr,score,healthLabel:toHealthBSN.label,healthDetail:toHealthBSN.detail,healthPenalty:toHealthBSN.penalty,rankPenalty:rankPenaltyBSN,weakCount:weakBSN};
         })
@@ -2847,7 +2847,7 @@ async function runAIScore(s, forceRefresh){
   panel.querySelector('.sp-sub').textContent='Fetching live market data...';
   panel.querySelector('.sp-fill').style.width='0%';
   panel.querySelector('.sp-needle').style.left='0%';
-  panel.querySelector('.sp-explain-body').textContent='Calculating risk filters...';
+  panel.querySelector('.sp-explain-body').innerHTML='<span style="color:var(--text3);font-size:13px">Calculating score factors...</span>';
   panel.querySelector('.sp-situation').textContent='';
   panel.querySelector('.sp-pred').style.display='none';
   /* Hide risk panels while loading */
@@ -2911,29 +2911,85 @@ async function runAIScore(s, forceRefresh){
   const ms=mathScore(freshS);
 
   const buildPlainExplanation=(score,s)=>{
-    const t=s.trend7;
-    const tTxt=t>2
-      ?`The ${fromSym}/${toSym} ratio rose ${t.toFixed(1)}% this week — ${fromSym} is gaining vs ${toSym}.`
-      :t<-2
-        ?`The ${fromSym}/${toSym} ratio dropped ${Math.abs(t).toFixed(1)}% this week — ${fromSym} is weakening vs ${toSym}.`
-        :`The ${fromSym}/${toSym} rate has been stable this week.`;
-    const mTxt=s.macdHist>0?'Momentum is positive.':'Momentum is negative.';
-    const rTxt=s.rsi<40?` RSI is oversold (${s.rsi.toFixed(0)}) — a bounce may be coming.`
-      :s.rsi>60?` RSI is high (${s.rsi.toFixed(0)}) — may slow soon.`:'';
-    const corrTxt=corr90<0.80
-      ?' ⚠️ Low correlation between these coins — consider picking a more correlated pair.'
-      :corr90<0.87?' ⚠️ Moderate correlation — higher risk of decoupling.'
-      :corr90<0.92?' Note: correlation slightly below ideal.'
-      :'';
-    const healthTxt=toHealth&&toHealth.penalty>=10
-      ?' ⚠️ '+toSym+' health warning: '+toHealth.detail
-      :'';
-    const rankTxt=marketRankTO&&marketRankTO.penalty>=12
-      ?' ⚠️ '+toSym+' is losing vs '+marketRankTO.weakCount+'/'+marketRankTO.total+' coins right now — broadly the weakest in the market.'
-      :marketRankTO&&marketRankTO.penalty>=6
-      ?' Note: '+toSym+' is underperforming '+marketRankTO.weakCount+'/'+marketRankTO.total+' coins currently.'
-      :'';
-    return tTxt+' '+mTxt+rTxt+corrTxt+healthTxt+rankTxt;
+    // Build structured list of score drivers — what is pushing score up or down
+    const factors=[];
+
+    // ── Ratio trend ──
+    if(s.trend7>4&&s.trend14>2)
+      factors.push({good:true,  txt:fromSym+' is gaining strongly vs '+toSym+' — ratio up '+s.trend7.toFixed(1)+'% this week and '+s.trend14.toFixed(1)+'% over 2 weeks.'});
+    else if(s.trend7>2)
+      factors.push({good:true,  txt:fromSym+' is gaining vs '+toSym+' — ratio up '+s.trend7.toFixed(1)+'% this week.'});
+    else if(s.trend7<-4&&s.trend14<-2)
+      factors.push({good:false, txt:fromSym+' is losing ground vs '+toSym+' — ratio down '+Math.abs(s.trend7).toFixed(1)+'% this week and '+Math.abs(s.trend14).toFixed(1)+'% over 2 weeks.'});
+    else if(s.trend7<-2)
+      factors.push({good:false, txt:fromSym+' is weakening vs '+toSym+' — ratio down '+Math.abs(s.trend7).toFixed(1)+'% this week.'});
+    else
+      factors.push({good:null,  txt:'The '+fromSym+'/'+toSym+' ratio has been flat this week — no clear direction yet.'});
+
+    // ── Short-term trend (3d) ──
+    if(s.trend3<-3&&s.trend7<0)
+      factors.push({good:false, txt:'Short-term momentum is falling (3d: '+s.trend3.toFixed(1)+'%). Ratio still declining — not bottomed yet.'});
+    else if(s.trend3>3&&s.trend7>0)
+      factors.push({good:true,  txt:'Short-term momentum is accelerating (3d: +'+s.trend3.toFixed(1)+'%). Good early signal.'});
+
+    // ── RSI ──
+    if(s.rsi<30)
+      factors.push({good:true,  txt:'RSI is deeply oversold ('+s.rsi.toFixed(0)+') — '+fromSym+' is historically cheap vs '+toSym+'. A bounce is likely.'});
+    else if(s.rsi<40)
+      factors.push({good:true,  txt:'RSI is oversold ('+s.rsi.toFixed(0)+') — ratio may be near a bottom.'});
+    else if(s.rsi>70)
+      factors.push({good:false, txt:'RSI is overbought ('+s.rsi.toFixed(0)+') — '+fromSym+' has run up fast and may slow down soon.'});
+    else if(s.rsi>60)
+      factors.push({good:false, txt:'RSI is elevated ('+s.rsi.toFixed(0)+') — momentum may be fading.'});
+
+    // ── MACD ──
+    if(s.macdHist>0&&s.macdVal>s.macdSig)
+      factors.push({good:true,  txt:'MACD is bullish and accelerating — momentum building in your favour.'});
+    else if(s.macdHist<0&&s.macdVal<s.macdSig)
+      factors.push({good:false, txt:'MACD is bearish and accelerating — momentum moving against the swap.'});
+
+    // ── Streak ──
+    const streak=s.streak||0;
+    if(streak<=-5)
+      factors.push({good:false, txt:'Ratio has fallen for '+Math.abs(streak)+' consecutive days — strong downtrend in place.'});
+    else if(streak<=-3)
+      factors.push({good:false, txt:'Ratio has fallen '+Math.abs(streak)+' days in a row — short-term pressure.'});
+    else if(streak>=3)
+      factors.push({good:true,  txt:'Ratio has risen '+streak+' days in a row — momentum is with you.'});
+
+    // ── Correlation ──
+    if(corr90<0.80)
+      factors.push({good:false, txt:'Low 90-day correlation ('+corr90.toFixed(2)+') — these coins do not move together reliably. High risk of decoupling.'});
+    else if(corr90<0.87)
+      factors.push({good:false, txt:'Moderate correlation ('+corr90.toFixed(2)+') — coins sometimes move independently. Added risk.'});
+    else if(corr90<0.92)
+      factors.push({good:null,  txt:'Correlation is slightly below ideal ('+corr90.toFixed(2)+') — generally fine but worth noting.'});
+    else
+      factors.push({good:true,  txt:'Strong correlation ('+corr90.toFixed(2)+') — coins move together reliably. Ratio will likely revert.'});
+
+    // ── TO coin health ──
+    if(toHealth&&toHealth.penalty>=18)
+      factors.push({good:false, txt:'⚠️ '+toSym+' structural risk: '+toHealth.detail});
+    else if(toHealth&&toHealth.penalty>=10)
+      factors.push({good:false, txt:'⚠️ '+toSym+' health warning: '+toHealth.detail});
+
+    // ── Market rank of TO coin ──
+    if(marketRankTO&&marketRankTO.penalty>=15)
+      factors.push({good:false, txt:'⚠️ '+toSym+' is losing vs '+marketRankTO.weakCount+'/'+marketRankTO.total+' coins ('+Math.round(marketRankTO.weakCount/marketRankTO.total*100)+'%) — broadly the weakest coin in the market right now.'});
+    else if(marketRankTO&&marketRankTO.penalty>=6)
+      factors.push({good:false, txt:toSym+' is underperforming '+marketRankTO.weakCount+'/'+marketRankTO.total+' coins — noticeably weak across the market.'});
+
+    // Build HTML — green bullets for positives, red for negatives, grey for neutral
+    const rows=factors.map(f=>{
+      const col=f.good===true?'#00c076':f.good===false?'#ef4444':'#7a8099';
+      const dot=f.good===true?'▲':f.good===false?'▼':'·';
+      return '<div style="display:flex;gap:8px;margin-bottom:4px">'
+        +'<span style="color:'+col+';font-weight:700;flex-shrink:0;font-family:monospace;font-size:12px;margin-top:1px">'+dot+'</span>'
+        +'<span style="color:var(--text);font-size:13px;line-height:1.5">'+f.txt+'</span>'
+        +'</div>';
+    }).join('');
+
+    return rows||'Calculating...';
   };
 
   /* Show math score + risk dashboard immediately */
@@ -3102,7 +3158,7 @@ function renderScore(j){
   }
 
   /* Explanation */
-  p.querySelector('.sp-explain-body').textContent=j.plain_explanation||'';
+  p.querySelector('.sp-explain-body').innerHTML=j.plain_explanation||'';
 
   /* Market situation */
   const sit=p.querySelector('.sp-situation');
@@ -3840,10 +3896,9 @@ async function getScoreForPair(a,b){
     }
     let rankPenaltyTO=0;
     if(cachedTO>=10){
-      if(weakCountTO>=15)      rankPenaltyTO=20;
-      else if(weakCountTO>=12) rankPenaltyTO=12;
-      else if(weakCountTO>=9)  rankPenaltyTO=6;
-      else if(weakCountTO>=6)  rankPenaltyTO=3;
+      if(weakCountTO>=20)      rankPenaltyTO=25;
+      else if(weakCountTO>=18) rankPenaltyTO=15;
+      else if(weakCountTO>=15) rankPenaltyTO=6;
     }
     const rankPenaltyGSP=rankPenaltyTO;
     const scFinal=Math.min(100,Math.max(0,sc-toHealthGSP.penalty-rankPenaltyGSP));
@@ -3868,71 +3923,154 @@ async function buildTrackerSignal(tr, curAsset, signalId){
   const orderedCandidates=[tr.assetB,...usedCoins.filter(c=>c!==tr.assetB),...candidates.filter(c=>c!==tr.assetB&&!usedCoins.includes(c))];
 
   if(!holdingBase){
-    // ── DETAIL VIEW CLOSE SIGNAL — same independent logic as card ──
-    const res=await getScoreForPair(tr.assetB, tr.assetA);
-    if(!sigEl.isConnected) return;
-    const ratioSc=res?res.score:50;
+    // Show loading state immediately
+    sigEl.innerHTML='<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:14px;margin-bottom:.75rem">'
+      +'<div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:6px">POSITION ANALYSIS — holding '+curAsset+'</div>'
+      +'<div style="font-size:12px;color:var(--text2)">Scanning market position of '+curAsset+'...</div>'
+      +'</div>';
 
-    // Calculate current profit with fees
+    // Fetch ratio score AND full market rank in parallel
+    const allOpponents=COINS_LIST.filter(c=>c!==curAsset);
+    const toKlinesCache={};
+    // Pre-fetch curAsset klines once — reused for all comparisons
+    const curKlines=await fetch('https://api.binance.com/api/v3/klines?symbol='+curAsset+'USDT&interval=1d&limit=92').then(r=>r.json()).catch(()=>[]);
+    const kB=curKlines.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
+
+    const [res, ...rankResults]=await Promise.all([
+      getScoreForPair(tr.assetB, tr.assetA),
+      ...allOpponents.map(opp=>
+        fetch('https://api.binance.com/api/v3/klines?symbol='+opp+'USDT&interval=1d&limit=92').then(r=>r.json())
+          .then(fk=>{
+            const kA=fk.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
+            const n=Math.min(kA.length,kB.length);
+            if(n<10) return {opp,score:50,winning:false};
+            const rs=Array.from({length:n},(_,i)=>({
+              t:kA[kA.length-n+i].t,
+              o:kA[kA.length-n+i].o/kB[kB.length-n+i].o,
+              h:kA[kA.length-n+i].h/kB[kB.length-n+i].h,
+              l:kA[kA.length-n+i].l/kB[kB.length-n+i].l,
+              c:kA[kA.length-n+i].c/kB[kB.length-n+i].c
+            }));
+            const st=getStats(rs);
+            const sc=st?mathScore(st):50;
+            // Cache it for future use
+            const key=opp+'_'+curAsset;
+            _scoreCache[key]={score:sc,from:opp,to:curAsset};
+            _scoreCacheTime[key]=Date.now();
+            return {opp,score:sc,winning:sc>=55};
+          }).catch(()=>({opp,score:50,winning:false}))
+      )
+    ]);
+
+    if(!sigEl.isConnected) return;
+
+    // Market rank — how many coins is curAsset losing against?
+    const total=rankResults.length;
+    const losingAgainst=rankResults.filter(r=>r.winning).length;
+    const rankPct=Math.round(losingAgainst/total*100);
+    const rankPos=losingAgainst+1;
+
+    let rankLabel, rankCol, rankBg;
+    if(rankPct>=90){
+      rankLabel='🔴 WEAKEST IN MARKET — rank '+rankPos+'/'+COINS_LIST.length+' (losing vs '+losingAgainst+'/'+total+' coins)';
+      rankCol='#ef4444'; rankBg='rgba(239,68,68,0.08)';
+    } else if(rankPct>=75){
+      rankLabel='🔴 VERY WEAK — rank '+rankPos+'/'+COINS_LIST.length+' (losing vs '+losingAgainst+'/'+total+' coins)';
+      rankCol='#ef4444'; rankBg='rgba(239,68,68,0.06)';
+    } else if(rankPct>=60){
+      rankLabel='🟡 BELOW AVERAGE — rank '+rankPos+'/'+COINS_LIST.length+' (losing vs '+losingAgainst+'/'+total+' coins)';
+      rankCol='#f5a623'; rankBg='rgba(245,166,35,0.06)';
+    } else if(rankPct>=40){
+      rankLabel='🟡 AVERAGE — rank '+rankPos+'/'+COINS_LIST.length+' (losing vs '+losingAgainst+'/'+total+' coins)';
+      rankCol='#f5a623'; rankBg='rgba(245,166,35,0.04)';
+    } else if(rankPct>=20){
+      rankLabel='🟢 ABOVE AVERAGE — rank '+rankPos+'/'+COINS_LIST.length+' (losing vs only '+losingAgainst+'/'+total+' coins)';
+      rankCol='#00c076'; rankBg='rgba(0,192,118,0.06)';
+    } else {
+      rankLabel='🟢 MARKET LEADER — rank '+rankPos+'/'+COINS_LIST.length+' (losing vs only '+losingAgainst+'/'+total+' coins)';
+      rankCol='#00c076'; rankBg='rgba(0,192,118,0.08)';
+    }
+
+    // Visual rank bar (strength from left=weak to right=strong)
+    const rankBarFill=Math.round((1-losingAgainst/total)*100);
+    const rankBar='<div style="margin:8px 0 4px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">'
+      +'<div style="height:100%;width:'+rankBarFill+'%;background:'+rankCol+';border-radius:3px"></div>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:9px;font-family:monospace;color:var(--text3);margin-bottom:6px">'
+      +'<span>Weakest</span><span>Strongest</span></div>';
+
+    // Top 3 strongest coins vs curAsset — where strength is concentrated
+    const sortedWinners=rankResults.filter(r=>r.winning).sort((a,b)=>b.score-a.score).slice(0,3);
+    const topThreatsTxt=sortedWinners.length
+      ? '<div style="font-size:11px;color:var(--text2)">Strongest vs '+curAsset+' right now: '
+        +sortedWinners.map(r=>'<strong style="color:#00c076">'+r.opp+'</strong>').join(' · ')
+        +' — these are gaining the most vs your holding.</div>'
+      : '';
+
+    // Bottom 3 — coins curAsset is beating (potential swap targets when ready)
+    const sortedLosers=rankResults.filter(r=>!r.winning).sort((a,b)=>a.score-b.score).slice(0,3);
+    const bottomTxt=sortedLosers.length
+      ? '<div style="font-size:11px;color:var(--text2);margin-top:4px">'+curAsset+' is stronger than: '
+        +sortedLosers.map(r=>'<strong style="color:var(--text)">'+r.opp+'</strong>').join(' · ')+'.</div>'
+      : '';
+
+    // Ratio score and profit
+    const ratioSc=res?res.score:50;
     const _baseAmt=calcBaseAmount(tr);
     const _fees=calcTotalFees(tr);
     const _profitPct=(_baseAmt!==null&&tr.startAmount>0)?((_baseAmt-tr.startAmount-_fees)/tr.startAmount*100):null;
     const _profitAmt=_baseAmt!==null?_baseAmt-tr.startAmount-_fees:null;
     const _profitStr=_profitAmt!==null?(_profitAmt>=0?'+':'')+_profitAmt.toFixed(4)+' '+tr.assetA:'—';
 
-    let verdict, explanation, col, bg, border;
-
-    // Gate 1: no profit — always hold, show situation for context
-    if(_profitPct===null || _profitPct < 1.0){
+    // Close signal verdict
+    let verdict, verdictCol, verdictBg, verdictBorder;
+    if(_profitPct===null||_profitPct<1.0){
       const inLoss=_profitPct!==null&&_profitPct<0;
-      col='#ef4444'; bg='rgba(239,68,68,0.1)'; border='rgba(239,68,68,0.4)';
       verdict=inLoss
         ? '⛔ HOLD — IN LOSS ('+(_profitPct!==null?_profitPct.toFixed(2)+'%':'—')+')'
         : '⛔ HOLD — NOT ENOUGH PROFIT YET ('+(_profitPct!==null?'+'+_profitPct.toFixed(2)+'%':'—')+')';
-      let situationCtx;
-      if(ratioSc>=70)      situationCtx='Ratio score: '+ratioSc+'/100 — reversal signal forming. '+curAsset+' is starting to recover vs '+tr.assetA+'. Keep holding.';
-      else if(ratioSc>=55) situationCtx='Ratio score: '+ratioSc+'/100 — momentum improving. Watch closely, direction is turning.';
-      else if(ratioSc>=40) situationCtx='Ratio score: '+ratioSc+'/100 — mixed signals. No clear direction yet, hold.';
-      else if(ratioSc>=25) situationCtx='Ratio score: '+ratioSc+'/100 — still weak. No reversal signal yet. Patience required.';
-      else                 situationCtx='Ratio score: '+ratioSc+'/100 — under pressure. Hold firm. Every downtrend eventually reverses.';
-      explanation=(inLoss
-        ? 'Never close on a loss. Wait for '+curAsset+' to recover vs '+tr.assetA+'. '
-        : 'Profit below 1% minimum — fees would eat the gain. Keep holding. ')
-        + situationCtx;
-    }
-    // Gate 2: in profit — assess if it is safe to keep holding
-    else if(ratioSc<=35){
-      col='#00c076'; bg='rgba(0,192,118,0.12)'; border='rgba(0,192,118,0.6)';
+      verdictCol='#ef4444'; verdictBg='rgba(239,68,68,0.1)'; verdictBorder='rgba(239,68,68,0.4)';
+    } else if(ratioSc<=35){
       verdict=_profitPct>=3
         ? '✅ CLOSE NOW — '+_profitStr+' (+'+_profitPct.toFixed(2)+'%)'
         : '⚠️ CLOSE SOON — '+_profitStr+' (+'+_profitPct.toFixed(2)+'%)';
-      explanation=curAsset+' is losing momentum vs '+tr.assetA+'. Profit of +'+_profitPct.toFixed(2)+'% is at risk of shrinking. '
-        +(_profitPct>=3 ? 'Good profit secured — close now and lock it in.' : 'Thin but positive — close before it reverses.');
-    }
-    else if(ratioSc<=55){
-      col='#f5a623'; bg='rgba(245,166,35,0.1)'; border='rgba(245,166,35,0.5)';
+      verdictCol='#00c076'; verdictBg='rgba(0,192,118,0.12)'; verdictBorder='rgba(0,192,118,0.6)';
+    } else if(ratioSc<=55){
       verdict=_profitPct>=3
         ? '⏳ WATCH CLOSELY — '+_profitStr+' (+'+_profitPct.toFixed(2)+'%) — momentum slowing'
         : '⚠️ CONSIDER CLOSING — '+_profitStr+' (+'+_profitPct.toFixed(2)+'%)';
-      explanation=_profitPct>=3
-        ? curAsset+'/'+tr.assetA+' momentum is fading but profit is solid. Watch one more day — if it keeps weakening, close.'
-        : 'Thin profit and momentum fading. Not urgent yet but check again tomorrow.';
-    }
-    else {
-      col='#3b8fff'; bg='rgba(59,143,255,0.1)'; border='rgba(59,143,255,0.4)';
+      verdictCol='#f5a623'; verdictBg='rgba(245,166,35,0.1)'; verdictBorder='rgba(245,166,35,0.5)';
+    } else {
       verdict='📈 HOLD — PROFIT GROWING — '+_profitStr+' (+'+_profitPct.toFixed(2)+'%)';
-      explanation=curAsset+' is still outperforming '+tr.assetA+'. Hold and let the profit grow. Check back tomorrow.';
+      verdictCol='#3b8fff'; verdictBg='rgba(59,143,255,0.1)'; verdictBorder='rgba(59,143,255,0.4)';
     }
 
-    sigEl.innerHTML='<div style="background:'+bg+';border:2px solid '+border+';border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">'
-      +'<div style="font-size:10px;font-family:monospace;color:'+col+';font-weight:700;margin-bottom:4px">POSITION STATUS — holding '+curAsset+'</div>'
-      +'<div style="font-size:15px;font-weight:700;color:'+col+';margin-bottom:4px">'+verdict+'</div>'
-      +'<div style="font-size:11px;color:var(--text2);line-height:1.5">'+explanation+'</div>'
-      +'<button onclick="switchAnalyzerPair(\''+tr.assetB+'\',\''+tr.assetA+'\')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid rgba(255,255,255,0.15);cursor:pointer;background:transparent;color:var(--text2)">View full ratio analysis →</button>'
+    // Ratio context line
+    let ratioCtx;
+    if(ratioSc>=70)      ratioCtx='Ratio score '+ratioSc+'/100 — '+curAsset+' gaining vs '+tr.assetA+'. Recovery forming.';
+    else if(ratioSc>=55) ratioCtx='Ratio score '+ratioSc+'/100 — momentum improving vs '+tr.assetA+'. Watch closely.';
+    else if(ratioSc>=40) ratioCtx='Ratio score '+ratioSc+'/100 — mixed signals. No clear direction vs '+tr.assetA+' yet.';
+    else if(ratioSc>=25) ratioCtx='Ratio score '+ratioSc+'/100 — still weak vs '+tr.assetA+'. Patience required.';
+    else                 ratioCtx='Ratio score '+ratioSc+'/100 — '+curAsset+' under strong pressure vs '+tr.assetA+'. Hold firm.';
+
+    sigEl.innerHTML=
+      // ── Close decision ──
+      '<div style="background:'+verdictBg+';border:2px solid '+verdictBorder+';border-radius:var(--rs);padding:12px 14px;margin-bottom:10px">'
+        +'<div style="font-size:10px;font-family:monospace;color:'+verdictCol+';font-weight:700;margin-bottom:6px;letter-spacing:.5px">CLOSE SIGNAL</div>'
+        +'<div style="font-size:15px;font-weight:700;color:'+verdictCol+';margin-bottom:6px">'+verdict+'</div>'
+        +'<div style="font-size:11px;color:var(--text2)">'+ratioCtx+'</div>'
+        +'<button onclick="switchAnalyzerPair(\''+tr.assetB+'\',\''+tr.assetA+'\')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:3px 10px;border-radius:var(--rs);border:1px solid rgba(255,255,255,0.1);cursor:pointer;background:transparent;color:var(--text3)">Full ratio analysis →</button>'
+      +'</div>'
+      // ── Market rank ──
+      +'<div style="background:'+rankBg+';border:1px solid rgba(255,255,255,0.07);border-radius:var(--rs);padding:12px 14px;margin-bottom:.75rem">'
+        +'<div style="font-size:10px;font-family:monospace;color:var(--text3);font-weight:700;margin-bottom:6px;letter-spacing:.5px">MARKET POSITION OF '+curAsset+'</div>'
+        +'<div style="font-size:13px;font-weight:700;color:'+rankCol+';margin-bottom:2px">'+rankLabel+'</div>'
+        +rankBar
+        +topThreatsTxt
+        +bottomTxt
       +'</div>';
     return;
   }
-
   // Holding base asset → scan all candidates and rank them
   sigEl.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
     <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:4px">WHAT TO SWAP NEXT — scanning ${orderedCandidates.length} pairs...</div>
