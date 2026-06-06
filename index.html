@@ -640,6 +640,18 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .best-partner{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.7rem}
 .best-partner-title{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.7rem;display:flex;align-items:center;gap:6px}
 .bp-grid{display:flex;flex-wrap:wrap;gap:8px}
+/* ── Quick Scalps ── */
+.qs-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:border-color .2s;cursor:default}
+.qs-card.qs-hot{border-color:rgba(245,166,35,.5);background:rgba(245,166,35,.04)}
+.qs-card.qs-go{border-color:rgba(0,192,118,.5);background:rgba(0,192,118,.04)}
+.qs-card.qs-weak{opacity:.6}
+.qs-score{font-size:28px;font-weight:700;font-family:monospace}
+.qs-pair{font-size:16px;font-weight:700}
+.qs-badge{font-size:10px;font-family:monospace;padding:2px 8px;border-radius:10px;font-weight:700}
+.qs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.qs-bar-track{height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-top:3px}
+.qs-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+/* ── /Quick Scalps ── */
 .bp-card{background:var(--bg3);border:2px solid var(--border);border-radius:var(--rs);padding:.6rem .8rem;cursor:pointer;transition:all .2s;min-width:110px;flex:1}
 .bp-card:hover{border-color:var(--blue);background:rgba(59,143,255,.06)}
 .bp-card.bp-best{border-color:rgba(0,192,118,.5);background:rgba(0,192,118,.06)}
@@ -762,9 +774,77 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <div class="tab-bar">
   <button class="tab-btn active" data-tab="analyzer">📊 Analyzer</button>
+  <button class="tab-btn" data-tab="scalps">⚡ Quick Scalps</button>
   <button class="tab-btn" data-tab="tracker">📈 Swap Tracker</button>
   <button class="tab-btn" data-tab="alerts">🔔 Alerts <span id="alertBadge" style="display:none;background:#ef4444;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:3px;font-family:monospace">0</span></button>
   <button class="tab-btn" data-tab="guide">📖 How To Use</button>
+</div>
+
+<!-- Quick Scalps tab -->
+<div class="tab-pane" id="tab-scalps">
+  <div style="max-width:860px;margin:0 auto;padding:1rem 0">
+
+    <!-- Header -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">⚡ Quick Scalps</div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.5">
+        Short-term mean-reversion trades · Z &gt; 1.2 · Hold 1–4 days · Target 1.5–4% gain · Uses 30-day window
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px">
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <label style="font-size:10px;color:var(--text3);font-family:monospace">HOLDING COIN</label>
+        <select id="scalpHoldingCoin" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
+          <option value="XRP">XRP</option>
+          <option value="BTC">BTC</option>
+          <option value="ETH">ETH</option>
+          <option value="SOL">SOL</option>
+          <option value="ADA">ADA</option>
+          <option value="XLM">XLM</option>
+          <option value="ALGO">ALGO</option>
+          <option value="HBAR">HBAR</option>
+          <option value="QNT">QNT</option>
+          <option value="LINK">LINK</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <label style="font-size:10px;color:var(--text3);font-family:monospace">MIN GAIN TARGET</label>
+        <select id="scalpMinGain" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
+          <option value="1.0">1.0%</option>
+          <option value="1.5" selected>1.5%</option>
+          <option value="2.0">2.0%</option>
+          <option value="2.5">2.5%</option>
+          <option value="3.0">3.0%</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <label style="font-size:10px;color:var(--text3);font-family:monospace">EXCHANGE FEE (round trip)</label>
+        <select id="scalpFee" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
+          <option value="0.1">0.1% (CEX standard)</option>
+          <option value="0.2" selected>0.2% (round trip)</option>
+          <option value="0.5">0.5% (high fee)</option>
+        </select>
+      </div>
+      <button id="scalpScanBtn" onclick="runScalpScan()" style="margin-left:auto;background:linear-gradient(135deg,#f5a623,#e8940f);border:none;border-radius:8px;padding:9px 20px;color:#000;font-weight:700;font-family:monospace;font-size:12px;cursor:pointer;white-space:nowrap">
+        ⚡ Scan Quick Scalps
+      </button>
+    </div>
+
+    <!-- Fee warning -->
+    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:11px;color:var(--text3)">
+      ⚠️ <strong style="color:#f5a623">Fee reminder:</strong> Quick scalps are only profitable if gain &gt; 3× round-trip fee. At 0.2% fee, minimum real gain = 0.6%. App only shows trades above your minimum gain target.
+    </div>
+
+    <!-- Results -->
+    <div id="scalpResults">
+      <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">
+        Press <strong>⚡ Scan Quick Scalps</strong> to find short-term opportunities
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <!-- Guide tab -->
@@ -4413,8 +4493,275 @@ function initTabs(){
       document.getElementById('tab-'+tab).classList.add('active');
       if(tab==='tracker'){ Object.keys(_scoreCache).forEach(k=>{delete _scoreCache[k]; delete _scoreCacheTime[k];}); initTrackerUI(); startTrackerLiveRefresh(); }
       if(tab==='alerts'&&!window._alertsInited){ initAlerts(); window._alertsInited=true; }
+      if(tab==='scalps') initScalpTab();
     });
   });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   QUICK SCALPS ENGINE
+   Independent short-term mean-reversion scanner.
+   Uses 30-day window, lower Z threshold, 5-force QSS score.
+   Completely separate from main OMEGA system.
+══════════════════════════════════════════════════════════════ */
+
+function computeQSS(closes, corr) {
+  /* Quick Scalp Score (QSS) 0–100
+     Formula: QSS = MT × (SE_q×0.30 + BP×0.25 + RE×0.20 + QF×0.15 + CorrQ×0.10)
+     where MT = momentum turn gate (like EPM but lighter) */
+  if (!closes || closes.length < 22) return null;
+  const n = closes.length;
+
+  /* ── 1. SE_q — Signal Edge on 30-day Z-score ──
+     Threshold: Z30 > 0.8 starts scoring, Z30 = 2.3 → 100.
+     Lower than OMEGA (1.0 threshold) — we act on smaller moves. */
+  const w30 = closes.slice(-30);
+  const mean30 = w30.reduce((a,b)=>a+b,0)/w30.length;
+  const std30  = Math.sqrt(w30.reduce((s,v)=>s+(v-mean30)**2,0)/w30.length) || 0.001;
+  const z30    = (closes[n-1] - mean30) / std30;
+  // Directional: only reward positive Z (selling the overvalued asset)
+  const se_q   = Math.max(0, Math.min(100, Math.round((z30 - 0.8) / 1.5 * 100)));
+
+  /* ── 2. BP — Bollinger Band Position (20-day, 2σ) ──
+     Near upper band = ratio overextended at short timescale = good scalp entry. */
+  const w20    = closes.slice(-20);
+  const bMean  = w20.reduce((a,b)=>a+b,0)/20;
+  const bStd   = Math.sqrt(w20.reduce((s,v)=>s+(v-bMean)**2,0)/20) || 0.001;
+  const bUpper = bMean + 2*bStd;
+  const bLower = bMean - 2*bStd;
+  const bRange = bUpper - bLower;
+  const bollPos = bRange > 0 ? (closes[n-1]-bLower)/bRange*100 : 50;
+  const bp     = bollPos > 90 ? 100
+    : bollPos > 75 ? Math.round((bollPos-75)/15*70+30)
+    : bollPos > 60 ? Math.round((bollPos-60)/15*30)
+    : 0;
+
+  /* ── 3. RE — RSI Extreme (14-period on ratio closes) ──
+     RSI > 70 = overbought ratio = good time to sell FROM.
+     RSI < 30 = oversold = bad direction. */
+  const rsiArr = rsiCalc(closes.slice(-40));
+  const rsi    = rsiArr.length ? rsiArr[rsiArr.length-1] : 50;
+  const re     = rsi > 78 ? 100
+    : rsi > 68 ? Math.round((rsi-68)/10*70+30)
+    : rsi > 58 ? Math.round((rsi-58)/10*30)
+    : 0;
+
+  /* ── 4. QF — Quick OU Force (20-day window) ──
+     Same OU physics as OMEGA but using shorter window = faster spring detection.
+     Directional: negative force (pulling toward mean) = good. */
+  const ouHL20  = ouHalfLifeET(closes.slice(-25));
+  // Only use OU if half-life ≤ 14 days (true short-term spring — scalp territory)
+  const theta20 = ouHL20 <= 14 ? Math.log(2)/ouHL20 : 0;
+  const ouF20   = theta20 * (mean30 - closes[n-1]);
+  const ouFPct20 = std30 > 0 ? (ouF20/std30)*100 : 0;
+  // Negate: negative ouFPct20 (pulling down toward mean) → positive score
+  const qf      = Math.max(0, Math.min(100, Math.round(-ouFPct20 * 2.2)));
+
+  /* ── 5. CorrQ — Correlation quality ──
+     High correlation = pair naturally reverts. Same logic as OMEGA MQ pairwise. */
+  const corrQ   = Math.max(0, Math.min(100, Math.round(((corr||0) - 0.50) / 0.40 * 100)));
+
+  /* ── MT — Momentum Turn gate ──
+     Detects if momentum is decelerating at short timescale.
+     Velocity = last close minus previous close (1-day).
+     Acceleration = change in velocity.
+     Gate values: still accelerating = 0.55, decelerating = 1.0, already reversing = 0.75 */
+  const vel1  = closes[n-1] - closes[n-2];
+  const vel2  = closes[n-2] - closes[n-3];
+  const vel3  = closes[n-3] - closes[n-4];
+  const acc   = vel1 - vel2;   // current acceleration
+  const acc2  = vel2 - vel3;   // previous acceleration
+  let mt;
+  if (z30 < 0.8) {
+    mt = 0.40; // not extended enough — barely worth looking
+  } else if (vel1 > 0 && acc > 0) {
+    mt = 0.55; // still accelerating upward — too early
+  } else if (vel1 > 0 && acc <= 0) {
+    mt = 1.00; // moving up but slowing — PERFECT entry window
+  } else if (vel1 <= 0 && acc <= 0) {
+    mt = 0.75; // already reversing — still ok, some gain left
+  } else {
+    mt = 0.65;
+  }
+
+  /* ── Final QSS ── */
+  const inner = se_q*0.30 + bp*0.25 + re*0.20 + qf*0.15 + corrQ*0.10;
+  const qss   = Math.round(mt * inner);
+
+  /* ── Trade estimates ── */
+  // Expected gain = distance from current to 30-day mean
+  const expGain  = mean30 > 0 ? Math.abs((closes[n-1]/mean30 - 1)*100) : 0;
+  // Hold days: OU half-life × 0.5, capped at 7 days max (scalp = short by definition)
+  // If ouHL20 > 14, no reliable short-term estimate — return null (pair will be filtered out)
+  const holdDays = ouHL20 <= 14 ? Math.min(7, Math.max(1, Math.round(ouHL20 * 0.5))) : null;
+  const meanFmt  = mean30 > 1 ? mean30.toFixed(4) : mean30.toFixed(7);
+
+  return {
+    qss, se_q, bp, re, qf, corrQ, mt,
+    z30, bollPos, rsi, ouFPct20,
+    expGain, holdDays, mean30, meanFmt, ouHL20
+  };
+}
+
+function initScalpTab() {
+  // Sync holding coin with main analyzer if possible
+  const sel = document.getElementById('scalpHoldingCoin');
+  if (sel && typeof fromSym !== 'undefined') {
+    if ([...sel.options].some(o=>o.value===fromSym)) sel.value = fromSym;
+  }
+}
+
+async function runScalpScan() {
+  const btn     = document.getElementById('scalpScanBtn');
+  const results = document.getElementById('scalpResults');
+  const holding = document.getElementById('scalpHoldingCoin')?.value || 'XRP';
+  const minGain = parseFloat(document.getElementById('scalpMinGain')?.value || '1.5');
+  const fee     = parseFloat(document.getElementById('scalpFee')?.value || '0.2');
+
+  if (btn) { btn.disabled=true; btn.textContent='⏳ Scanning...'; }
+  results.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px;font-family:monospace">
+    ⚡ Scanning all pairs for short-term opportunities...<br>
+    <span style="opacity:.5;font-size:10px">Fetching 30-day data for each pair</span>
+  </div>`;
+
+  const candidates = COINS_LIST.filter(c => c !== holding);
+  const scanTime   = Date.now();
+  const scalpData  = [];
+
+  // Fetch all pairs in parallel
+  await Promise.all(candidates.map(async (sym) => {
+    try {
+      const [fk, tk] = await Promise.all([
+        fetch(`https://api.binance.com/api/v3/klines?symbol=${holding}USDT&interval=1d&limit=35`).then(r=>r.json()),
+        fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=35`).then(r=>r.json())
+      ]);
+      const fC = fk.map(k=>+k[4]);
+      const tC = tk.map(k=>+k[4]);
+      const n  = Math.min(fC.length, tC.length);
+      // Build ratio closes
+      const ratioC = Array.from({length:n},(_,i)=>fC[fC.length-n+i]/tC[tC.length-n+i]);
+      const corr   = calcCorrelation(fC, tC);
+      const q      = computeQSS(ratioC, corr);
+      if (!q) return;
+      // Filter 1: must have a short-term hold estimate (ouHL ≤ 14d)
+      // If holdDays is null, OU spring is too slow — this is a swing trade not a scalp
+      if (!q.holdDays) return;
+      // Filter 2: minimum gain after fees
+      const netGain = q.expGain - fee;
+      if (q.expGain < minGain) return;
+      scalpData.push({ sym, corr, netGain, ...q });
+    } catch(e) { /* skip failed pairs */ }
+  }));
+
+  // Sort by QSS descending
+  scalpData.sort((a,b) => b.qss - a.qss);
+
+  if (btn) { btn.disabled=false; btn.textContent='⚡ Scan Quick Scalps'; }
+
+  renderScalpResults(holding, scalpData, minGain, fee, scanTime);
+}
+
+function renderScalpResults(holding, data, minGain, fee, scanTime) {
+  const results = document.getElementById('scalpResults');
+  if (!results) return;
+
+  const elapsed = Math.round((Date.now()-scanTime)/1000);
+
+  if (!data.length) {
+    results.innerHTML = `
+      <div style="text-align:center;padding:32px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
+        <div style="font-size:32px;margin-bottom:8px">🔍</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">No scalp opportunities right now</div>
+        <div style="font-size:12px;color:var(--text3)">
+          No pair from ${holding} qualifies right now.<br><br>
+          Requirements: Z30 &gt; 0.8 · gain ≥ ${minGain}% · OU half-life ≤ 14 days (true short-term spring).<br>
+          The stricter OU filter ensures you only see pairs that can realistically revert within 1–7 days.
+        </div>
+      </div>`;
+    return;
+  }
+
+  const cards = data.map(d => {
+    const isGo   = d.qss >= 65;
+    const isHot  = d.qss >= 45 && d.qss < 65;
+    const cls    = isGo ? 'qs-go' : isHot ? 'qs-hot' : 'qs-weak';
+    const col    = isGo ? '#00c076' : isHot ? '#f5a623' : 'var(--text3)';
+    const badge  = isGo ? `<span class="qs-badge" style="background:rgba(0,192,118,.15);color:#00c076">⚡ SCALP NOW</span>`
+                 : isHot ? `<span class="qs-badge" style="background:rgba(245,166,35,.15);color:#f5a623">👁 WATCH</span>`
+                 : `<span class="qs-badge" style="background:rgba(255,255,255,.06);color:var(--text3)">WEAK</span>`;
+
+    const holdStr  = d.holdDays ? `~${d.holdDays}d` : '—';
+    const netStr   = (d.expGain - fee).toFixed(1);
+    const netCol   = parseFloat(netStr) > 0 ? '#00c076' : '#ef4444';
+
+    // Mini force bars
+    const bars = [
+      { lbl:'Z30',  val: d.se_q,  raw: d.z30.toFixed(2)+'σ' },
+      { lbl:'Boll', val: d.bp,    raw: d.bollPos.toFixed(0)+'%' },
+      { lbl:'RSI',  val: d.re,    raw: d.rsi.toFixed(0) },
+      { lbl:'OU',   val: d.qf,    raw: d.ouFPct20.toFixed(1)+'%/d' },
+      { lbl:'Corr', val: d.corrQ, raw: d.corr.toFixed(2) },
+    ].map(b => `
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px">
+        <span style="width:26px;color:var(--text3);font-family:monospace">${b.lbl}</span>
+        <div class="qs-bar-track" style="flex:1"><div class="qs-bar-fill" style="width:${b.val}%;background:${b.val>=60?'#00c076':b.val>=30?'#f5a623':'#ef4444'}"></div></div>
+        <span style="width:38px;text-align:right;color:var(--text3);font-family:monospace">${b.raw}</span>
+      </div>`).join('');
+
+    return `
+      <div class="qs-card ${cls}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div>
+            <div class="qs-pair" style="color:${col}">${holding} → ${d.sym}</div>
+            <div style="margin-top:3px">${badge}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="qs-score" style="color:${col}">${d.qss}</div>
+            <div style="font-size:9px;color:var(--text3);font-family:monospace">QSS /100</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;background:rgba(255,255,255,.03);border-radius:6px;padding:8px">
+          <div style="text-align:center">
+            <div style="font-size:9px;color:var(--text3);font-family:monospace">GAIN TARGET</div>
+            <div style="font-size:16px;font-weight:700;color:#00c076">+${d.expGain.toFixed(1)}%</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:9px;color:var(--text3);font-family:monospace">HOLD TIME</div>
+            <div style="font-size:16px;font-weight:700;color:var(--text)">${holdStr}</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:9px;color:var(--text3);font-family:monospace">AFTER FEES</div>
+            <div style="font-size:16px;font-weight:700;color:${netCol}">+${netStr}%</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">${bars}</div>
+        <div style="font-size:10px;color:var(--text3)">
+          Target: <strong style="color:var(--text2)">${d.meanFmt}</strong> (30d mean) ·
+          Exit when Z30 &lt; 0.3
+        </div>
+        <div style="margin-top:8px">
+          <button onclick="switchAnalyzerPair('${holding}','${d.sym}')" style="font-family:monospace;font-size:10px;padding:4px 12px;border-radius:6px;border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">
+            Full analysis →
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  const goCount = data.filter(d=>d.qss>=65).length;
+  const summary = goCount > 0
+    ? `<div style="background:rgba(0,192,118,.08);border:1px solid rgba(0,192,118,.3);border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:12px;color:#00c076;font-weight:700">
+        ⚡ ${goCount} scalp ${goCount===1?'opportunity':'opportunities'} found — QSS ≥ 65
+       </div>`
+    : `<div style="background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.2);border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:12px;color:#f5a623">
+        👁 No high-confidence scalps right now — showing best available signals
+       </div>`;
+
+  results.innerHTML = `
+    ${summary}
+    <div class="qs-grid">${cards}</div>
+    <div style="margin-top:10px;font-size:10px;color:var(--text3);text-align:right;font-family:monospace">
+      Scanned ${data.length} pairs from ${holding} · ${elapsed}s · Min gain ${minGain}% · Fee ${fee}%
+    </div>`;
 }
 
 /* ══════════════════════════════════════
