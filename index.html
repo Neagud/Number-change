@@ -2646,12 +2646,12 @@ async function scanBestPartners(baseSym){
     results.push(...batchResults);
 
     // Rank: 50% correlation + 30% score + 20% swing range (normalised to 0-1 over 60% max swing)
-    const rankFn=r=>(r.corr*0.5)+((r.score||50)/100*0.3)+Math.min((r.swingPct||0)/60,1)*0.2;
+    const rankFn=r=>(r.corr*0.5)+Math.min((r.swingPct||0)/60,1)*0.5;
     const sorted=results.filter(r=>r.corr>0.3).sort((a,b)=>rankFn(b)-rankFn(a));
     renderBestPartners(baseSym, sorted, true);
   }
 
-  const rankFn=r=>(r.corr*0.5)+((r.score||50)/100*0.3)+Math.min((r.swingPct||0)/60,1)*0.2;
+  const rankFn=r=>(r.corr*0.5)+Math.min((r.swingPct||0)/60,1)*0.5;
   // Final sort and cache
   const final=results.filter(r=>r.corr>0.3).sort((a,b)=>rankFn(b)-rankFn(a));
   _bpCache[cacheKey]=final;
@@ -2672,7 +2672,7 @@ function renderBestPartners(baseSym, results, isPartial){
 
   top.forEach((r,idx)=>{
     const card=document.createElement('div');
-    const combined=(r.corr*0.6)+(r.score/100*0.4);
+    const combined=(r.corr*0.6)+Math.min((r.swingPct||0)/60,1)*0.4;
     const isBest=idx===0;
     const isWarn=r.corr<0.6;
     const isBad=r.corr<0.4;
@@ -4972,20 +4972,20 @@ function renderTrackerList(){
         const cardEl=scoreEl2?.closest('.st-tracker-card');
         if(!scoreEl2||!cardEl) return;
 
-        const scored=candidates.map((c,i)=>({sym:c,score:results[i]?results[i].score:0}))
-          .filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+        const scored=candidates.map((c,i)=>({sym:c,omega:results[i]?results[i].omega:0}))
+          .filter(x=>x.omega>0).sort((a,b)=>b.omega-a.omega);
         const top3=scored.slice(0,3);
 
         if(!top3.length){ scoreEl2.innerHTML=''; return; }
 
         const best=top3[0];
-        const bestCol=best.score>=70?'#00c076':'#f5a623';
-        const bestBg=best.score>=70?'rgba(0,192,118,0.12)':'rgba(245,166,35,0.1)';
+        const bestCol=best.omega>=60?'#00c076':'#f5a623';
+        const bestBg=best.omega>=60?'rgba(0,192,118,0.12)':'rgba(245,166,35,0.1)';
 
         const pills=top3.map((x,i)=>{
-          const c=x.score>=70?'#00c076':x.score<=30?'#ef4444':'#f5a623';
-          const b=x.score>=70?'rgba(0,192,118,0.1)':'rgba(245,166,35,0.08)';
-          return `<span onclick="switchAnalyzerPair('${tr.assetA}','${x.sym}')" style="cursor:pointer;font-family:monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;background:${b};color:${c};border:1px solid ${c.replace(')',',0.3)').replace('rgb','rgba')}">${i===0?'→ ':''} ${x.sym} ${x.score}</span>`;
+          const c=x.omega>=60?'#00c076':x.omega<=20?'#ef4444':'#f5a623';
+          const b=x.omega>=60?'rgba(0,192,118,0.1)':'rgba(245,166,35,0.08)';
+          return `<span onclick="switchAnalyzerPair('${tr.assetA}','${x.sym}')" style="cursor:pointer;font-family:monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;background:${b};color:${c};border:1px solid ${c.replace(')',',0.3)').replace('rgb','rgba')}">${i===0?'→ ':''} ${x.sym} Ω${x.omega}</span>`;
         }).join(' ');
 
         scoreEl2.innerHTML=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -4993,8 +4993,7 @@ function renderTrackerList(){
           ${pills}
         </div>`;
 
-        // Border: green if best opportunity ≥70, amber otherwise, never red for closed
-        cardEl.style.borderColor=best.score>=70?'rgba(0,192,118,0.4)':'rgba(245,166,35,0.3)';
+        cardEl.style.borderColor=best.omega>=60?'rgba(0,192,118,0.4)':'rgba(245,166,35,0.3)';
         cardEl.style.background='transparent';
       }).catch(()=>{});
     }
@@ -6006,7 +6005,7 @@ function initBestSwapNow(){
       const batch=tasks.slice(i,i+BATCH);
       const batchRes=await Promise.all(batch.map(t=>getScoreForPair(t.from,t.to).catch(()=>null)));
       batchRes.forEach((r,j)=>{
-        if(r&&r.score>0) scored.push({...batch[j],...r});
+        if(r&&r.omega>=0) scored.push({...batch[j],...r});
       });
       // Update progress
       const done=Math.min(i+BATCH,tasks.length);
@@ -6014,7 +6013,7 @@ function initBestSwapNow(){
     }
 
     // Sort by OMEGA (same formula as analyzer). When omega ties at 0, rank by swap score.
-    scored.sort((a,b)=> b.omega !== a.omega ? b.omega - a.omega : b.score - a.score);
+    scored.sort((a,b)=> b.omega !== a.omega ? b.omega - a.omega : (b.zScore||0) - (a.zScore||0));
 
     // Group by FROM coin — best swap for each held coin
     const byFrom={};
@@ -6075,7 +6074,7 @@ function initBestSwapNow(){
     const sortedFrom=Object.keys(byFrom).sort((a,b)=>{
       const bBest=byFrom[b][0]; const aBest=byFrom[a][0];
       const bo=bBest?.omega||0, ao=aBest?.omega||0;
-      return bo!==ao ? bo-ao : (bBest?.score||0)-(aBest?.score||0);
+      return bo!==ao ? bo-ao : (bBest?.zScore||0)-(aBest?.zScore||0);
     });
 
     sortedFrom.forEach(fromSym=>{
@@ -6090,7 +6089,7 @@ function initBestSwapNow(){
 
       const card=document.createElement('div');
       card.className='bsn-result-item';
-      card.style.cssText=`border-color:${best.score>=70?'rgba(0,192,118,0.3)':'var(--border)'};margin-bottom:.5rem`;
+      card.style.cssText=`border-color:${bOm>=60?'rgba(0,192,118,0.3)':'var(--border)'};margin-bottom:.5rem`;
 
       // Alt options — show up to 4 alternatives
       const altHtml=top5.length>1?
