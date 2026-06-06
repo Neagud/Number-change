@@ -1262,7 +1262,7 @@ let fromSym=_p.fromSym||'BTC',toSym=_p.toSym||'ETH',activeTF=_p.activeTF||90,cha
 let _activeTab=_p.activeTab||'analyzer';
 let activeTrackerId=_p.activeTrackerId||null;
 let priceCache={},lastFetch=0,liveTimer=null,scoreTimer=null;
-let currentStats=null, _currentRatioS=[], _lastSwapScore=50, _lastRmtQ=50, _lastHurst=0.5, _lastPairCorr=0.65;
+let currentStats=null, _currentRatioS=[], _lastRmtQ=50, _lastHurst=0.5, _lastPairCorr=0.65;
 const CI={}; /* chart instances */
 
 const BINANCE='https://api.binance.com/api/v3';
@@ -2122,129 +2122,10 @@ function renderSigs(s){
   `;
 }
 
-/* ═══════════════════════
-   AI SCORE
-═══════════════════════ */
+/* mathScore removed — OMEGA is the only score system */
 function mathScore(s){
-  /* SCORE MEANING:
-     The ratio series is FROM/TO (e.g. XRP/XLM).
-     HIGH score (70-100) = FROM is strong vs TO right now = good time to swap FROM→TO
-                           (you get more TO per FROM than you will after the ratio reverts)
-     LOW score  (0-30)  = FROM is weak vs TO = bad time to swap FROM→TO
-     MID score  (31-69) = unclear, hold and watch
-
-     Strategy: 1-2 swaps/month, catching ratio extremes (including news spikes).
-     The score rewards BOTH sustained trends AND sharp spike tops/bottoms.
-  */
-  let sc=50;
-
-  // ── Z-SCORE: primary statistical edge — how far from 90-day mean is the ratio? ──
-  // Z>2 = ratio at rare extreme, ~90% probability of reversion for correlated pairs.
-  // Neutral zone (Z between -1 and +1) = no edge, ratio near mean, discourage swapping.
-  const z=s.zScore||0;
-  if(z>2.5)       sc+=28;  // extreme peak — very high confidence sell
-  else if(z>2.0)  sc+=20;
-  else if(z>1.5)  sc+=13;
-  else if(z>1.0)  sc+=6;
-  else if(z>-1.0) sc-=12; // neutral zone: ratio near mean, no statistical edge
-  else if(z>-1.5) sc-=6;
-  else if(z>-2.0) sc-=13;
-  else if(z>-2.5) sc-=20;
-  else            sc-=28;  // extreme low — FROM is deeply undervalued, bad time to sell
-
-  // ── SPIKE DETECTOR: 1-day move is the most important signal for news-driven spikes ──
-  // trend1 measures how much the FROM/TO ratio moved in the last 24 hours.
-  // A sharp 1-day spike on the ratio = FROM just surged vs TO = sell FROM NOW before reversal.
-  const t1=s.trend1||0;
-  if(t1>15)       sc+=22;  // massive spike — news event, ratio likely to revert hard
-  else if(t1>8)   sc+=15;  // strong 1-day surge — very actionable
-  else if(t1>4)   sc+=8;   // notable intraday move
-  else if(t1<-15) sc-=22;  // crashed — FROM at 1d low
-  else if(t1<-8)  sc-=15;
-  else if(t1<-4)  sc-=8;
-
-  // ── Multi-day trend ──
-  if(s.trend7>4&&s.trend14>2)        sc+=14;  // confirmed uptrend
-  else if(s.trend7>2&&s.trend14>0)   sc+=8;
-  else if(s.trend7>0)                sc+=3;
-  else if(s.trend7<-4&&s.trend14<-2) sc-=14;
-  else if(s.trend7<-2&&s.trend14<0)  sc-=8;
-  else if(s.trend7<0)                sc-=3;
-
-  // 3-day trend
-  if(s.trend3>4)       sc+=6;
-  else if(s.trend3>2)  sc+=3;
-  else if(s.trend3<-4) sc-=6;
-  else if(s.trend3<-2) sc-=3;
-
-  // ── MACD momentum ──
-  if(s.macdHist>0&&s.macdVal>s.macdSig)     sc+=8;
-  else if(s.macdHist>0)                      sc+=3;
-  else if(s.macdHist<0&&s.macdVal<s.macdSig) sc-=8;
-  else if(s.macdHist<0)                      sc-=3;
-
-  // ── EMA alignment ──
-  if(s.ema3>s.ema5&&s.ema5>s.ema12&&s.ema12>s.ema26)      sc+=10;
-  else if(s.ema3<s.ema5&&s.ema5<s.ema12&&s.ema12<s.ema26) sc-=10;
-  else if(s.ema12>s.ema26) sc+=4;
-  else                      sc-=4;
-
-  // ── RSI — overbought means FROM is at a peak = SELL signal, not a penalty ──
-  // Flipped from classic mean-reversion: for ratio trading, overbought = swap NOW.
-  if(s.rsi>75)      sc+=12;  // FROM massively overbought vs TO = sell peak
-  else if(s.rsi>65) sc+=6;
-  else if(s.rsi>55) sc+=2;
-  else if(s.rsi<25) sc-=12;  // FROM extremely oversold = bad time to sell
-  else if(s.rsi<35) sc-=6;
-  else if(s.rsi<45) sc-=2;
-
-  // RSI crossed 50 upward = ratio just turned bullish
-  if(s.rsiCross50===1)  sc+=8;
-  if(s.rsiCross50===-1) sc-=8;
-
-  // RSI slope — accelerating upward = more urgency to swap
-  if(s.rsiSlope>8)      sc+=5;
-  else if(s.rsiSlope>4) sc+=2;
-  else if(s.rsiSlope<-8)  sc-=5;
-  else if(s.rsiSlope<-4)  sc-=2;
-
-  // ── Bollinger — near upper band = FROM overextended = swap NOW ──
-  // Flipped: upper band = sell signal (ratio stretched above mean, will revert)
-  if(s.bollPos>85)      sc+=10;  // ratio deep in upper band = classic exit zone
-  else if(s.bollPos>70) sc+=5;
-  else if(s.bollPos<15) sc-=10;  // ratio deep in lower band = bad time to sell FROM
-  else if(s.bollPos<30) sc-=5;
-
-  // ── StochRSI — same flip: overbought = sell ──
-  if(s.stochRsi>85)     sc+=8;
-  else if(s.stochRsi>70) sc+=4;
-  else if(s.stochRsi<15) sc-=8;
-  else if(s.stochRsi<30) sc-=4;
-
-  // ── SPIKE MODE BONUS: multiple overbought signals together = high-confidence spike top ──
-  // When trend1 spike + RSI overbought + Bollinger stretched: all three agree = news event
-  if(t1>5&&s.rsi>65&&s.bollPos>70)   sc+=12;  // strong spike confirmation
-  if(t1>10&&s.rsi>70&&s.bollPos>80)  sc+=8;   // extra bonus for extreme spike
-
-  // ── Volume confirmation: spike on high volume = real news move, not noise ──
-  const vs=s.volSpike||1;
-  if(vs>3&&t1>5)        sc+=10;  // massive volume + price spike = confirmed news event
-  else if(vs>2&&t1>3)   sc+=5;
-  else if(vs<0.5&&t1>5) sc-=5;   // price spike on tiny volume = suspicious, likely to reverse fast but less reliable
-
-  // ── RSI divergence ──
-  if(s.rsiBullDiv) sc+=10;  // FROM at low but RSI recovering = about to bounce up
-  if(s.rsiBearDiv) sc-=10;
-
-  // ── 30-day position ──
-  // Near 30d HIGH = FROM is at a local peak = good time to swap FROM→TO
-  // Near 30d LOW  = FROM is cheap = bad time to swap away FROM
-  if(s.pos30>85&&s.trend7>2)      sc+=10;  // at peak and still moving up = optimal exit
-  else if(s.pos30>85)              sc+=5;   // at peak = probably good time to swap
-  else if(s.pos30<15&&s.trend7<-2) sc-=8;  // at bottom in downtrend = falling knife
-  else if(s.pos30<15)              sc-=4;  // at 30d low = not a good time to swap FROM
-
-  return Math.min(100,Math.max(0,Math.round(sc)));
+  // Legacy stub — returns neutral 50. All scoring is now done by computeOmegaScore().
+  return 50;
 }
 /* ── Score cache: key = pair+timeframe, TTL = 5 min, stored in localStorage ── */
 const _SCORE_TTL = 5 * 60 * 1000;
@@ -2895,18 +2776,13 @@ async function runAIScore(s, forceRefresh){
   const ratioSeriesForATR=fk90obj.length>5&&tk90obj.length>5?buildRatio(fk90obj,tk90obj):[];
   const atrPct=ratioSeriesForATR.length>15?calcATR(ratioSeriesForATR):3;
 
-  /* Confirmation candle */
-  const ms0=mathScore(freshS);
-  const confirmed=ratioSeriesForATR.length>2?calcConfirmationCandle(ratioSeriesForATR, ms0>=70):null;
+  /* Confirmation candle — direction based on Z-score sign */
+  const confirmed=ratioSeriesForATR.length>2?calcConfirmationCandle(ratioSeriesForATR, (freshS.zScore||0)>=1.5):null;
 
   /* BTC dominance trend */
   const btcDom=(fromSym!=='BTC'&&toSym!=='BTC')?await getBTCDominanceTrend().catch(()=>null):null;
 
-  /* Build result — math score always, AI upgrade if key present */
   const apiKey=_getApiKey();
-
-  /* Math score */
-  const ms=mathScore(freshS);
 
   const buildPlainExplanation=(score,s)=>{
     const t=s.trend7;
@@ -2926,58 +2802,8 @@ async function runAIScore(s, forceRefresh){
     return tTxt+' '+mTxt+rTxt+corrTxt+rkTxt;
   };
 
-  /* Show math score + risk dashboard immediately */
-  // ── Apply unified adjustments to raw math score ──
-  let adjustedMs = ms;
-
-  // 1. Trend confirmation gate — both 3d AND 7d negative = extra penalty
-  if(freshS.trend3<-2&&freshS.trend7<-2)  adjustedMs-=8;
-  if(freshS.trend3<-4&&freshS.trend7<-4)  adjustedMs-=4;  // stacks with above
-
-  // 2. Streak penalties/bonuses
-  // Consecutive DOWN days = falling knife, penalise
-  // Consecutive UP days = ratio may be exhausted, reversal likely = sell signal (bonus)
-  const streak = freshS.streak || 0;
-  if(streak <= -7)      adjustedMs -= 18;
-  else if(streak <= -5) adjustedMs -= 12;
-  else if(streak <= -4) adjustedMs -= 8;
-  else if(streak <= -3) adjustedMs -= 5;
-  // Positive streak: extended up-run = ratio stretched, swap window opening
-  if(streak >= 7)       adjustedMs += 14;  // 7+ up days = very likely at a top
-  else if(streak >= 5)  adjustedMs += 9;
-  else if(streak >= 4)  adjustedMs += 6;
-  else if(streak >= 3)  adjustedMs += 3;
-
-  // 3. Correlation penalty (return-based Pearson: good pairs ~0.70-0.90)
-  if(corr90 < 0.45)      adjustedMs -= 20;  // truly unrelated, dangerous
-  else if(corr90 < 0.60) adjustedMs -= 10;  // poor correlation
-  else if(corr90 < 0.75) adjustedMs -= 4;   // moderate — slight caution
-  else                   adjustedMs += 3;   // 0.75+ = small reward
-
-  // 4. Weak coin warning in explanation (no score penalty — just info)
+  // Weak coin warning for explanation text
   const rankWarning=_weakCoins.has(toSym)?`⚠️ ${toSym} is one of the 4 weakest coins this week — consider a stronger target.`:'';
-
-  // 6. Risk filter penalty — capped at -15; confirmation candle excluded from count
-  // (a spike that just fired won't have a confirmation candle yet — don't penalise that)
-  const riskForPenalty = buildRiskAnalysis({
-    score: adjustedMs, corr90, atrPct,
-    bollWidth: freshS.bollWidth || 5,
-    confirmed, btcDom,
-    trend7: freshS.trend7, trend14: freshS.trend14,
-    fromSym, toSym
-  });
-  // Count greens excluding the candle confirmation filter (index 2)
-  const greenCountAdj = riskForPenalty.risks.filter((r,i)=>i!==2&&r.cls==='safe').length;
-  const totalAdj = riskForPenalty.risks.filter((_,i)=>i!==2).length;
-  if(greenCountAdj <= 2)              adjustedMs -= 15;
-  else if(greenCountAdj === 3)        adjustedMs -= 8;
-  else if(greenCountAdj < totalAdj)   adjustedMs -= 3;
-
-  adjustedMs = Math.min(100, Math.max(0, Math.round(adjustedMs)));
-
-  // Use adjustedMs everywhere
-  const finalMs = adjustedMs;
-  const msG = finalMs >= 70, msR = finalMs <= 30;
 
   const z=freshS.zScore||0;
   const expGain=freshS.expectedRevertGain||0;
@@ -2985,31 +2811,27 @@ async function runAIScore(s, forceRefresh){
   // Divergence warning: ratio extreme for too long without reverting
   const divergenceWarn=Math.abs(z)>2&&freshS.streak&&Math.abs(freshS.streak)>=7&&Math.sign(freshS.streak)===Math.sign(z);
 
+  // mathResult: score=50 placeholder — OMEGA (computed async) will replace the displayed number
   const mathResult={
-    score: finalMs,
-    verdict:msG?'SWAP NOW':msR?'DO NOT SWAP':'WATCH',
+    score: 50,
     simple_verdict: Math.abs(z) < 1
       ? `Ratio near 90-day mean — no statistical edge yet`
       : z > 0
         ? `${fromSym} is above its mean vs ${toSym} — computing Ω...`
         : `${fromSym} is below its mean vs ${toSym} — computing Ω...`,
-    plain_explanation:buildPlainExplanation(finalMs,freshS),
+    plain_explanation: buildPlainExplanation(50, freshS),
     market_situation:`${fromSym}/${toSym} ratio: ${freshS.cur>=1?freshS.cur.toFixed(4):freshS.cur.toFixed(7)} · Z-score ${z>=0?'+':''}${z.toFixed(2)} · ${freshS.trend7>=0?'▲ +':'▼ '}${freshS.trend7.toFixed(2)}% this week`,
-    prediction:finalMs>=70
-      ?`Before swapping, do a 30-second check on ${toSym} — any recent hacks, delistings, or major bad news? If nothing alarming, proceed.`
-      :finalMs>30?(freshS.trend7>0?`Slowly improving. Watch for a score above 70.`:`Slight downtrend. Consider waiting.`)
-      :'',
+    prediction: '',
     _stats:{cur:freshS.cur,trend7:freshS.trend7,trend1:freshS.trend1||0,zScore:z,expectedRevertGain:expGain,swingPct,mean90:freshS.mean90||0},
     _risk:{corr90,atrPct,bollWidth:freshS.bollWidth,confirmed},
     _divergenceWarn:divergenceWarn
   };
 
   renderScore(mathResult);
-  _syncScoreCache(fromSym, toSym, finalMs);
+  _syncScoreCache(fromSym, toSym, 50);
   scanBestPartners(fromSym);
 
   /* Quantum analysis — async, does not block score render */
-  _lastSwapScore = finalMs; // store for unified verdict
   if (!_qaRunning) {
     _qaRunning = true;
     runQuantumAnalysis(ratioSeriesForATR.length > 15 ? ratioSeriesForATR : _currentRatioS)
@@ -3017,7 +2839,7 @@ async function runAIScore(s, forceRefresh){
   }
 
   renderRiskDashboard({
-    score:finalMs, corr90, atrPct,
+    score:50, corr90, atrPct,
     bollWidth:freshS.bollWidth||5,
     confirmed, btcDom,
     stats:freshS, fromSym, toSym
@@ -3919,7 +3741,7 @@ async function runQuantumAnalysis(ratioSeries) {
   renderEntryPanel(entryTiming);
 
   /* Unified verdict — synthesises all three systems into ONE final answer */
-  applyUnifiedVerdict(_lastSwapScore, qScore || 50, entryTiming);
+  applyUnifiedVerdict(entryTiming);
 
   /* Show the "detailed analysis" toggle now that panels are populated */
   const toggleRow = document.getElementById('detailToggleRow');
@@ -4173,7 +3995,7 @@ function computeOmegaScore(et, rmtQ) {
    Takes swap score + quantum + entry timing → ONE final answer
    This is the only thing the user needs to read
 ═══════════════════════════════════════════════════════════ */
-function applyUnifiedVerdict(swapSc, quantumSc, et) {
+function applyUnifiedVerdict(et) {
   if (!et) return;
   const phase  = et.phase;
   const hurst  = et.hurst;
@@ -4182,13 +4004,6 @@ function applyUnifiedVerdict(swapSc, quantumSc, et) {
   /* ── OMEGA SCORE — the ONE number that means everything ── */
   const om = computeOmegaScore(et, _lastRmtQ);
   const omega = om.omega;
-
-  /* ── (legacy TRS kept internally for checklist logic) ── */
-  const entAdj = phase === 2 ? Math.min(et.entryScore, 28) : et.entryScore;
-  let trs = Math.round(swapSc * 0.45 + quantumSc * 0.20 + entAdj * 0.35);
-  if (phase === 2) trs = Math.min(trs, 62);
-  if (phase <= 1 && swapSc < 70) trs = Math.min(trs, 40);
-  trs = Math.min(100, Math.max(0, trs));
 
   /* ── Hurst warning (pair may not be a good mean-reversion pair) ── */
   const hurstWarn = hurst > 0.72
@@ -5121,50 +4936,15 @@ async function getScoreForPair(a,b){
       c:kA[kA.length-n+i].c/kB[kB.length-n+i].c
     }));
     const stats=getStats(ratioSeries);
-    let sc=stats?mathScore(stats):50;
-
-    // ── Apply unified adjustments (same as runAIScore) ──
-
-    // 1. Trend confirmation gate — both 3d and 7d negative = extra penalty
-    if(stats){
-      if(stats.trend3<-2&&stats.trend7<-2)       sc-=10; // both negative, mild
-      if(stats.trend3<-4&&stats.trend7<-4)       sc-=6;  // both strongly negative (stacks)
-    }
-
-    // 2. Correlation adjustment — reduced penalty, temporary decoupling = opportunity
     const closes90A=kA.slice(-90).map(k=>k.c);
     const closes90B=kB.slice(-90).map(k=>k.c);
     const corr=calcCorrelation(closes90A,closes90B);
-    if(corr<0.60)      sc-=20;
-    else if(corr<0.70) sc-=10;
-    else if(corr<0.80) sc-=4;
-    else if(corr<0.92) sc-=1;
-    else               sc+=3;
 
-    // 3. Streak: down = penalty, up = bonus (reversal signal)
-    const streak=stats?stats.streak||0:0;
-    if(streak<=-7)      sc-=18;
-    else if(streak<=-5) sc-=12;
-    else if(streak<=-4) sc-=8;
-    else if(streak<=-3) sc-=5;
-    if(streak>=7)       sc+=14;
-    else if(streak>=5)  sc+=9;
-    else if(streak>=4)  sc+=6;
-    else if(streak>=3)  sc+=3;
-
-
-
-    sc=Math.min(100,Math.max(0,Math.round(sc)));
-
-    const rsi=stats?stats.rsi:50;
     const trend7=stats?stats.trend7:0;
-    const trendPlain=trend7>2?`The swap rate improved ${trend7.toFixed(1)}% this week, meaning you'd get more ${b} for your ${a} today than last week`
-      :trend7<-2?`The swap rate dropped ${Math.abs(trend7).toFixed(1)}% this week`
-      :`The swap rate between ${a} and ${b} has been stable this week`;
-    const rsiPlain=rsi<35?`${a} looks relatively cheap vs ${b} — often a good entry`
-      :rsi>65?`${a} has been rising fast vs ${b} — may be overextended`
-      :`${a} is trading at normal levels vs ${b}`;
-    const plain_explanation=rsiPlain+'. '+trendPlain+'.';
+    const plain_explanation=trend7>2
+      ?`The swap rate improved ${trend7.toFixed(1)}% this week.`
+      :trend7<-2?`The swap rate dropped ${Math.abs(trend7).toFixed(1)}% this week.`
+      :`The swap rate between ${a} and ${b} has been stable this week.`;
 
     const trend1=stats?stats.trend1||0:0;
     const zScore=stats?stats.zScore||0:0;
@@ -5181,7 +4961,7 @@ async function getScoreForPair(a,b){
     const omegaPhaseLabel = etForOmega ? etForOmega.phaseLabel : '';
     const omegaAbsZ = etForOmega ? +(etForOmega.absZ || 0).toFixed(2) : 0;
 
-    const result={score:sc, omega, omegaPhase, omegaPhaseLabel, omegaAbsZ,
+    const result={omega, omegaPhase, omegaPhaseLabel, omegaAbsZ,
       from:a,to:b,trend1,zScore,expectedRevertGain,swingPct,plain_explanation,corr};
     _scoreCache[key]=result; _scoreCacheTime[key]=now;
     return result;
@@ -5203,51 +4983,51 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
   if(!holdingBase){
     const res=await getScoreForPair(curAsset, tr.assetA);
     if(!sigEl.isConnected) return;
-    const sc=res?res.score:0;
+    const omega=res?res.omega:0;
     const profit=currentGrowth||0;
     const spikeT1=res?Math.abs(res.trend1||0):0;
-    const isSpike=spikeT1>6&&sc>=65;
+    const isSpike=spikeT1>6&&omega>=40;
 
-    // Spike banner — prepended to whatever verdict follows
+    // Spike banner
     const spikeBannerHtml=isSpike?`<div style="background:rgba(245,166,35,0.1);border:2px solid rgba(245,166,35,0.5);border-radius:var(--rs);padding:8px 14px;margin-bottom:8px">
       <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">⚡ SPIKE DETECTED — ${curAsset} moved ${spikeT1.toFixed(1)}% in 24h</div>
       <div style="font-size:11px;color:var(--text2);margin-top:3px">News moves don't last. This may be your exit window — act before it reverses.</div>
     </div>`:'';
 
-    // ── Profit gate (Gate 1): below threshold → HOLD unless spike detected ──
-    const isSpikeExit = isSpike && sc >= 75;
+    // ── Profit gate: below threshold → HOLD ──
+    const isSpikeExit = isSpike && omega >= 40;
     const profitGate = isSpikeExit ? 0.3 : 1;
     if(profit < profitGate){
-      const situationTxt=sc>=60?'Ratio is recovering — momentum building.'
-        :sc>=40?'Ratio is mixed — no clear direction yet.'
+      const situationTxt=omega>=60?'Ratio is recovering — momentum building.'
+        :omega>=40?'Ratio is mixed — no clear direction yet.'
         :'Ratio is under pressure — '+curAsset+' weakening vs '+tr.assetA+'.';
       sigEl.innerHTML=spikeBannerHtml+`<div style="background:rgba(239,68,68,0.06);border:2px solid rgba(239,68,68,0.3);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
         <div style="font-size:10px;font-family:monospace;color:#ef4444;font-weight:700;margin-bottom:4px">OPEN POSITION: holding ${curAsset}</div>
         <div style="font-size:16px;font-weight:700;color:#ef4444">⏳ HOLD — profit below ${profitGate}%</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">Fees would eat your gains. Wait for at least +${profitGate}% before swapping back.<br><span style="color:var(--text3)">${situationTxt} Ratio score: ${sc}/100.</span></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">Fees would eat your gains. Wait for at least +${profitGate}% before swapping back.<br><span style="color:var(--text3)">${situationTxt} Ω ${omega}/100.</span></div>
         <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid rgba(239,68,68,0.4);cursor:pointer;background:transparent;color:#ef4444">Analyze ${curAsset}/${tr.assetA} →</button>
       </div>`;
       return;
     }
 
-    // ── Gate 2: profit ≥ gate → assess based on ratio score ──
+    // ── Gate 2: profit ≥ gate → assess based on OMEGA ──
     const resZ=res?res.zScore||0:0;
     const resEG=res?res.expectedRevertGain||0:0;
     const zLine=Math.abs(resZ)>=1?`<span style="font-size:10px;font-family:monospace;color:var(--text3);margin-left:6px">Z ${resZ>=0?'+':''}${resZ.toFixed(1)}</span>`:'';
     const egLine=Math.abs(resEG)>=2?`<div style="font-size:10px;color:var(--text3);margin-top:3px">Mean reversion target: <strong style="color:${resEG>0?'#00c076':'#ef4444'}">${resEG>=0?'+':''}${resEG.toFixed(1)}% ${tr.assetA}</strong> if ratio reverts</div>`:'';
 
     let verdict, explanation, col, bg, border;
-    if(sc>=70){
+    if(omega>=60){
       col='#00c076'; bg='rgba(0,192,118,0.1)'; border='rgba(0,192,118,0.4)';
       verdict=isSpike?'⚡ SWAP BACK NOW — spike exit':'✅ GOOD TIME TO SWAP BACK — take the profit';
       explanation=isSpike
         ?curAsset+' just spiked — news-driven peak. You have +'+profit.toFixed(2)+'% profit. Close now before it reverses.'
         :curAsset+' is at a ratio peak vs '+tr.assetA+'. You have +'+profit.toFixed(2)+'% profit. Good time to close this position.';
-    } else if(sc<=35){
+    } else if(omega<=20){
       col='#00c076'; bg='rgba(0,192,118,0.1)'; border='rgba(0,192,118,0.4)';
       verdict='✅ CONSIDER SWAPPING BACK';
       explanation=curAsset+' is weakening vs '+tr.assetA+'. You have +'+profit.toFixed(2)+'% profit. Ratio may have peaked — consider closing.';
-    } else if(sc<=55){
+    } else if(omega<=40){
       col='#f5a623'; bg='rgba(245,166,35,0.1)'; border='rgba(245,166,35,0.3)';
       verdict='⏳ WATCH CLOSELY — profit is building';
       explanation='You have +'+profit.toFixed(2)+'% profit. Ratio is mixed — consider closing soon or wait for a clearer signal.';
@@ -5276,10 +5056,10 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
   const results=await Promise.all(orderedCandidates.map(c=>getScoreForPair(tr.assetA,c)));
   if(!sigEl.isConnected) return;
 
-  // Combine and sort by score
-  const scored=orderedCandidates.map((c,i)=>({coin:c,score:results[i]?results[i].score:0,used:usedCoins.includes(c)||c===tr.assetB}))
-    .filter(x=>x.score>0)
-    .sort((a,b)=>b.score-a.score);
+  // Sort by OMEGA — the only score that matters
+  const scored=orderedCandidates.map((c,i)=>({coin:c,omega:results[i]?results[i].omega:0,used:usedCoins.includes(c)||c===tr.assetB}))
+    .filter(x=>x.omega>0)
+    .sort((a,b)=>b.omega-a.omega);
 
   if(!scored.length){
     sigEl.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
@@ -5289,19 +5069,19 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
   }
 
   const best=scored[0];
-  const bestCol=best.score>=70?'#00c076':best.score<=30?'#ef4444':'#f5a623';
-  const bestBg=best.score>=70?'rgba(0,192,118,0.1)':best.score<=30?'rgba(239,68,68,0.08)':'rgba(245,166,35,0.08)';
-  const bestBorder=best.score>=70?'rgba(0,192,118,0.5)':best.score<=30?'rgba(239,68,68,0.3)':'rgba(245,166,35,0.35)';
-  const bestVerdict=best.score>=70?'✅ SWAP NOW':best.score<=30?'❌ HOLD':'⏳ WATCH';
+  const bestCol=best.omega>=60?'#00c076':best.omega<=20?'#ef4444':'#f5a623';
+  const bestBg=best.omega>=60?'rgba(0,192,118,0.1)':best.omega<=20?'rgba(239,68,68,0.08)':'rgba(245,166,35,0.08)';
+  const bestBorder=best.omega>=60?'rgba(0,192,118,0.5)':best.omega<=20?'rgba(239,68,68,0.3)':'rgba(245,166,35,0.35)';
+  const bestVerdict=best.omega>=60?'✅ SWAP NOW':best.omega>=40?'⚠️ PROCEED WITH CAUTION':best.omega>=20?'👁 WATCH':'❌ HOLD';
 
   // Other pairs rows (top 5 excluding best)
   const othersHtml=scored.slice(1,5).map(x=>{
-    const c=x.score>=70?'#00c076':x.score<=30?'#ef4444':'#f5a623';
+    const c=x.omega>=60?'#00c076':x.omega<=20?'#ef4444':'#f5a623';
     const tag=x.used?'<span style="font-size:9px;font-family:monospace;padding:1px 5px;border-radius:6px;background:rgba(59,143,255,0.15);color:#3b8fff;margin-left:5px">history</span>':'';
-    const verdict=x.score>=70?'✅':x.score<=30?'❌':'⏳';
+    const verdict=x.omega>=60?'✅':x.omega<=20?'❌':'⏳';
     return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-top:1px solid var(--border)">
       <span style="font-family:monospace;font-weight:700;font-size:13px;color:var(--text);min-width:50px">${tr.assetA}→${x.coin}${tag}</span>
-      <span style="font-family:monospace;font-weight:700;font-size:13px;color:${c}">${x.score}</span>
+      <span style="font-family:monospace;font-weight:700;font-size:13px;color:${c}">Ω ${x.omega}</span>
       <span style="font-size:12px;color:${c}">${verdict}</span>
       <button onclick="switchAnalyzerPair('${tr.assetA}','${x.coin}')" style="margin-left:auto;font-family:monospace;font-size:9px;padding:2px 8px;border-radius:var(--rs);border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text2)">Analyze →</button>
     </div>`;
@@ -5311,7 +5091,7 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
     <div style="font-size:10px;font-family:monospace;color:${bestCol};font-weight:700;margin-bottom:6px">BEST SWAP RIGHT NOW — ${tr.assetA} holding</div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap">
       <span style="font-size:20px;font-weight:700;color:${bestCol}">${tr.assetA} → ${best.coin}</span>
-      <span style="font-size:22px;font-weight:700;font-family:monospace;color:${bestCol}">${best.score}<span style="font-size:12px">/100</span></span>
+      <span style="font-size:22px;font-weight:700;font-family:monospace;color:${bestCol}">Ω ${best.omega}<span style="font-size:12px">/100</span></span>
       <span style="font-size:15px;color:${bestCol}">${bestVerdict}</span>
       ${best.used?'<span style="font-size:10px;font-family:monospace;padding:2px 8px;border-radius:10px;background:rgba(59,143,255,0.15);color:#3b8fff;border:1px solid rgba(59,143,255,0.3)">used in history</span>':'<span style="font-size:10px;font-family:monospace;padding:2px 8px;border-radius:10px;background:rgba(245,166,35,0.1);color:#f5a623;border:1px solid rgba(245,166,35,0.25)">new opportunity</span>'}
     </div>
