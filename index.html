@@ -2717,19 +2717,17 @@ function renderBestPartners(baseSym, results, isPartial){
     card.className='bp-card'+(isBest?' bp-best':isWarn&&!isBad?' bp-warn':isBad?' bp-bad':'');
 
     const corrCol=r.corr>=0.75?'#00c076':r.corr>=0.55?'#f5a623':'#ef4444';
-    const scoreCol=r.score>=70?'#00c076':r.score<=30?'#ef4444':'#f5a623';
-    const scoreEmoji=r.score>=70?'✅':r.score<=30?'🔴':'⏳';
-
     const zc=r.zScore||0;
     const zCol2=zc>2?'#00c076':zc>1?'#f5a623':zc<-2?'#ef4444':zc<-1?'#f5a623':'var(--text3)';
     const swingCol=(r.swingPct||0)>30?'#00c076':(r.swingPct||0)>15?'#f5a623':'var(--text3)';
+    // Show Z and Swing as the key metrics — not old score which means nothing to user
+    const zSignal = Math.abs(zc)>2.5?'Extreme':Math.abs(zc)>1.5?'Extended':Math.abs(zc)>1?'Mild':'Near mean';
     card.innerHTML=
       '<div class="bp-sym">'+(isBest?'⭐ ':'')+r.sym+'</div>'+
       '<div class="bp-corr" style="color:'+corrCol+'">Corr: '+r.corr.toFixed(2)+'</div>'+
-      '<div class="bp-label">Score: <span style="color:'+scoreCol+'">'+r.score+'</span> '+scoreEmoji+'</div>'+
       '<div class="bp-label" style="color:'+swingCol+'">Swing: '+(r.swingPct||0).toFixed(0)+'%</div>'+
       '<div class="bp-label" style="color:'+zCol2+'">Z: '+(zc>=0?'+':'')+zc.toFixed(1)+'</div>'+
-      (isBest?'<div class="bp-score-badge" style="background:rgba(0,192,118,.12);color:#00c076">Best match</div>':'');
+      (isBest?'<div class="bp-score-badge" style="background:rgba(0,192,118,.12);color:#00c076">Best correlation</div>':'');
 
     card.title='Click to analyze '+baseSym+'/'+r.sym;
     card.onclick=()=>{
@@ -2990,10 +2988,11 @@ async function runAIScore(s, forceRefresh){
   const mathResult={
     score: finalMs,
     verdict:msG?'SWAP NOW':msR?'DO NOT SWAP':'WATCH',
-    simple_verdict:msG
-      ?`${fromSym} is gaining vs ${toSym} — good time to swap`
-      :msR?`${toSym} is gaining vs ${fromSym} — wait for better rate`
-      :(Math.abs(z)<1?`Ratio near 90-day mean — no statistical edge yet, wait for divergence`:`No clear signal yet — keep monitoring`),
+    simple_verdict: Math.abs(z) < 1
+      ? `Ratio near 90-day mean — no statistical edge yet`
+      : z > 0
+        ? `${fromSym} is above its mean vs ${toSym} — computing Ω...`
+        : `${fromSym} is below its mean vs ${toSym} — computing Ω...`,
     plain_explanation:buildPlainExplanation(finalMs,freshS),
     market_situation:`${fromSym}/${toSym} ratio: ${freshS.cur>=1?freshS.cur.toFixed(4):freshS.cur.toFixed(7)} · Z-score ${z>=0?'+':''}${z.toFixed(2)} · ${freshS.trend7>=0?'▲ +':'▼ '}${freshS.trend7.toFixed(2)}% this week`,
     prediction:finalMs>=70
@@ -3296,6 +3295,83 @@ function hurstRS(data) {
   return Math.min(1, Math.max(0, H));
 }
 
+/* ═══════════════════════════════════════════════════════════
+   MULTI-SCALE HURST — Haar Wavelet Variance Method
+   Based on: Var{d_j(k)} ≈ σ² · 2^(j·(2H−1))
+   At each wavelet scale j, a local H is estimated from the
+   variance of detail coefficients. This reveals whether the
+   "memory" of the series is short-lived or structural.
+   ═══════════════════════════════════════════════════════════ */
+function multiscaleHurst(closes) {
+  if (!closes || closes.length < 32) return null;
+
+  // Log-returns for stationarity
+  const logR = [];
+  for (let i = 1; i < closes.length; i++) {
+    if (closes[i] > 0 && closes[i-1] > 0)
+      logR.push(Math.log(closes[i] / closes[i-1]));
+  }
+  if (logR.length < 16) return null;
+
+  // Haar wavelet decomposition — builds detail + smooth at each level
+  const haarStep = (data) => {
+    const d = [], s = [];
+    for (let i = 0; i + 1 < data.length; i += 2) {
+      d.push((data[i] - data[i+1]) / Math.SQRT2);
+      s.push((data[i] + data[i+1]) / Math.SQRT2);
+    }
+    return { d, s };
+  };
+
+  const variance = (arr) => {
+    if (arr.length < 3) return null;
+    const m = arr.reduce((a, b) => a + b, 0) / arr.length;
+    return arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length;
+  };
+
+  // Decompose up to 5 levels, collect (scale, variance) pairs
+  const levels = [];
+  let cur = [...logR];
+  for (let j = 1; j <= 5 && cur.length >= 4; j++) {
+    const { d, s } = haarStep(cur);
+    const v = variance(d);
+    if (v !== null && v > 0) levels.push({ j, scaledays: Math.pow(2, j), v });
+    cur = s;
+  }
+  if (levels.length < 2) return null;
+
+  // Local H between adjacent scales:
+  // log2(var_j) = C + j·(2H−1)  →  H_local = (log2(v_j / v_{j-1}) / 2) + 0.5
+  const scaleH = [];
+  for (let i = 1; i < levels.length; i++) {
+    const slope = Math.log2(levels[i].v / levels[i-1].v);
+    const h = Math.max(0.05, Math.min(0.99, slope / 2 + 0.5));
+    scaleH.push({ scaledays: levels[i].scaledays, h });
+  }
+
+  // Global H: OLS regression of log2(var) on j
+  const xs = levels.map(l => l.j);
+  const ys = levels.map(l => Math.log2(l.v));
+  const xm = xs.reduce((a, b) => a + b) / xs.length;
+  const ym = ys.reduce((a, b) => a + b) / ys.length;
+  const num = xs.reduce((s, x, i) => s + (x - xm) * (ys[i] - ym), 0);
+  const den = xs.reduce((s, x) => s + (x - xm) ** 2, 0);
+  const globalH = Math.max(0.05, Math.min(0.99, den === 0 ? 0.5 : (num / den) / 2 + 0.5));
+
+  // Trend: is H rising (trend strengthening) or falling (trend exhausting)?
+  const firstH = scaleH[0].h;
+  const lastH  = scaleH[scaleH.length - 1].h;
+  const hTrend = lastH - firstH; // positive = H rises with scale (structural trend)
+                                  // negative = H drops with scale (short-term trend only)
+
+  // Short-term H = shortest scale (recent momentum, most data points = most reliable local H)
+  const shortH = scaleH[0].h;
+  // Structural H = global OLS fit across all scales (more robust than last scale alone)
+  const structuralH = globalH;
+
+  return { scaleH, globalH, structuralH, shortH, hTrend };
+}
+
 /* OU half-life: regress Δy_t on y_{t-1} to estimate mean-reversion speed */
 function ouHalfLifeET(closes) {
   const raw = closes.slice(-Math.min(90, closes.length));
@@ -3394,13 +3470,22 @@ function analyzeEntryTiming(rCloses) {
     }
   }
 
-  /* Hurst exponent — 60-day (structural) + 30-day (recent regime) */
-  const hurst60   = hurstRS(rCloses.slice(-60));
-  const hurst30   = rCloses.length >= 30 ? hurstRS(rCloses.slice(-30)) : hurst60;
-  // Use the more conservative (higher = more trending) of the two.
-  // If recent 30d regime has turned trending while 60d still looks ok, we catch it early.
-  const hurst     = Math.max(hurst60, hurst30);
-  const hurstRegimeWarn = hurst30 > hurst60 + 0.12; // recent regime notably worse
+  /* Multi-scale Hurst — Haar Wavelet method */
+  const msHurst    = multiscaleHurst(rCloses.slice(-64));
+  const hurst60    = hurstRS(rCloses.slice(-60));
+  const hurst30    = rCloses.length >= 30 ? hurstRS(rCloses.slice(-30)) : hurst60;
+
+  // PRIMARY Hurst for OMEGA = R/S analysis (reliable, enough data points).
+  // Wavelet multi-scale = DISPLAY ONLY + exhaustion bonus signal.
+  // Wavelet at long scales has too few coefficients (3-4 points) to be statistically reliable
+  // as a primary input — it would give wild swings like 0.05 or 0.99 randomly.
+  const hurst         = Math.max(hurst60, hurst30); // R/S — stable, drives all OMEGA math
+  const hurst3        = hurst30;
+  const shortH        = msHurst ? msHurst.shortH      : hurst30;
+  const structuralH   = msHurst ? msHurst.globalH     : hurst60; // use global OLS fit, not last scale
+  const hTrend        = msHurst ? msHurst.hTrend       : 0;
+  const hurstRegimeWarn = hurst30 > hurst60 + 0.12;
+
   const hurstColor = hurst < 0.44 ? 'green' : hurst < 0.54 ? 'amber' : 'red';
   const hurstLabel = hurst < 0.44 ? 'Anti-persistent — strong mean reversion tendency'
     : hurst < 0.54 ? 'Near random walk — moderate mean reversion'
@@ -3453,7 +3538,8 @@ function analyzeEntryTiming(rCloses) {
   return {
     phase, phaseLabel, phaseSub, phaseColor, phaseEmoji,
     curVel, curAcc, velDir, accDir,
-    hurst, hurst60, hurst30, hurstRegimeWarn, hurstColor, hurstLabel,
+    hurst, hurst60, hurst30: hurst3, hurstRegimeWarn, hurstColor, hurstLabel,
+    msHurst, shortH, structuralH, hTrend,
     ouForce, ouForcePct, ouColor, ouLabel,
     halfLife, daysToMeanEst, daysLate, gainLost,
     entryScore, tlPos, absZ, curZ, mean90, std90,
@@ -3539,10 +3625,56 @@ function renderEntryPanel(t) {
         <div class="et-card-val ${t.ouColor}">${ouStr}</div>
         <div class="et-card-sub">${t.ouLabel}</div>
       </div>
-      <div class="et-card">
-        <div class="et-card-lbl">Hurst Exponent</div>
-        <div class="et-card-val ${t.hurstColor}">${t.hurst.toFixed(3)}</div>
-        <div class="et-card-sub">${t.hurstLabel}${t.hurstRegimeWarn ? ` <span style="color:#f5a623">⚠️ 30d: ${(t.hurst30||t.hurst).toFixed(2)} — recent trending</span>` : ` <span style="opacity:.55">(60d: ${(t.hurst60||t.hurst).toFixed(2)} · 30d: ${(t.hurst30||t.hurst).toFixed(2)})</span>`}</div>
+      <div class="et-card" style="grid-column:1/-1">
+        <div class="et-card-lbl">Market Memory — Multi-Scale Hurst (Wavelet)</div>
+        ${(() => {
+          const ms = t.msHurst;
+          const scaleNames = ['2–4d','4–8d','8–16d','16–32d','32d+'];
+          const hColor = h => h < 0.50 ? '#00c076' : h < 0.65 ? '#a3e635' : h < 0.80 ? '#f5a623' : '#ef4444';
+          const hLabel = h => h < 0.50 ? 'REVERTING' : h < 0.65 ? 'NEUTRAL' : h < 0.80 ? 'TRENDING' : 'STRONG TREND';
+
+          // Determine overall interpretation
+          let interpretation = '', intColor = 'var(--text3)';
+          if (ms && ms.scaleH.length >= 2) {
+            const trend = ms.hTrend;
+            const sh = ms.shortH, lh = ms.structuralH;
+            if (sh > 0.75 && lh < 0.65) {
+              interpretation = '⬇ H drops across scales — short-term trend exhausting, reversal building';
+              intColor = '#f5a623';
+            } else if (sh > 0.75 && lh > 0.75) {
+              interpretation = '↔ H high at all scales — structural trend, wait for Hurst to fall';
+              intColor = '#ef4444';
+            } else if (sh < 0.55 && lh < 0.55) {
+              interpretation = '✅ H low at all scales — strong mean-reversion regime';
+              intColor = '#00c076';
+            } else if (sh < lh - 0.10) {
+              interpretation = '⬆ H rises with scale — short-term calm, longer-term drift';
+              intColor = '#f5a623';
+            } else {
+              interpretation = `Structural H ${lh.toFixed(2)} · Short H ${sh.toFixed(2)}`;
+              intColor = 'var(--text2)';
+            }
+          }
+
+          if (!ms || ms.scaleH.length < 2) {
+            return `<div class="et-card-val ${t.hurstColor}">${t.hurst.toFixed(3)}</div>
+                    <div class="et-card-sub">${t.hurstLabel}</div>`;
+          }
+
+          return `
+            <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+              ${ms.scaleH.map((sh, i) => `
+                <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+                  <span style="width:42px;color:var(--text3);font-family:monospace">${scaleNames[i]||''}</span>
+                  <div style="flex:1;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
+                    <div style="width:${Math.round(sh.h*100)}%;height:100%;background:${hColor(sh.h)};border-radius:3px;transition:width 0.4s"></div>
+                  </div>
+                  <span style="width:34px;font-family:monospace;color:${hColor(sh.h)};font-weight:600">${sh.h.toFixed(2)}</span>
+                  <span style="width:82px;color:${hColor(sh.h)};font-size:10px">${hLabel(sh.h)}</span>
+                </div>`).join('')}
+              <div style="margin-top:4px;font-size:11px;color:${intColor};font-style:italic">${interpretation}</div>
+            </div>`;
+        })()}
       </div>
       <div class="et-card">
         <div class="et-card-lbl">Half-Life</div>
@@ -4011,7 +4143,18 @@ function computeOmegaScore(et, rmtQ) {
   else if (hurst < 0.65) hm = 1.00 - ((hurst - 0.50) / 0.15) * 0.20;  // 1.00 → 0.80
   else if (hurst < 0.80) hm = 0.80 - ((hurst - 0.65) / 0.15) * 0.20;  // 0.80 → 0.60
   else                   hm = 0.60 - ((hurst - 0.80) / 0.20) * 0.10;  // 0.60 → 0.50 at H=1.0
-  hm = Math.max(0.50, Math.min(1.00, hm)); // floor 0.50 — always meaningful differentiation
+  hm = Math.max(0.50, Math.min(1.00, hm));
+
+  // Multi-scale bonus: if short-term H is HIGH but structural H is LOW,
+  // the trend is a short-term phenomenon only — it is likely exhausting.
+  // In this case, soften the HM penalty by up to +0.10 (max bonus).
+  // hTrend < 0 means H drops from short scale to long scale = trend exhausting.
+  const hTrend = (et.hTrend !== undefined && isFinite(et.hTrend)) ? et.hTrend : 0;
+  if (hTrend < -0.10) {
+    // Trend exhaustion bonus — scales linearly: -0.10 → +0.03, -0.30+ → +0.10
+    const exhaustionBonus = Math.min(0.10, Math.abs(hTrend + 0.10) / 0.20 * 0.10);
+    hm = Math.min(1.00, hm + exhaustionBonus);
+  }
 
   // Entropy multiplier — confidence modifier based on how predictable the ratio series is.
   // Low entropy (< 0.6) = highly regular = full score.
@@ -4137,8 +4280,21 @@ function applyUnifiedVerdict(swapSc, quantumSc, et) {
       vEl.textContent = `${em} ${title}`;
     }
 
-    // NOTE: deliberately NOT overriding .sp-sub — renderScore puts the ratio/7d trend there,
-    // which is valuable context. OMEGA description goes into sp-trs-tag instead.
+    // Update .sp-sub with OMEGA-accurate description + keep ratio/7d info
+    const subEl = sp.querySelector('.sp-sub');
+    if (subEl) {
+      // Build accurate OMEGA-driven subtitle
+      const omSubText = omega >= 60
+        ? `All forces aligned — high confidence entry`
+        : omega >= 40
+          ? `Signal exists — proceed with caution, reduce size`
+          : omega >= 20
+            ? `Weak signal — watch only, do not swap yet`
+            : `No edge — hold your current position`;
+      // Preserve the ratio/7d info span that renderScore injected
+      const existingSpan = subEl.querySelector('span');
+      subEl.innerHTML = omSubText + (existingSpan ? existingSpan.outerHTML : '');
+    }
 
     // OMEGA breakdown bars (5 forces)
     let omegaSec = sp.querySelector('.omega-section');
@@ -4153,12 +4309,22 @@ function applyUnifiedVerdict(swapSc, quantumSc, et) {
     const epmPct = Math.round(om.epm * 100);
     const entMultPct = Math.round((om.entropyMult || 1) * 100);
     const kZStr = om.zForSE ? (om.zForSE >= 0 ? '+' : '') + om.zForSE.toFixed(2) + 'σ' : '';
-    // Hurst sub-label: show both 60d and 30d if regime has recently changed
-    const h60 = et.hurst60 !== undefined ? et.hurst60 : et.hurst;
-    const h30 = et.hurst30 !== undefined ? et.hurst30 : et.hurst;
-    const hurstSub = et.hurstRegimeWarn
-      ? `Hurst 60d:${h60.toFixed(2)} / 30d:${h30.toFixed(2)} ⚠️ trending recently`
-      : `Hurst ${et.hurst.toFixed(2)}`;
+    // Hurst sub-label: use multi-scale data if available
+    const ms = et.msHurst;
+    let hurstSub;
+    if (ms && ms.scaleH && ms.scaleH.length >= 2) {
+      const sh = ms.shortH.toFixed(2);
+      const lh = ms.structuralH.toFixed(2);
+      const trend = ms.hTrend;
+      const trendIcon = trend < -0.10 ? '⬇' : trend > 0.10 ? '⬆' : '↔';
+      hurstSub = `Hurst ${et.hurst.toFixed(2)} · ${trendIcon} short ${sh} → structural ${lh}`;
+    } else {
+      const h60 = et.hurst60 !== undefined ? et.hurst60 : et.hurst;
+      const h30 = et.hurst30 !== undefined ? et.hurst30 : et.hurst;
+      hurstSub = et.hurstRegimeWarn
+        ? `Hurst 60d:${h60.toFixed(2)} / 30d:${h30.toFixed(2)} ⚠️ trending recently`
+        : `Hurst ${et.hurst.toFixed(2)}`;
+    }
     // MQ sub-label: show both components
     const corrPct = typeof _lastPairCorr === 'number' ? (_lastPairCorr * 100).toFixed(0) + '% corr' : '';
     const mqSub = corrPct ? `RMT + ${corrPct}` : 'RMT sync';
@@ -4200,7 +4366,7 @@ function applyUnifiedVerdict(swapSc, quantumSc, et) {
           <span class="omega-lbl">Reversion Gate (HM)</span>
           <div class="omega-track"><div class="omega-fill" style="width:${hmPct}%;background:${hmCol}"></div></div>
           <span class="omega-val" style="color:${hmCol}">${hmPct}%</span>
-          <span class="omega-epm">Hurst ${et.hurst.toFixed(2)} · ${hmLbl}</span>`;
+          <span class="omega-epm">Hurst ${et.hurst.toFixed(2)} · ${hmLbl}${et.hTrend < -0.10 ? ' · ⬇ trend exhausting' : ''}</span>`;
         })()}
       </div>
       <div class="omega-row" style="margin-top:4px">
@@ -4225,6 +4391,18 @@ function applyUnifiedVerdict(swapSc, quantumSc, et) {
       : omega >= 20 ? 'Weak signal — watch only'
       : 'No edge — hold position';
     trsTag.innerHTML = `<span style="font-family:monospace;letter-spacing:.3px">Ω OMEGA SCORE &nbsp;·&nbsp; ${omLabel}</span>`;
+
+    // Fix Z-score panel label — update now that we have the definitive current Hurst
+    const zLabelEl = sp.querySelector('.sp-zscore-panel [style*="font-size:10px"]');
+    if (zLabelEl) {
+      const isTrending = hurst > 0.72;
+      const hurstNote = isTrending ? ` ⚠️ Hurst ${hurst.toFixed(2)}: pair is trending` : '';
+      const currentZLabel = zLabelEl.textContent || '';
+      // Replace any existing hurst warning then re-apply correctly
+      const baseLabel = currentZLabel.replace(/ ⚠️ Hurst.*$/,'');
+      zLabelEl.textContent = baseLabel.replace(' — very high reversion probability', isTrending ? '' : ' — very high reversion probability')
+                                       .replace(' — high reversion probability', isTrending ? '' : ' — high reversion probability') + hurstNote;
+    }
   }
 
   /* ── Update Master Action Box ── */
