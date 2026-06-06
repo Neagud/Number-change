@@ -1927,6 +1927,7 @@ function renderMain(series){
       <div class="ma-instruction" id="maInstruction">Fetching market data...</div>
       <div class="ma-reason" id="maReason"></div>
       <div class="ma-checklist" id="maChecklist"></div>
+      <div id="maTradePlan" style="display:none"></div>
       <div class="swap-size-rec" id="swapSizeRec" style="display:none!important">
         <span class="swap-size-label">Recommended swap size</span>
         <span class="swap-size-val" id="swapSizeVal">—</span>
@@ -4255,6 +4256,67 @@ function applyUnifiedVerdict(et) {
     cl.innerHTML = checks.map(c =>
       `<span class="ma-check ${c.ok ? 'safe' : 'fail'}">${c.ok ? '✓' : '✗'} ${c.label}</span>`
     ).join('');
+  }
+
+  /* ── TRADE PLAN — shown only when OMEGA ≥ 60 (swap now zone) ── */
+  const tpEl = document.getElementById('maTradePlan');
+  if (tpEl) {
+    if (omega >= 60) {
+      // Pull data from entry timing + currentStats
+      const st = currentStats;
+      const halfLife   = et.halfLife < 990 ? et.halfLife : null;
+      const expGain    = st ? (st.expectedRevertGain || 0) : 0;
+      const mean90     = st ? (st.mean90 || 0) : 0;
+      const curRatio   = st ? (st.cur || 0) : 0;
+      const swingPct   = st ? (st.swingPct || 0) : 0;
+
+      // Days estimate: OU half-life × 0.7 = median time to mean (from daysToMeanEst formula)
+      // Range: faster end = halfLife×0.4, slower end = halfLife×1.5
+      const daysMin  = halfLife ? Math.max(1, Math.round(halfLife * 0.4)) : null;
+      const daysMid  = halfLife ? Math.max(2, Math.round(halfLife * 0.7)) : null;
+      const daysMax  = halfLife ? Math.max(3, Math.round(halfLife * 1.5)) : null;
+      const daysStr  = daysMid
+        ? `${daysMin}–${daysMax} days <span style="opacity:.55">(median ~${daysMid}d)</span>`
+        : 'Unknown — no OU data';
+
+      // Profit estimate: conservative = 60% reversion, target = full mean, optimistic = slight overshoot
+      const profConservative = Math.abs(expGain * 0.6).toFixed(1);
+      const profTarget       = Math.abs(expGain).toFixed(1);
+      const profOptimistic   = Math.abs(expGain * 1.25).toFixed(1);
+
+      // Mean target format
+      const meanFmt = mean90 > 1 ? mean90.toFixed(4) : mean90.toFixed(7);
+      const curFmt  = curRatio > 1 ? curRatio.toFixed(4) : curRatio.toFixed(7);
+
+      // Exit signal description
+      const exitSignal = `when Z-score returns below 0.5 OR ratio reaches ${meanFmt}`;
+
+      tpEl.style.display = 'block';
+      tpEl.innerHTML = `
+        <div style="margin-top:12px;border:1px solid rgba(0,192,118,0.25);border-radius:8px;overflow:hidden">
+          <div style="background:rgba(0,192,118,0.08);padding:8px 12px;font-size:10px;font-family:monospace;color:#00c076;font-weight:700;letter-spacing:.5px">
+            📋 TRADE PLAN
+          </div>
+          <div style="padding:12px;display:flex;gap:12px;align-items:stretch">
+            <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:6px;padding:10px 12px;text-align:center">
+              <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:4px">⏱ SWAP BACK IN</div>
+              <div style="font-size:26px;font-weight:700;color:var(--text)">${daysMid ? daysMid : '—'}<span style="font-size:13px;font-weight:400;color:var(--text3)"> days</span></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">target: ${meanFmt}</div>
+            </div>
+            <div style="flex:1;background:rgba(0,192,118,0.06);border-radius:6px;padding:10px 12px;text-align:center;border:1px solid rgba(0,192,118,0.2)">
+              <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:4px">💰 EXPECTED GAIN</div>
+              <div style="font-size:26px;font-weight:700;color:#00c076">+${profTarget}<span style="font-size:13px">%</span></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">more ${fromSym} after swap back</div>
+            </div>
+          </div>
+          <div style="padding:0 12px 10px;font-size:10px;color:var(--text3)">
+            📤 Swap back when Z-score drops below 0.5 or ratio reaches ${meanFmt}
+          </div>
+        </div>`;
+    } else {
+      tpEl.style.display = 'none';
+      tpEl.innerHTML = '';
+    }
   }
 }
 
