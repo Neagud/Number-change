@@ -4550,8 +4550,8 @@ function computeQSS(closes, corr) {
      Same OU physics as OMEGA but using shorter window = faster spring detection.
      Directional: negative force (pulling toward mean) = good. */
   const ouHL20  = ouHalfLifeET(closes.slice(-25));
-  // Only use OU if half-life ≤ 14 days (true short-term spring — scalp territory)
-  const theta20 = ouHL20 <= 14 ? Math.log(2)/ouHL20 : 0;
+  // Use OU if half-life ≤ 20 days — still fast enough for a scalp
+  const theta20 = ouHL20 <= 20 ? Math.log(2)/ouHL20 : 0;
   const ouF20   = theta20 * (mean30 - closes[n-1]);
   const ouFPct20 = std30 > 0 ? (ouF20/std30)*100 : 0;
   // Negate: negative ouFPct20 (pulling down toward mean) → positive score
@@ -4591,9 +4591,12 @@ function computeQSS(closes, corr) {
   /* ── Trade estimates ── */
   // Expected gain = distance from current to 30-day mean
   const expGain  = mean30 > 0 ? Math.abs((closes[n-1]/mean30 - 1)*100) : 0;
-  // Hold days: OU half-life × 0.5, capped at 7 days max (scalp = short by definition)
-  // If ouHL20 > 14, no reliable short-term estimate — return null (pair will be filtered out)
-  const holdDays = ouHL20 <= 14 ? Math.min(7, Math.max(1, Math.round(ouHL20 * 0.5))) : null;
+  // Hold days estimate:
+  // If OU spring is fast (≤20d) → use OU half-life × 0.5, capped at 7d
+  // If OU spring is slow/absent → estimate from Z30 (further from mean = reverts faster at short scale)
+  const holdDays = ouHL20 <= 20
+    ? Math.min(7, Math.max(1, Math.round(ouHL20 * 0.5)))
+    : z30 > 2.0 ? 4 : z30 > 1.5 ? 5 : z30 > 1.0 ? 6 : 7;
   const meanFmt  = mean30 > 1 ? mean30.toFixed(4) : mean30.toFixed(7);
 
   return {
@@ -4643,9 +4646,9 @@ async function runScalpScan() {
       const corr   = calcCorrelation(fC, tC);
       const q      = computeQSS(ratioC, corr);
       if (!q) return;
-      // Filter 1: must have a short-term hold estimate (ouHL ≤ 14d)
-      // If holdDays is null, OU spring is too slow — this is a swing trade not a scalp
-      if (!q.holdDays) return;
+      // holdDays always has a value now (OU-based or Z30-based fallback)
+      // Only skip if Z30 is too weak to be worth trading
+      if (q.z30 < 0.8) return;
       // Filter 2: minimum gain after fees
       const netGain = q.expGain - fee;
       if (q.expGain < minGain) return;
@@ -4690,7 +4693,7 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
                  : isHot ? `<span class="qs-badge" style="background:rgba(245,166,35,.15);color:#f5a623">👁 WATCH</span>`
                  : `<span class="qs-badge" style="background:rgba(255,255,255,.06);color:var(--text3)">WEAK</span>`;
 
-    const holdStr  = d.holdDays ? `~${d.holdDays}d` : '—';
+    const holdStr  = `~${d.holdDays}d${d.ouHL20 > 20 ? '*' : ''}`;
     const netStr   = (d.expGain - fee).toFixed(1);
     const netCol   = parseFloat(netStr) > 0 ? '#00c076' : '#ef4444';
 
@@ -4738,6 +4741,7 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
         <div style="font-size:10px;color:var(--text3)">
           Target: <strong style="color:var(--text2)">${d.meanFmt}</strong> (30d mean) ·
           Exit when Z30 &lt; 0.3
+          ${d.ouHL20 > 20 ? '<br><span style="opacity:.55">* Hold est. from Z30 — no fast OU spring (pair trending). Higher risk.</span>' : ''}
         </div>
         <div style="margin-top:8px">
           <button onclick="switchAnalyzerPair('${holding}','${d.sym}')" style="font-family:monospace;font-size:10px;padding:4px 12px;border-radius:6px;border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">
