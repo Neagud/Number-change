@@ -515,11 +515,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   .st-detail-title{font-size:15px}
   .st-back-btn{padding:5px 10px;font-size:11px}
 
-  /* New tracker form */
-  #stNewTrackerForm .st-form-grid{grid-template-columns:1fr 1fr}
+  /* New tracker form — single column on mobile for clarity */
+  #stNewTrackerForm .st-form-grid{grid-template-columns:1fr}
+  #stNewTrackerForm select, #stNewTrackerForm input{min-height:44px;font-size:15px}
 
   /* Swap form inside tracker */
   #stSwapForm .st-form-grid{grid-template-columns:1fr 1fr}
+  #stSwapForm select, #stSwapForm input[type=number]{min-height:44px;font-size:15px}
 
   /* Score panel footer */
   .reanalyze-btn{font-size:9px;padding:3px 8px}
@@ -1203,7 +1205,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <!-- New tracker form -->
     <div class="st-form" id="stNewTrackerForm" style="display:none">
       <div class="st-title">Create a new tracker</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px">
         <div class="st-form-group">
           <label>Tracker name</label>
           <input type="text" id="nt-name" placeholder="e.g. My XLM strategy">
@@ -5051,14 +5053,28 @@ function bindTrackerListUI(){
   if(_trackerUIBound) return; // only bind once
   _trackerUIBound=true;
 
-  // Populate asset selects
-  ['nt-asset-a','nt-asset-b'].forEach((id,idx)=>{
-    const sel=document.getElementById(id);
-    if(!sel) return;
-    sel.innerHTML='';
-    COINS_LIST.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
-    sel.selectedIndex=idx; // default A=BTC, B=ETH
-  });
+  // Populate asset selects — A and B must always be different coins
+  const ntA = document.getElementById('nt-asset-a');
+  const ntB = document.getElementById('nt-asset-b');
+  function populateNtB(excludeVal){
+    const prev = ntB.value;
+    ntB.innerHTML = '';
+    COINS_LIST.filter(c => c !== excludeVal).forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c;
+      ntB.appendChild(o);
+    });
+    // Restore previous selection if still valid, else pick first available
+    if(prev && prev !== excludeVal) ntB.value = prev;
+    else ntB.selectedIndex = 0;
+  }
+  if(ntA){
+    ntA.innerHTML = '';
+    COINS_LIST.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;ntA.appendChild(o);});
+    ntA.value = 'XRP'; // sensible default
+    populateNtB('XRP'); // B defaults to BTC (first after removing XRP)
+    ntA.addEventListener('change', () => populateNtB(ntA.value));
+  }
 
   initExportImport();
   newBtn.onclick=()=>{form.style.display=form.style.display==='none'?'block':'none';};
