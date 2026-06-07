@@ -2779,7 +2779,9 @@ function _clearScore(){ try{ localStorage.removeItem(_scoreKey()); }catch(e){} }
 function _syncScoreCache(a, b, score){
   const key=a+'_'+b;
   if(typeof _scoreCache!=='undefined'){
-    _scoreCache[key]={score};
+    // Store omega field too so tracker cards reading res.omega get the right value
+    const existing=_scoreCache[key]||{};
+    _scoreCache[key]={...existing, score, omega: score};
     _scoreCacheTime[key]=Date.now();
   }
 }
@@ -6160,11 +6162,11 @@ function renderSwapTable(tr){
       /* Respect base-asset rules when editing */
       const editBase=sw.fromAsset===t.assetA;
       if(editBase){
-        const toOpts=COINS_LIST.filter(c=>c!==t.assetA);
+        // Two-coin tracker: TO is always the paired asset, never any other coin
         populateAssetSelect('sf-from-asset',[t.assetA],t.assetA);
-        populateAssetSelect('sf-to-asset',toOpts,sw.toAsset);
+        populateAssetSelect('sf-to-asset',[t.assetB],t.assetB);
         document.getElementById('sf-from-asset').disabled=true;
-        document.getElementById('sf-to-asset').disabled=false;
+        document.getElementById('sf-to-asset').disabled=true;
       } else {
         populateAssetSelect('sf-from-asset',[sw.fromAsset],sw.fromAsset);
         populateAssetSelect('sf-to-asset',[t.assetA],t.assetA);
@@ -6226,12 +6228,11 @@ function resetSwapForm(tr){
 
   const holdingBase=curAsset===tr.assetA;
   if(holdingBase){
-    // Holding base → FROM locked to base, TO = any other coin
-    const toOptions=COINS_LIST.filter(c=>c!==tr.assetA);
+    // Holding base → FROM locked to base, TO locked to paired asset only (two-coin tracker)
     populateAssetSelect('sf-from-asset',[tr.assetA],tr.assetA);
-    populateAssetSelect('sf-to-asset',toOptions,tr.assetB||toOptions[0]);
+    populateAssetSelect('sf-to-asset',[tr.assetB],tr.assetB);
     document.getElementById('sf-from-asset').disabled=true;
-    document.getElementById('sf-to-asset').disabled=false;
+    document.getElementById('sf-to-asset').disabled=true;
   } else {
     // Holding another asset → FROM locked to it, TO locked to base only
     populateAssetSelect('sf-from-asset',[curAsset],curAsset);
