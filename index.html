@@ -5450,130 +5450,148 @@ async function buildLiveMonitor(tr, curAsset) {
     ? Math.max(1, Math.round(halfLife * 0.7))
     : currentZ < -1.5 ? 14 : currentZ < -0.8 ? 8 : currentZ < -0.3 ? 4 : 1;
 
-  // ── Smart recommendation ──
-  let recTitle, recBody, recColor, recBg, recIcon;
+  // ── Plain-English status ──
+  let statusIcon, statusLine, statusDetail, statusColor, statusBg;
   if (currentZ > 1.5) {
-    recTitle = '🎯 EXIT NOW — ratio overshot the mean';
-    recBody  = `${curAsset} is now ${currentZ.toFixed(1)}σ ABOVE its 60d mean — it has overshot. This is the ideal exit window. Swap back to ${tr.assetA} to lock in maximum gains before the ratio corrects back down.`;
-    recColor = '#00c076'; recBg = 'rgba(0,192,118,0.09)'; recIcon = '✅';
+    statusIcon = '🎯'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.10)';
+    statusLine = 'Time to sell — you are in the profit zone';
+    statusDetail = `${curAsset} has risen well above its normal range. Swap back to ${tr.assetA} now to lock in your gains.`;
   } else if (currentZ > 0.8) {
-    recTitle = '💰 STRONG EXIT SIGNAL — above mean, consider closing';
-    recBody  = `${curAsset} is ${currentZ.toFixed(1)}σ above its 60d average. You're in profit territory. You can exit now for a strong gain, or hold for a few more days to squeeze out the last ${(remainingToMean > 0 ? remainingToMean : 0).toFixed(1)}% if the ratio continues — but risk increases.`;
-    recColor = '#00c076'; recBg = 'rgba(0,192,118,0.07)'; recIcon = '🟢';
+    statusIcon = '✅'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.08)';
+    statusLine = 'Looking good — consider selling soon';
+    statusDetail = `${curAsset} is above average and still climbing. You can sell now for a solid gain, or wait a few more days for the peak.`;
   } else if (currentZ > 0.2) {
-    recTitle = '📈 APPROACHING EXIT — nearly at mean';
-    recBody  = `Ratio is ${currentZ.toFixed(1)}σ above mean — almost there. Hold a bit longer. The target exit zone is Z > 1.2σ. Est. ${estDays} more days to reach it.`;
-    recColor = '#f5a623'; recBg = 'rgba(245,166,35,0.07)'; recIcon = '📈';
+    statusIcon = '📈'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.06)';
+    statusLine = 'Almost there — keep holding';
+    statusDetail = `${curAsset} is nearly back to its normal price vs ${tr.assetA}. A little more patience and you will be in sell territory.`;
   } else if (currentZ > -0.3) {
-    recTitle = '⚖️ AT THE MEAN — ratio returned to average';
-    recBody  = `Good news: the ratio is back at its 60d mean. You have ${gainSoFar >= 0 ? 'a small gain' : 'broken even'}. For maximum profit, wait until Z > 1.2σ before exiting. Est. ${estDays} more days.`;
-    recColor = '#f5a623'; recBg = 'rgba(245,166,35,0.07)'; recIcon = '⚖️';
-  } else if (phase === 3 || phase === 4) {
-    recTitle = '🔄 REVERSAL CONFIRMED — hold, it is turning';
-    recBody  = `The ratio is in deceleration phase (${phaseLabel}). This means the move against you is slowing — reversal has started. The spring is loaded at ${currentZ.toFixed(1)}σ below mean. Est. exit in ~${estDays} days. Do NOT exit now.`;
-    recColor = '#f5a623'; recBg = 'rgba(245,166,35,0.07)'; recIcon = '🔄';
-  } else if (phase === 5) {
-    recTitle = '↩️ REVERSAL IN PROGRESS — ratio rising';
-    recBody  = `The ratio has reversed and is climbing back. ${curAsset} is gaining vs ${tr.assetA}. Hold — you're on the right side now. Exit target: ratio above mean (+1.2σ), est. ~${estDays} days.`;
-    recColor = '#f5a623'; recBg = 'rgba(245,166,35,0.07)'; recIcon = '↩️';
+    statusIcon = '⚖️'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
+    statusLine = 'Back to normal — wait for the overshoot';
+    statusDetail = `The price is back to its average. Hold a bit longer — it usually overshoots above average before settling. That is your best exit point.`;
+  } else if (phase === 3 || phase === 4 || phase === 5) {
+    statusIcon = '🔄'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
+    statusLine = 'Turning around now — stay patient';
+    statusDetail = `The price move is slowing down and starting to reverse. This is exactly what you were waiting for. Hold — it should reach the sell zone in about ${estDays} days.`;
   } else {
-    // Still building (phase 0/1/2 — still moving against us or unclear)
-    const springNote = ouForcePct < -3
-      ? ` The OU spring is loading at ${Math.abs(ouForcePct).toFixed(1)}%/day — mechanical pull is building.`
-      : '';
-    const normalNote = daysSinceEntry < 10
-      ? ` Entered only ${Math.floor(daysSinceEntry)}d ago — it is completely normal to be temporarily red. Pairs often keep diverging for 1–3 weeks before reversing.`
-      : '';
-    recTitle = '⏳ HOLD — spring is loading, reversal not yet';
-    recBody  = `${curAsset} is ${Math.abs(currentZ).toFixed(1)}σ below its 60d mean. The deeper it goes, the stronger the spring that will pull it back.${springNote}${normalNote} Watch for Phase 3 (deceleration) — that signals the reversal is close.`;
-    recColor = '#ef4444'; recBg = 'rgba(239,68,68,0.06)'; recIcon = '⏳';
+    statusIcon = '⏳'; statusColor = '#ef4444'; statusBg = 'rgba(239,68,68,0.06)';
+    statusLine = daysSinceEntry < 8 ? 'Normal — trades often dip before recovering' : 'Still waiting — hold your position';
+    statusDetail = daysSinceEntry < 8
+      ? `It has only been ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} — being temporarily down is completely normal. The price usually takes 1–3 weeks to reverse. Do not panic.`
+      : `${curAsset} is still below its average vs ${tr.assetA}. The deeper it falls, the stronger it bounces back. Keep holding and check back daily.`;
   }
 
-  // ── Progress bar positions (mapped to -3σ … +2.5σ range) ──
+  // ── Progress bar (the journey) ──
   const rangeMin = -3, rangeMax = 2.5, rangeTotal = rangeMax - rangeMin;
-  const toPct = z => Math.max(2, Math.min(98, (z - rangeMin) / rangeTotal * 100));
+  const toPct = z => Math.max(1, Math.min(99, (z - rangeMin) / rangeTotal * 100));
   const entryPct   = toPct(entryZ);
   const currentPct = toPct(currentZ);
   const meanPct    = toPct(0);
   const exitPct    = toPct(1.5);
-  const barLeft    = Math.min(entryPct, currentPct);
-  const barWidth   = Math.abs(currentPct - entryPct);
-  const barColor   = currentZ > 0.3 ? '#00c076' : currentZ > -0.5 ? '#f5a623' : '#ef4444';
+  // Filled segment: from entry up to current (shows how far we've traveled)
+  const fillLeft  = Math.min(entryPct, currentPct);
+  const fillWidth = Math.abs(currentPct - entryPct);
+  const dotColor  = currentZ > 0.3 ? '#00c076' : currentZ > -0.8 ? '#f5a623' : '#ef4444';
 
-  const dayStr = daysSinceEntry < 1 ? 'today'
-    : daysSinceEntry < 2 ? '1 day ago'
-    : `${Math.floor(daysSinceEntry)} days ago`;
-
-  const decFmt = (v) => v > 1 ? v.toFixed(4) : v.toFixed(7);
+  // Gain labels
+  const nowLabel    = (gainSoFar >= 0 ? '+' : '') + gainSoFar.toFixed(1) + '%';
+  const targetLabel = '+' + (gainSoFar + (remainingToMean > 0 ? remainingToMean : 0)).toFixed(1) + '%';
+  const dayStr = daysSinceEntry < 1 ? 'today' : daysSinceEntry < 2 ? '1 day ago' : `${Math.floor(daysSinceEntry)} days ago`;
+  const exitLabel = currentZ > 1.2 ? 'NOW' : `~${estDays}d`;
+  const decFmt = v => v > 1 ? v.toFixed(4) : v.toFixed(7);
 
   return `
-    <div style="background:var(--bg3);border:2px solid ${recColor === '#00c076' ? 'rgba(0,192,118,0.35)' : recColor === '#f5a623' ? 'rgba(245,166,35,0.35)' : 'rgba(239,68,68,0.35)'};border-radius:var(--rs);padding:12px 16px;margin-bottom:.75rem">
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:.75rem">
 
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:10px;font-family:monospace;color:var(--text3);font-weight:700;letter-spacing:.6px">📡 LIVE TRADE MONITOR</div>
-        <div style="font-size:10px;font-family:monospace;color:var(--text3)">entered ${dayStr}</div>
+      <!-- Header strip -->
+      <div style="background:var(--bg3);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.3px">📡 Trade Progress</div>
+        <div style="font-size:10px;color:var(--text3)">started ${dayStr}</div>
       </div>
 
-      <!-- Main recommendation -->
-      <div style="background:${recBg};border-radius:6px;padding:9px 12px;margin-bottom:10px;border:1px solid ${recColor === '#00c076' ? 'rgba(0,192,118,0.22)' : recColor === '#f5a623' ? 'rgba(245,166,35,0.22)' : 'rgba(239,68,68,0.22)'}">
-        <div style="font-size:13px;font-weight:700;color:${recColor};margin-bottom:4px">${recIcon} ${recTitle}</div>
-        <div style="font-size:11px;color:var(--text2);line-height:1.65">${recBody}</div>
-      </div>
+      <div style="padding:16px">
 
-      <!-- Progress bar: entry → current → mean → exit -->
-      <div style="margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;font-size:8px;font-family:monospace;color:var(--text3);margin-bottom:4px">
-          <span>entered (${entryZ.toFixed(1)}σ)</span>
-          <span>mean (0σ)</span>
-          <span>exit (+1.5σ)</span>
+        <!-- Status message -->
+        <div style="background:${statusBg};border-radius:8px;padding:11px 14px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start">
+          <span style="font-size:20px;line-height:1">${statusIcon}</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:${statusColor};margin-bottom:3px">${statusLine}</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.6">${statusDetail}</div>
+          </div>
         </div>
-        <div style="height:10px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:visible;position:relative;margin:0 4px">
-          <!-- progress fill -->
-          <div style="position:absolute;left:${barLeft}%;width:${barWidth}%;height:100%;background:${barColor};opacity:0.55;border-radius:5px"></div>
-          <!-- mean line -->
-          <div style="position:absolute;left:${meanPct}%;width:2px;height:100%;background:rgba(255,255,255,0.25)"></div>
-          <!-- exit zone line -->
-          <div style="position:absolute;left:${exitPct}%;width:2px;height:100%;background:rgba(0,192,118,0.5)"></div>
-          <!-- current position dot -->
-          <div style="position:absolute;left:${currentPct}%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:${barColor};border:2px solid var(--bg3);border-radius:50%;box-shadow:0 0 6px ${barColor}88"></div>
-          <!-- entry marker -->
-          <div style="position:absolute;left:${entryPct}%;top:50%;transform:translate(-50%,-50%);width:6px;height:6px;background:rgba(255,255,255,0.3);border-radius:50%"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:8px;font-family:monospace;margin-top:4px">
-          <span style="color:rgba(255,255,255,0.3)">● entry</span>
-          <span style="color:${gainSoFar>=0?'#00c076':'#ef4444'};font-weight:700">${gainSoFar>=0?'+':''}${gainSoFar.toFixed(1)}% so far &nbsp;·&nbsp; ${progressPct.toFixed(0)}% of trade done</span>
-          <span style="color:rgba(0,192,118,0.7)">exit zone →</span>
-        </div>
-      </div>
 
-      <!-- Key metrics -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px">
-        <div style="background:rgba(255,255,255,0.03);border-radius:5px;padding:5px 6px;text-align:center">
-          <div style="font-size:7px;color:var(--text3);font-family:monospace;text-transform:uppercase">Days held</div>
-          <div style="font-size:13px;font-weight:700;color:var(--text)">${Math.floor(daysSinceEntry)}d</div>
-        </div>
-        <div style="background:rgba(255,255,255,0.03);border-radius:5px;padding:5px 6px;text-align:center">
-          <div style="font-size:7px;color:var(--text3);font-family:monospace;text-transform:uppercase">Z-score</div>
-          <div style="font-size:13px;font-weight:700;color:${currentZ>0?'#00c076':currentZ>-1?'#f5a623':'#ef4444'}">${currentZ.toFixed(2)}σ</div>
-        </div>
-        <div style="background:rgba(255,255,255,0.03);border-radius:5px;padding:5px 6px;text-align:center">
-          <div style="font-size:7px;color:var(--text3);font-family:monospace;text-transform:uppercase">To mean</div>
-          <div style="font-size:13px;font-weight:700;color:${remainingToMean>0?'#00c076':'#f5a623'}">${remainingToMean>0?'+':''}${remainingToMean.toFixed(1)}%</div>
-        </div>
-        <div style="background:rgba(255,255,255,0.03);border-radius:5px;padding:5px 6px;text-align:center">
-          <div style="font-size:7px;color:var(--text3);font-family:monospace;text-transform:uppercase">Est. exit</div>
-          <div style="font-size:13px;font-weight:700;color:var(--text)">${currentZ > 1.2 ? 'now' : '~'+estDays+'d'}</div>
-        </div>
-      </div>
+        <!-- ══ JOURNEY BAR ══ -->
+        <div style="margin-bottom:20px">
 
-      <!-- Footer: phase + mean target + analyze button -->
-      <div style="font-size:9px;font-family:monospace;color:var(--text3);display:flex;align-items:center;flex-wrap:wrap;gap:6px">
-        <span>Phase: <strong style="color:var(--text2)">${phaseLabel}</strong></span>
-        <span>·</span>
-        <span>Target: <strong style="color:#00c076">${decFmt(mean60)}</strong></span>
-        <span>·</span>
-        <span>OU: <strong style="color:${ouForcePct<0?'#00c076':'#ef4444'}">${ouForcePct<0?'pulling to mean':'no spring yet'}</strong></span>
-        <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-left:auto;font-family:monospace;font-size:9px;padding:2px 9px;border-radius:5px;border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text3)">Full analysis →</button>
+          <!-- Step labels above bar -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;margin-bottom:8px;font-size:10px;font-family:monospace">
+            <div style="color:var(--text3)">① You entered here</div>
+            <div style="text-align:center;color:var(--text3)">② Halfway point</div>
+            <div style="text-align:right;color:#00c076">③ Sell here ✓</div>
+          </div>
+
+          <!-- The bar -->
+          <div style="position:relative;height:22px;background:rgba(255,255,255,0.05);border-radius:11px;overflow:visible">
+
+            <!-- Background gradient zones: left=danger, right=profit -->
+            <div style="position:absolute;inset:0;border-radius:11px;background:linear-gradient(to right,rgba(239,68,68,0.12) 0%,rgba(245,166,35,0.08) 45%,rgba(0,192,118,0.15) 75%,rgba(0,192,118,0.30) 100%);overflow:hidden"></div>
+
+            <!-- Traveled segment (entry → current) -->
+            <div style="position:absolute;top:3px;bottom:3px;left:${fillLeft}%;width:${fillWidth}%;background:${dotColor};opacity:0.4;border-radius:8px;transition:width .5s"></div>
+
+            <!-- Mean divider -->
+            <div style="position:absolute;left:${meanPct}%;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.20);border-radius:1px"></div>
+
+            <!-- Exit zone marker -->
+            <div style="position:absolute;left:${exitPct}%;top:0;bottom:0;width:3px;background:rgba(0,192,118,0.7);border-radius:2px"></div>
+
+            <!-- Entry dot (hollow) -->
+            <div style="position:absolute;left:${entryPct}%;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border:2px solid rgba(255,255,255,0.35);border-radius:50%;background:var(--bg2)"></div>
+
+            <!-- Current position (glowing dot) -->
+            <div style="position:absolute;left:${currentPct}%;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;background:${dotColor};border:3px solid var(--bg2);border-radius:50%;box-shadow:0 0 10px ${dotColor},0 0 20px ${dotColor}55;z-index:2"></div>
+
+          </div>
+
+          <!-- Labels below bar -->
+          <div style="position:relative;height:28px;margin-top:6px;font-size:10px;font-family:monospace">
+            <span style="position:absolute;left:${Math.max(0,entryPct-2)}%;transform:translateX(-${entryPct>80?100:0}%);color:rgba(255,255,255,0.35)">entered</span>
+            <span style="position:absolute;left:${meanPct}%;transform:translateX(-50%);color:var(--text3)">normal price</span>
+            <span style="position:absolute;left:${exitPct}%;transform:translateX(-50%);color:#00c076;font-weight:700">sell zone</span>
+            <!-- current value floating above dot -->
+            <span style="position:absolute;left:${currentPct}%;transform:translateX(-50%);top:0;color:${dotColor};font-weight:700;white-space:nowrap">${nowLabel} now</span>
+          </div>
+
+        </div>
+
+        <!-- 4 key numbers -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <div style="background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--border)">
+            <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Days held</div>
+            <div style="font-size:20px;font-weight:700;color:var(--text)">${Math.floor(daysSinceEntry)}</div>
+            <div style="font-size:9px;color:var(--text3)">days</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--border)">
+            <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Right now</div>
+            <div style="font-size:20px;font-weight:700;color:${gainSoFar>=0?'#00c076':'#ef4444'}">${nowLabel}</div>
+            <div style="font-size:9px;color:var(--text3)">profit / loss</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--border)">
+            <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Potential gain</div>
+            <div style="font-size:20px;font-weight:700;color:#00c076">${targetLabel}</div>
+            <div style="font-size:9px;color:var(--text3)">if held to exit</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--border)">
+            <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Est. sell in</div>
+            <div style="font-size:20px;font-weight:700;color:${currentZ>1.2?'#00c076':'var(--text)'}">${exitLabel}</div>
+            <div style="font-size:9px;color:var(--text3)">${currentZ>1.2?'right now':'days'}</div>
+          </div>
+        </div>
+
+        <!-- Analyze link -->
+        <div style="margin-top:12px;text-align:right">
+          <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="font-family:monospace;font-size:10px;padding:4px 12px;border-radius:6px;border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text3)">Open full analysis →</button>
+        </div>
+
       </div>
     </div>`;
 }
