@@ -4966,55 +4966,35 @@ function renderTrackerList(){
     // card will be appended after score fetch
 
     if(curAsset!==tr.assetA){
-      // Score paired/base (assetB/assetA)
-      // High = paired outperforming base = good time to swap paired→base
-      // Low = paired underperforming = hold, wait
-      getScoreForPair(tr.assetB, tr.assetA).then(res=>{
-        const sc=res?res.score:0;
+      // Score curAsset/assetA — high OMEGA means curAsset is overvalued vs base = good time to swap back
+      getScoreForPair(curAsset, tr.assetA).then(res=>{
+        const sc=res?res.omega:0;
         const scoreEl=document.getElementById(scoreId);
         const cardEl=scoreEl?.closest('.st-tracker-card');
         if(!scoreEl||!cardEl) return;
-        const scCol=sc>=70?'#00c076':sc<=30?'#ef4444':'#f5a623';
-        const scBg=sc>=70?'rgba(0,192,118,0.12)':sc<=30?'rgba(239,68,68,0.1)':'rgba(245,166,35,0.1)';
-        const scLabel=sc>=70?'↩ SWAP BACK':sc<=30?'⛔ HOLD':'⏳ WATCH';
-        scoreEl.innerHTML=`<span style="font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:${scBg};color:${scCol}">${scLabel} ${sc}/100</span>`;
-        cardEl.style.borderColor=sc>=70?'rgba(0,192,118,0.6)':sc<=30?'rgba(239,68,68,0.5)':'rgba(245,166,35,0.5)';
-        cardEl.style.background=sc>=70?'rgba(0,192,118,0.03)':sc<=30?'rgba(239,68,68,0.03)':'transparent';
+        const scCol=sc>=60?'#00c076':sc>=30?'#f5a623':'#ef4444';
+        const scBg=sc>=60?'rgba(0,192,118,0.12)':sc>=30?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
+        const scLabel=sc>=60?'↩ SWAP BACK':sc>=30?'⏳ WATCH':'⛔ HOLD';
+        scoreEl.innerHTML=`<span style="font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:${scBg};color:${scCol}">${scLabel} Ω${sc}/100</span>`;
+        cardEl.style.borderColor=sc>=60?'rgba(0,192,118,0.6)':sc>=30?'rgba(245,166,35,0.5)':'rgba(239,68,68,0.4)';
+        cardEl.style.background=sc>=60?'rgba(0,192,118,0.03)':'transparent';
       }).catch(()=>{});
     } else {
       // ── Closed position (holding base): scan top 3 swap opportunities ──
+      // Holding base — only show score for the one paired asset (assetB)
       const scoreEl=document.getElementById(scoreId);
-      if(scoreEl) scoreEl.innerHTML=`<span style="font-size:11px;color:var(--text3);font-family:monospace">⏳ scanning...</span>`;
-
-      const candidates=COINS_LIST.filter(c=>c!==tr.assetA);
-      Promise.all(candidates.map(c=>getScoreForPair(tr.assetA,c).catch(()=>null))).then(results=>{
+      if(scoreEl) scoreEl.innerHTML=`<span style="font-size:11px;color:var(--text3);font-family:monospace">⏳ checking ${tr.assetB}...</span>`;
+      getScoreForPair(tr.assetA, tr.assetB).then(res=>{
         const scoreEl2=document.getElementById(scoreId);
         const cardEl=scoreEl2?.closest('.st-tracker-card');
         if(!scoreEl2||!cardEl) return;
-
-        const scored=candidates.map((c,i)=>({sym:c,omega:results[i]?results[i].omega:0}))
-          .filter(x=>x.omega>0).sort((a,b)=>b.omega-a.omega);
-        const top3=scored.slice(0,3);
-
-        if(!top3.length){ scoreEl2.innerHTML=''; return; }
-
-        const best=top3[0];
-        const bestCol=best.omega>=60?'#00c076':'#f5a623';
-        const bestBg=best.omega>=60?'rgba(0,192,118,0.12)':'rgba(245,166,35,0.1)';
-
-        const pills=top3.map((x,i)=>{
-          const c=x.omega>=60?'#00c076':x.omega<=20?'#ef4444':'#f5a623';
-          const b=x.omega>=60?'rgba(0,192,118,0.1)':'rgba(245,166,35,0.08)';
-          return `<span onclick="switchAnalyzerPair('${tr.assetA}','${x.sym}')" style="cursor:pointer;font-family:monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;background:${b};color:${c};border:1px solid ${c.replace(')',',0.3)').replace('rgb','rgba')}">${i===0?'→ ':''} ${x.sym} Ω${x.omega}</span>`;
-        }).join(' ');
-
-        scoreEl2.innerHTML=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span style="font-size:10px;color:var(--text3);font-family:monospace">Swap to:</span>
-          ${pills}
-        </div>`;
-
-        cardEl.style.borderColor=best.omega>=60?'rgba(0,192,118,0.4)':'rgba(245,166,35,0.3)';
-        cardEl.style.background='transparent';
+        const sc=res?res.omega:0;
+        const scCol=sc>=60?'#00c076':sc>=30?'#f5a623':'#ef4444';
+        const scBg=sc>=60?'rgba(0,192,118,0.12)':sc>=30?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
+        const scLabel=sc>=60?'⚡ SWAP NOW':sc>=30?'⏳ WATCH':'⛔ HOLD';
+        scoreEl2.innerHTML=`<span onclick="switchAnalyzerPair('${tr.assetA}','${tr.assetB}')" style="cursor:pointer;font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:${scBg};color:${scCol}">${scLabel} Ω${sc}</span>`;
+        cardEl.style.borderColor=sc>=60?'rgba(0,192,118,0.5)':sc>=30?'rgba(245,166,35,0.4)':'var(--border)';
+        cardEl.style.background=sc>=60?'rgba(0,192,118,0.03)':'transparent';
       }).catch(()=>{});
     }
 
@@ -5396,135 +5376,308 @@ async function getScoreForPair(a,b){
   }catch(e){return null;}
 }
 
+/* ══════════════════════════════════════════════════════════════
+   LIVE TRADE MONITOR
+   Fetches ratio history, identifies entry point, measures progress
+   toward reversion. Shows smart recommendation for open positions.
+══════════════════════════════════════════════════════════════ */
+async function buildLiveMonitor(tr, curAsset) {
+  const swaps = tr.swaps || [];
+  // Find last swap that landed us into curAsset
+  const lastSwap = [...swaps].reverse().find(s => s.toAsset === curAsset);
+  if (!lastSwap) return null;
+
+  const entryDateMs = new Date(lastSwap.date).getTime();
+  const daysSinceEntry = Math.max(0, (Date.now() - entryDateMs) / 86400000);
+
+  // Fetch 90-day ratio history: curAsset/assetA
+  let ratioCloses = [], ratioTs = [];
+  let mean60 = 0, std60 = 0.001, currentZ = 0, entryZ = 0, entryRatioHist = null;
+  let et = null, corr = 0.65;
+
+  try {
+    const [fk, tk] = await Promise.all([
+      fetch(`https://api.binance.com/api/v3/klines?symbol=${curAsset}USDT&interval=1d&limit=92`).then(r=>r.json()),
+      fetch(`https://api.binance.com/api/v3/klines?symbol=${tr.assetA}USDT&interval=1d&limit=92`).then(r=>r.json())
+    ]);
+    const fC = fk.map(k => +k[4]);
+    const tC = tk.map(k => +k[4]);
+    const fT = fk.map(k => +k[0]); // open timestamps
+    const n = Math.min(fC.length, tC.length);
+    ratioCloses = Array.from({length:n}, (_,i) => fC[fC.length-n+i] / tC[tC.length-n+i]);
+    ratioTs     = fT.slice(fT.length-n);
+
+    // 60-day mean/std for Z calculation
+    const w60 = ratioCloses.slice(-60);
+    mean60 = w60.reduce((a,b)=>a+b,0) / w60.length;
+    std60  = Math.sqrt(w60.reduce((s,v)=>s+(v-mean60)**2,0)/w60.length) || 0.001;
+
+    // Current Z
+    const currentRatio = ratioCloses[ratioCloses.length-1];
+    currentZ = (currentRatio - mean60) / std60;
+
+    // Entry Z — find closest historical candle to entry date
+    const ONEDAY = 86400000;
+    let closestIdx = ratioTs.reduce((best, ts, i) =>
+      Math.abs(ts - entryDateMs) < Math.abs(ratioTs[best] - entryDateMs) ? i : best, 0);
+    entryRatioHist = ratioCloses[closestIdx];
+    entryZ = (entryRatioHist - mean60) / std60;
+
+    // Correlation
+    corr = calcCorrelation(fC.slice(-60), tC.slice(-60));
+
+    // Entry timing on current ratio
+    et = analyzeEntryTiming(ratioCloses);
+  } catch(e) { return null; }
+
+  // ── Progress calculation ──
+  // Trade is: entered when curAsset/assetA was LOW (Z negative), exit when HIGH (Z > +1.2σ)
+  // Progress: how much of the journey from entryZ → 0 (mean) has been completed
+  const journeyTotal = Math.abs(entryZ); // how far below mean we entered
+  const journeyCovered = currentZ - entryZ; // how much ratio has moved toward mean
+  const progressPct = journeyTotal > 0 ? Math.max(0, Math.min(100, journeyCovered / journeyTotal * 100)) : 50;
+
+  // Gain so far (ratio improvement)
+  const gainSoFar = entryRatioHist > 0 ? (ratioCloses[ratioCloses.length-1] / entryRatioHist - 1) * 100 : 0;
+  const remainingToMean = mean60 > 0 ? (mean60 / ratioCloses[ratioCloses.length-1] - 1) * 100 : 0;
+
+  // Phase + OU
+  const phase = et ? et.phase : 0;
+  const phaseLabel = et ? et.phaseLabel : '—';
+  const ouForcePct = et ? (et.ouForcePct || 0) : 0;
+  const halfLife = et && et.halfLife < 990 ? et.halfLife : null;
+  const estDays = halfLife
+    ? Math.max(1, Math.round(halfLife * 0.7))
+    : currentZ < -1.5 ? 14 : currentZ < -0.8 ? 8 : currentZ < -0.3 ? 4 : 1;
+
+  // ── Smart recommendation ──
+  let recTitle, recBody, recColor, recBg, recIcon;
+  if (currentZ > 1.5) {
+    recTitle = '🎯 EXIT NOW — ratio overshot the mean';
+    recBody  = `${curAsset} is now ${currentZ.toFixed(1)}σ ABOVE its 60d mean — it has overshot. This is the ideal exit window. Swap back to ${tr.assetA} to lock in maximum gains before the ratio corrects back down.`;
+    recColor = '#00c076'; recBg = 'rgba(0,192,118,0.09)'; recIcon = '✅';
+  } else if (currentZ > 0.8) {
+    recTitle = '💰 STRONG EXIT SIGNAL — above mean, consider closing';
+    recBody  = `${curAsset} is ${currentZ.toFixed(1)}σ above its 60d average. You're in profit territory. You can exit now for a strong gain, or hold for a few more days to squeeze out the last ${(remainingToMean > 0 ? remainingToMean : 0).toFixed(1)}% if the ratio continues — but risk increases.`;
+    recColor = '#00c076'; recBg = 'rgba(0,192,118,0.07)'; recIcon = '🟢';
+  } else if (currentZ > 0.2) {
+    recTitle = '📈 APPROACHING EXIT — nearly at mean';
+    recBody  = `Ratio is ${currentZ.toFixed(1)}σ above mean — almost there. Hold a bit longer. The target exit zone is Z > 1.2σ. Est. ${estDays} more days to reach it.`;
+    recColor = '#f5a623'; recBg = 'rgba(245,166,35,0.07)'; recIcon = '📈';
+  } else if (currentZ > -0.3) {
+    recTitle = '⚖️ AT THE MEAN — ratio returned to average';
+    recBody  = `Good news: the ratio is back at its 60d mean. You have ${gainSoFar >= 0 ? 'a small gain' : 'broken even'}. For maximum profit, wait until Z > 1.2σ before exiting. Est. ${estDays} more days.`;
+    recColor = '#f5a623'; recBg = 'rgba(245,166,35,0.07)'; recIcon = '⚖️';
+  } else if (phase === 3 || phase === 4) {
+    recTitle = '🔄 REVERSAL CONFIRMED — hold, it is turning';
+    recBody  = `The ratio is in deceleration phase (${phaseLabel}). This means the move against you is slowing — reversal has started. The spring is loaded at ${currentZ.toFixed(1)}σ below mean. Est. exit in ~${estDays} days. Do NOT exit now.`;
+    recColor = '#f5a623'; recBg = 'rgba(245,166,35,0.07)'; recIcon = '🔄';
+  } else if (phase === 5) {
+    recTitle = '↩️ REVERSAL IN PROGRESS — ratio rising';
+    recBody  = `The ratio has reversed and is climbing back. ${curAsset} is gaining vs ${tr.assetA}. Hold — you're on the right side now. Exit target: ratio above mean (+1.2σ), est. ~${estDays} days.`;
+    recColor = '#f5a623'; recBg = 'rgba(245,166,35,0.07)'; recIcon = '↩️';
+  } else {
+    // Still building (phase 0/1/2 — still moving against us or unclear)
+    const springNote = ouForcePct < -3
+      ? ` The OU spring is loading at ${Math.abs(ouForcePct).toFixed(1)}%/day — mechanical pull is building.`
+      : '';
+    const normalNote = daysSinceEntry < 10
+      ? ` Entered only ${Math.floor(daysSinceEntry)}d ago — it is completely normal to be temporarily red. Pairs often keep diverging for 1–3 weeks before reversing.`
+      : '';
+    recTitle = '⏳ HOLD — spring is loading, reversal not yet';
+    recBody  = `${curAsset} is ${Math.abs(currentZ).toFixed(1)}σ below its 60d mean. The deeper it goes, the stronger the spring that will pull it back.${springNote}${normalNote} Watch for Phase 3 (deceleration) — that signals the reversal is close.`;
+    recColor = '#ef4444'; recBg = 'rgba(239,68,68,0.06)'; recIcon = '⏳';
+  }
+
+  // ── Progress bar positions (mapped to -3σ … +2.5σ range) ──
+  const rangeMin = -3, rangeMax = 2.5, rangeTotal = rangeMax - rangeMin;
+  const toPct = z => Math.max(2, Math.min(98, (z - rangeMin) / rangeTotal * 100));
+  const entryPct   = toPct(entryZ);
+  const currentPct = toPct(currentZ);
+  const meanPct    = toPct(0);
+  const exitPct    = toPct(1.5);
+  const barLeft    = Math.min(entryPct, currentPct);
+  const barWidth   = Math.abs(currentPct - entryPct);
+  const barColor   = currentZ > 0.3 ? '#00c076' : currentZ > -0.5 ? '#f5a623' : '#ef4444';
+
+  const dayStr = daysSinceEntry < 1 ? 'today'
+    : daysSinceEntry < 2 ? '1 day ago'
+    : `${Math.floor(daysSinceEntry)} days ago`;
+
+  const decFmt = (v) => v > 1 ? v.toFixed(4) : v.toFixed(7);
+
+  return `
+    <div style="background:var(--bg3);border:2px solid ${recColor === '#00c076' ? 'rgba(0,192,118,0.35)' : recColor === '#f5a623' ? 'rgba(245,166,35,0.35)' : 'rgba(239,68,68,0.35)'};border-radius:var(--rs);padding:12px 16px;margin-bottom:.75rem">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:10px;font-family:monospace;color:var(--text3);font-weight:700;letter-spacing:.6px">📡 LIVE TRADE MONITOR</div>
+        <div style="font-size:10px;font-family:monospace;color:var(--text3)">entered ${dayStr}</div>
+      </div>
+
+      <!-- Main recommendation -->
+      <div style="background:${recBg};border-radius:6px;padding:9px 12px;margin-bottom:10px;border:1px solid ${recColor === '#00c076' ? 'rgba(0,192,118,0.22)' : recColor === '#f5a623' ? 'rgba(245,166,35,0.22)' : 'rgba(239,68,68,0.22)'}">
+        <div style="font-size:13px;font-weight:700;color:${recColor};margin-bottom:4px">${recIcon} ${recTitle}</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.65">${recBody}</div>
+      </div>
+
+      <!-- Progress bar: entry → current → mean → exit -->
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:8px;font-family:monospace;color:var(--text3);margin-bottom:4px">
+          <span>entered (${entryZ.toFixed(1)}σ)</span>
+          <span>mean (0σ)</span>
+          <span>exit (+1.5σ)</span>
+        </div>
+        <div style="height:10px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:visible;position:relative;margin:0 4px">
+          <!-- progress fill -->
+          <div style="position:absolute;left:${barLeft}%;width:${barWidth}%;height:100%;background:${barColor};opacity:0.55;border-radius:5px"></div>
+          <!-- mean line -->
+          <div style="position:absolute;left:${meanPct}%;width:2px;height:100%;background:rgba(255,255,255,0.25)"></div>
+          <!-- exit zone line -->
+          <div style="position:absolute;left:${exitPct}%;width:2px;height:100%;background:rgba(0,192,118,0.5)"></div>
+          <!-- current position dot -->
+          <div style="position:absolute;left:${currentPct}%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:${barColor};border:2px solid var(--bg3);border-radius:50%;box-shadow:0 0 6px ${barColor}88"></div>
+          <!-- entry marker -->
+          <div style="position:absolute;left:${entryPct}%;top:50%;transform:translate(-50%,-50%);width:6px;height:6px;background:rgba(255,255,255,0.3);border-radius:50%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:8px;font-family:monospace;margin-top:4px">
+          <span style="color:rgba(255,255,255,0.3)">● entry</span>
+          <span style="color:${gainSoFar>=0?'#00c076':'#ef4444'};font-weight:700">${gainSoFar>=0?'+':''}${gainSoFar.toFixed(1)}% so far &nbsp;·&nbsp; ${progressPct.toFixed(0)}% of trade done</span>
+          <span style="color:rgba(0,192,118,0.7)">exit zone →</span>
+        </div>
+      </div>
+
+      <!-- Key metrics -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px">
+        <div style="background:rgba(255,255,255,0.03);border-radius:5px;padding:5px 6px;text-align:center">
+          <div style="font-size:7px;color:var(--text3);font-family:monospace;text-transform:uppercase">Days held</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${Math.floor(daysSinceEntry)}d</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:5px;padding:5px 6px;text-align:center">
+          <div style="font-size:7px;color:var(--text3);font-family:monospace;text-transform:uppercase">Z-score</div>
+          <div style="font-size:13px;font-weight:700;color:${currentZ>0?'#00c076':currentZ>-1?'#f5a623':'#ef4444'}">${currentZ.toFixed(2)}σ</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:5px;padding:5px 6px;text-align:center">
+          <div style="font-size:7px;color:var(--text3);font-family:monospace;text-transform:uppercase">To mean</div>
+          <div style="font-size:13px;font-weight:700;color:${remainingToMean>0?'#00c076':'#f5a623'}">${remainingToMean>0?'+':''}${remainingToMean.toFixed(1)}%</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:5px;padding:5px 6px;text-align:center">
+          <div style="font-size:7px;color:var(--text3);font-family:monospace;text-transform:uppercase">Est. exit</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${currentZ > 1.2 ? 'now' : '~'+estDays+'d'}</div>
+        </div>
+      </div>
+
+      <!-- Footer: phase + mean target + analyze button -->
+      <div style="font-size:9px;font-family:monospace;color:var(--text3);display:flex;align-items:center;flex-wrap:wrap;gap:6px">
+        <span>Phase: <strong style="color:var(--text2)">${phaseLabel}</strong></span>
+        <span>·</span>
+        <span>Target: <strong style="color:#00c076">${decFmt(mean60)}</strong></span>
+        <span>·</span>
+        <span>OU: <strong style="color:${ouForcePct<0?'#00c076':'#ef4444'}">${ouForcePct<0?'pulling to mean':'no spring yet'}</strong></span>
+        <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-left:auto;font-family:monospace;font-size:9px;padding:2px 9px;border-radius:5px;border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text3)">Full analysis →</button>
+      </div>
+    </div>`;
+}
+
 async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
   const sigEl=document.getElementById(signalId);
   if(!sigEl) return;
 
   const holdingBase=curAsset===tr.assetA;
 
-  // Which coins to scan — always assetB first (tracker pair), then all others except base
-  const candidates=COINS_LIST.filter(c=>c!==tr.assetA&&!_weakCoins.has(c));
-  // Put tracker's assetB first, history coins next, then rest
-  const usedCoins=[...new Set((tr.swaps||[]).map(s=>s.toAsset).filter(c=>c!==tr.assetA))];
-  const orderedCandidates=[tr.assetB,...usedCoins.filter(c=>c!==tr.assetB),...candidates.filter(c=>c!==tr.assetB&&!usedCoins.includes(c))];
+  // Two-coin tracker: only assetA ↔ assetB — no 3rd coins involved
 
   if(!holdingBase){
-    const res=await getScoreForPair(curAsset, tr.assetA);
-    if(!sigEl.isConnected) return;
-    const omega=res?res.omega:0;
-    const profit=currentGrowth||0;
-    const spikeT1=res?Math.abs(res.trend1||0):0;
-    const isSpike=spikeT1>6&&omega>=40;
-
-    // Spike banner
-    const spikeBannerHtml=isSpike?`<div style="background:rgba(245,166,35,0.1);border:2px solid rgba(245,166,35,0.5);border-radius:var(--rs);padding:8px 14px;margin-bottom:8px">
-      <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">⚡ SPIKE DETECTED — ${curAsset} moved ${spikeT1.toFixed(1)}% in 24h</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:3px">News moves don't last. This may be your exit window — act before it reverses.</div>
-    </div>`:'';
-
-    // ── Profit gate: below threshold → HOLD ──
-    const isSpikeExit = isSpike && omega >= 40;
-    const profitGate = isSpikeExit ? 0.3 : 1;
-    if(profit < profitGate){
-      const situationTxt=omega>=60?'Ratio is recovering — momentum building.'
-        :omega>=40?'Ratio is mixed — no clear direction yet.'
-        :'Ratio is under pressure — '+curAsset+' weakening vs '+tr.assetA+'.';
-      sigEl.innerHTML=spikeBannerHtml+`<div style="background:rgba(239,68,68,0.06);border:2px solid rgba(239,68,68,0.3);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-        <div style="font-size:10px;font-family:monospace;color:#ef4444;font-weight:700;margin-bottom:4px">OPEN POSITION: holding ${curAsset}</div>
-        <div style="font-size:16px;font-weight:700;color:#ef4444">⏳ HOLD — profit below ${profitGate}%</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">Fees would eat your gains. Wait for at least +${profitGate}% before swapping back.<br><span style="color:var(--text3)">${situationTxt} Ω ${omega}/100.</span></div>
-        <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid rgba(239,68,68,0.4);cursor:pointer;background:transparent;color:#ef4444">Analyze ${curAsset}/${tr.assetA} →</button>
-      </div>`;
-      return;
-    }
-
-    // ── Gate 2: profit ≥ gate → assess based on OMEGA ──
-    const resZ=res?res.zScore||0:0;
-    const resEG=res?res.expectedRevertGain||0:0;
-    const zLine=Math.abs(resZ)>=1?`<span style="font-size:10px;font-family:monospace;color:var(--text3);margin-left:6px">Z ${resZ>=0?'+':''}${resZ.toFixed(1)}</span>`:'';
-    const egLine=Math.abs(resEG)>=2?`<div style="font-size:10px;color:var(--text3);margin-top:3px">Mean reversion target: <strong style="color:${resEG>0?'#00c076':'#ef4444'}">${resEG>=0?'+':''}${resEG.toFixed(1)}% ${tr.assetA}</strong> if ratio reverts</div>`:'';
-
-    let verdict, explanation, col, bg, border;
-    if(omega>=60){
-      col='#00c076'; bg='rgba(0,192,118,0.1)'; border='rgba(0,192,118,0.4)';
-      verdict=isSpike?'⚡ SWAP BACK NOW — spike exit':'✅ GOOD TIME TO SWAP BACK — take the profit';
-      explanation=isSpike
-        ?curAsset+' just spiked — news-driven peak. You have +'+profit.toFixed(2)+'% profit. Close now before it reverses.'
-        :curAsset+' is at a ratio peak vs '+tr.assetA+'. You have +'+profit.toFixed(2)+'% profit. Good time to close this position.';
-    } else if(omega<=20){
-      col='#00c076'; bg='rgba(0,192,118,0.1)'; border='rgba(0,192,118,0.4)';
-      verdict='✅ CONSIDER SWAPPING BACK';
-      explanation=curAsset+' is weakening vs '+tr.assetA+'. You have +'+profit.toFixed(2)+'% profit. Ratio may have peaked — consider closing.';
-    } else if(omega<=40){
-      col='#f5a623'; bg='rgba(245,166,35,0.1)'; border='rgba(245,166,35,0.3)';
-      verdict='⏳ WATCH CLOSELY — profit is building';
-      explanation='You have +'+profit.toFixed(2)+'% profit. Ratio is mixed — consider closing soon or wait for a clearer signal.';
-    } else {
-      col='#f5a623'; bg='rgba(245,166,35,0.08)'; border='rgba(245,166,35,0.3)';
-      verdict='⏳ HOLD — profit still growing';
-      explanation=curAsset+' is still gaining vs '+tr.assetA+'. You have +'+profit.toFixed(2)+'% profit. Hold for now.';
-    }
-    sigEl.innerHTML=spikeBannerHtml+`<div style="background:${bg};border:2px solid ${border};border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-      <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">OPEN POSITION: holding ${curAsset} · +${profit.toFixed(2)}% profit${zLine}</div>
-      <div style="font-size:16px;font-weight:700;color:${col}">${verdict}</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">${explanation}</div>
-      ${egLine}
-      <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Analyze ${curAsset}/${tr.assetA} in detail →</button>
+    // Show loading placeholder, then fill in async
+    sigEl.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:12px 16px;margin-bottom:.75rem">
+      <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:6px">📡 LIVE TRADE MONITOR</div>
+      <div style="font-size:11px;color:var(--text3)">⏳ Analysing your position...</div>
     </div>`;
+
+    // Fetch live monitor + swap-back score in parallel
+    const [monitorHtml, res] = await Promise.all([
+      buildLiveMonitor(tr, curAsset),
+      getScoreForPair(curAsset, tr.assetA)
+    ]);
+    if(!sigEl.isConnected) return;
+
+    const omega  = res ? res.omega : 0;
+    const profit = currentGrowth || 0;
+    const t1     = res ? Math.abs(res.trend1||0) : 0;
+    const isSpike= t1 > 6 && omega >= 40;
+
+    // Spike banner (always shown if detected)
+    const spikeBannerHtml = isSpike
+      ? `<div style="background:rgba(245,166,35,0.1);border:2px solid rgba(245,166,35,0.5);border-radius:var(--rs);padding:8px 14px;margin-bottom:8px">
+          <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">⚡ SPIKE DETECTED — ${curAsset} moved ${t1.toFixed(1)}% in 24h</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">News moves don't last — this may be your exit window. Act before it reverses.</div>
+         </div>` : '';
+
+    // Exit signal banner — shown on top of monitor when swap-back conditions met
+    let exitBannerHtml = '';
+    if (isSpike || omega >= 60 || (profit >= 1 && omega <= 20)) {
+      const col    = '#00c076', bg = 'rgba(0,192,118,0.1)', border = 'rgba(0,192,118,0.4)';
+      const title  = isSpike ? '⚡ EXIT NOW — spike detected' : omega >= 60
+        ? '✅ SWAP BACK NOW — peak confirmed by OMEGA' : '✅ CONSIDER SWAPPING BACK';
+      const body   = isSpike
+        ? `${curAsset} spiked ${t1.toFixed(1)}% in 24h. News moves don't last — lock in your +${profit.toFixed(2)}% profit now.`
+        : omega >= 60
+          ? `${curAsset} is at a confirmed ratio peak vs ${tr.assetA}. OMEGA ${omega}/100 — all forces say the overextension is ending. You have +${profit.toFixed(2)}% profit. Close this position.`
+          : `${curAsset} is weakening vs ${tr.assetA} (Ω ${omega}). You have +${profit.toFixed(2)}% — consider closing before it gives back gains.`;
+      exitBannerHtml = `<div style="background:${bg};border:2px solid ${border};border-radius:var(--rs);padding:10px 14px;margin-bottom:8px">
+        <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">🔔 EXIT SIGNAL TRIGGERED</div>
+        <div style="font-size:14px;font-weight:700;color:${col};margin-bottom:4px">${title}</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.5">${body}</div>
+        <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Confirm in analyzer →</button>
+      </div>`;
+    } else if (profit >= 1 && omega >= 40) {
+      exitBannerHtml = `<div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.3);border-radius:var(--rs);padding:8px 14px;margin-bottom:8px">
+        <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">💰 +${profit.toFixed(2)}% profit — watch for exit</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Ratio is mixed (Ω ${omega}). You're in profit. Check daily — exit when Z rises above +1.2σ or OMEGA drops below 25.</div>
+      </div>`;
+    }
+
+    sigEl.innerHTML = spikeBannerHtml + exitBannerHtml + (monitorHtml || `<div style="font-size:11px;color:var(--text3);padding:8px">Could not load monitor data. Check connection.</div>`);
     return;
   }
 
-  // Holding base asset → scan all candidates and rank them
+  // Holding base — check only assetB (two-coin tracker, no 3rd coins)
   sigEl.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-    <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:4px">WHAT TO SWAP NEXT — scanning ${orderedCandidates.length} pairs...</div>
-    <div style="font-size:12px;color:var(--text2)">⏳ Fetching live scores...</div>
+    <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:4px">SWAP SIGNAL — ${tr.assetA} → ${tr.assetB}</div>
+    <div style="font-size:12px;color:var(--text2)">⏳ Fetching live score...</div>
   </div>`;
 
-  // Fetch all scores in parallel
-  const results=await Promise.all(orderedCandidates.map(c=>getScoreForPair(tr.assetA,c)));
+  const res = await getScoreForPair(tr.assetA, tr.assetB);
   if(!sigEl.isConnected) return;
 
-  // Sort by OMEGA — the only score that matters
-  const scored=orderedCandidates.map((c,i)=>({coin:c,omega:results[i]?results[i].omega:0,used:usedCoins.includes(c)||c===tr.assetB}))
-    .filter(x=>x.omega>0)
-    .sort((a,b)=>b.omega-a.omega);
+  const omega = res ? res.omega : 0;
+  const col    = omega>=60?'#00c076':omega>=30?'#f5a623':'#ef4444';
+  const bg     = omega>=60?'rgba(0,192,118,0.1)':omega>=30?'rgba(245,166,35,0.08)':'rgba(239,68,68,0.06)';
+  const border = omega>=60?'rgba(0,192,118,0.45)':omega>=30?'rgba(245,166,35,0.35)':'rgba(239,68,68,0.3)';
+  const verdict= omega>=60?'✅ SWAP NOW — signal confirmed'
+               : omega>=40?'⚠️ APPROACHING — wait for Ω 60+'
+               : omega>=20?'👁 WATCH — no signal yet'
+               : '⛔ HOLD — conditions not met';
+  const body   = omega>=60
+    ? `${tr.assetB} is overextended vs ${tr.assetA} (Ω ${omega}/100). All forces aligned. Good time to swap ${tr.assetA} → ${tr.assetB}.`
+    : omega>=40
+    ? `Signal building (Ω ${omega}/100). Not enough conviction yet — check again tomorrow. Wait for Ω 60+.`
+    : `No swap signal for ${tr.assetA} → ${tr.assetB} right now (Ω ${omega}/100). Stay in ${tr.assetA} and monitor daily.`;
 
-  if(!scored.length){
+  if(!res){
     sigEl.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-      <div style="color:var(--text3);font-size:12px">Could not fetch scores. Check connection.</div>
+      <div style="color:var(--text3);font-size:12px">Could not fetch data. Check connection.</div>
     </div>`;
     return;
   }
 
-  const best=scored[0];
-  const bestCol=best.omega>=60?'#00c076':best.omega<=20?'#ef4444':'#f5a623';
-  const bestBg=best.omega>=60?'rgba(0,192,118,0.1)':best.omega<=20?'rgba(239,68,68,0.08)':'rgba(245,166,35,0.08)';
-  const bestBorder=best.omega>=60?'rgba(0,192,118,0.5)':best.omega<=20?'rgba(239,68,68,0.3)':'rgba(245,166,35,0.35)';
-  const bestVerdict=best.omega>=60?'✅ SWAP NOW':best.omega>=40?'⚠️ PROCEED WITH CAUTION':best.omega>=20?'👁 WATCH':'❌ HOLD';
-
-  // Other pairs rows (top 5 excluding best)
-  const othersHtml=scored.slice(1,5).map(x=>{
-    const c=x.omega>=60?'#00c076':x.omega<=20?'#ef4444':'#f5a623';
-    const tag=x.used?'<span style="font-size:9px;font-family:monospace;padding:1px 5px;border-radius:6px;background:rgba(59,143,255,0.15);color:#3b8fff;margin-left:5px">history</span>':'';
-    const verdict=x.omega>=60?'✅':x.omega<=20?'❌':'⏳';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-top:1px solid var(--border)">
-      <span style="font-family:monospace;font-weight:700;font-size:13px;color:var(--text);min-width:50px">${tr.assetA}→${x.coin}${tag}</span>
-      <span style="font-family:monospace;font-weight:700;font-size:13px;color:${c}">Ω ${x.omega}</span>
-      <span style="font-size:12px;color:${c}">${verdict}</span>
-      <button onclick="switchAnalyzerPair('${tr.assetA}','${x.coin}')" style="margin-left:auto;font-family:monospace;font-size:9px;padding:2px 8px;border-radius:var(--rs);border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text2)">Analyze →</button>
-    </div>`;
-  }).join('');
-
-  sigEl.innerHTML=`<div style="background:${bestBg};border:2px solid ${bestBorder};border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-    <div style="font-size:10px;font-family:monospace;color:${bestCol};font-weight:700;margin-bottom:6px">BEST SWAP RIGHT NOW — ${tr.assetA} holding</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap">
-      <span style="font-size:20px;font-weight:700;color:${bestCol}">${tr.assetA} → ${best.coin}</span>
-      <span style="font-size:22px;font-weight:700;font-family:monospace;color:${bestCol}">Ω ${best.omega}<span style="font-size:12px">/100</span></span>
-      <span style="font-size:15px;color:${bestCol}">${bestVerdict}</span>
-      ${best.used?'<span style="font-size:10px;font-family:monospace;padding:2px 8px;border-radius:10px;background:rgba(59,143,255,0.15);color:#3b8fff;border:1px solid rgba(59,143,255,0.3)">used in history</span>':'<span style="font-size:10px;font-family:monospace;padding:2px 8px;border-radius:10px;background:rgba(245,166,35,0.1);color:#f5a623;border:1px solid rgba(245,166,35,0.25)">new opportunity</span>'}
+  sigEl.innerHTML=`<div style="background:${bg};border:2px solid ${border};border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
+    <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:6px">SWAP SIGNAL — holding ${tr.assetA}</div>
+    <div style="font-size:16px;font-weight:700;color:${col};margin-bottom:4px">${verdict}</div>
+    <div style="font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:8px">${body}</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-family:monospace;font-size:22px;font-weight:700;color:${col}">Ω ${omega}<span style="font-size:12px;opacity:.6">/100</span></span>
+      <button onclick="switchAnalyzerPair('${tr.assetA}','${tr.assetB}')" style="font-family:monospace;font-size:10px;padding:4px 12px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Analyze ${tr.assetA}→${tr.assetB} →</button>
     </div>
-    <button onclick="switchAnalyzerPair('${tr.assetA}','${best.coin}')" style="font-family:monospace;font-size:10px;padding:4px 12px;border-radius:var(--rs);border:1px solid ${bestCol};cursor:pointer;background:transparent;color:${bestCol};margin-bottom:${scored.length>1?'8px':'0'}">Analyze ${tr.assetA}→${best.coin} in detail →</button>
-    ${scored.length>1?`<div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:4px;margin-top:4px">OTHER PAIRS</div>${othersHtml}`:''}
   </div>`;
 }
 
