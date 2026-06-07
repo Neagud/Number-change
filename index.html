@@ -5604,9 +5604,27 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     : isScalp ? 'days'
     : estDays <= 10 ? 'days' : 'weeks (est.)';
 
+  // ── Entry quality context — honest signal about how good the entry was ──
+  const entryScore = lastSwap.score || 0; // OMEGA score stored at time of swap
+  const weakEntry  = entryScore > 0 && entryScore < 50;
+  const slowPair   = estDays > 70; // > 10 weeks = this pair barely mean-reverts
+  const entryNote  = weakEntry
+    ? ` (entered at OMEGA ${entryScore} — below recommended threshold of 60)`
+    : '';
+
   // ── Plain-English status ──
   let statusIcon, statusLine, statusDetail, statusColor, statusBg;
-  if (currentZ > 1.5) {
+
+  // Slow pair override — honest about long recovery regardless of other signals
+  if (!isScalp && slowPair && currentZ < 0) {
+    statusIcon = '🐢'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
+    statusLine = weakEntry
+      ? 'Slow recovery — this was a weak entry'
+      : 'Slow recovery — this pair moves at its own pace';
+    statusDetail = weakEntry
+      ? `This trade was opened at OMEGA ${entryScore}, below the recommended 60+. The pair is recovering but slowly — estimated ${exitLabel}. Consider whether the wait is worth it for ${displayGain > -10 ? 'a small' : 'this'} loss recovery, or cut and redeploy into a stronger signal.`
+      : `This pair has a long mean-reversion cycle — estimated ${exitLabel} to reach the sell zone. Not broken, just slow. Only hold if you are comfortable with the timeline.`;
+  } else if (currentZ > 1.5) {
     statusIcon = '🎯'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.10)';
     statusLine = isScalp ? 'Sell now — target reached!' : 'Time to sell — you are in the profit zone';
     statusDetail = isScalp
@@ -5630,22 +5648,31 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
       : `Price is back to average. Hold a bit longer — it usually overshoots above average before settling. That is your best exit.`;
   } else if (phase === 3 || phase === 4 || phase === 5) {
     statusIcon = '🔄'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-    statusLine = 'Turning around — stay patient';
-    statusDetail = `The price move is slowing and starting to reverse. ${isScalp?`Quick scalps usually recover in ${estDays}–${estDays+2} days.`:`Hold — should reach the sell zone in about ${estDays} days.`}`;
+    statusLine = weakEntry ? 'Showing signs of recovery — but entry was weak' : 'Turning around — stay patient';
+    statusDetail = weakEntry
+      ? `Signs of reversal are appearing${entryNote}. Recovery is possible but may take longer given the weak entry signal. Est. ${exitLabel}.`
+      : `The price move is slowing and starting to reverse. ${isScalp?`Quick scalps usually recover in ${estDays}–${estDays+2} days.`:`Est. ${exitLabel} to reach the sell zone.`}`;
   } else {
     statusIcon = '⏳'; statusColor = '#ef4444'; statusBg = 'rgba(239,68,68,0.06)';
     if (isScalp) {
       statusLine = daysSinceEntry < 4 ? 'Holding — waiting for the bounce' : 'Taking longer than expected';
       statusDetail = daysSinceEntry < 4
-        ? `Scalps normally move within 2–5 days. It has been ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} — keep holding, the bounce is coming.`
+        ? `Scalps normally move within 2–5 days. It has been ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} — keep holding.`
         : `This scalp is taking longer than usual. If it stays red after 7 days, consider whether to cut losses or hold. Est. ${estDays} more days.`;
     } else {
-      statusLine = daysSinceEntry < 10 ? 'Normal — trades often dip before recovering' : 'Still waiting — hold your position';
-      statusDetail = daysSinceEntry < 10
-        ? `Only ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} in — being temporarily down is completely normal. Swing trades typically take 3–8 weeks from entry to exit. Do not panic.`
-        : daysSinceEntry < 30
-          ? `${Math.floor(daysSinceEntry)} days in — still within normal swing timeframe. These trades need weeks, not days. The deeper the dip, the stronger the recovery tends to be.`
-          : `${Math.floor(daysSinceEntry)} days in — this is a longer swing. Estimated ${exitLabel} more. Hold unless you see the exit warning above fire.`;
+      if (weakEntry) {
+        statusLine = daysSinceEntry < 10 ? 'In the red — this was a weak entry signal' : 'Waiting — low-quality entry takes longer';
+        statusDetail = daysSinceEntry < 10
+          ? `This trade was opened at OMEGA ${entryScore}${entryNote}. Weak entries spend more time in the red before recovering. Est. ${exitLabel}. Next time wait for OMEGA 60+.`
+          : `${Math.floor(daysSinceEntry)} days in. Low entry score means slower recovery — est. ${exitLabel} remaining. Hold only if you believe in the pair long-term, or consider cutting and re-entering on a stronger signal.`;
+      } else {
+        statusLine = daysSinceEntry < 10 ? 'Normal start — trades often dip before recovering' : 'Still waiting — hold your position';
+        statusDetail = daysSinceEntry < 10
+          ? `Only ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} in — being temporarily down is completely normal. Swing trades typically take 3–8 weeks. Do not panic.`
+          : daysSinceEntry < 30
+            ? `${Math.floor(daysSinceEntry)} days in — still within normal swing timeframe. These trades need weeks, not days. Est. ${exitLabel} remaining.`
+            : `${Math.floor(daysSinceEntry)} days in — this is a longer trade. Est. ${exitLabel} more. Hold unless you see the exit warning above fire.`;
+      }
     }
   }
 
