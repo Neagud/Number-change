@@ -5358,16 +5358,26 @@ const _scoreCache={};
 const _scoreCacheTime={};
 const SCORE_TTL=15*60*1000; // 15 minutes — daily candles don't change faster than this
 
+// In-flight deduplication: if a fetch for this key is already running, return same promise
+const _scorePending={};
+
 async function getScoreForPair(a,b){
   const key=a+'_'+b;
   const now=Date.now();
   if(_scoreCache[key]&&(now-_scoreCacheTime[key])<SCORE_TTL) return _scoreCache[key];
+  // Return existing in-flight promise instead of starting a duplicate fetch
+  if(_scorePending[key]) return _scorePending[key];
+  const _fetchJ=(url)=>Promise.race([
+    fetch(url).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }),
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),12000))
+  ]);
+  _scorePending[key] = (async()=>{
   try{
     const[fk,tk,fp,tp]=await Promise.all([
-      fetch(`https://api.binance.com/api/v3/klines?symbol=${a}USDT&interval=1d&limit=92`).then(r=>r.json()),
-      fetch(`https://api.binance.com/api/v3/klines?symbol=${b}USDT&interval=1d&limit=92`).then(r=>r.json()),
-      fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${a}USDT`).then(r=>r.json()),
-      fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${b}USDT`).then(r=>r.json()),
+      _fetchJ(`https://api.binance.com/api/v3/klines?symbol=${a}USDT&interval=1d&limit=92`),
+      _fetchJ(`https://api.binance.com/api/v3/klines?symbol=${b}USDT&interval=1d&limit=92`),
+      _fetchJ(`https://api.binance.com/api/v3/ticker/price?symbol=${a}USDT`),
+      _fetchJ(`https://api.binance.com/api/v3/ticker/price?symbol=${b}USDT`),
     ]);
     const kA=fk.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
     const kB=tk.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
@@ -5407,9 +5417,12 @@ async function getScoreForPair(a,b){
 
     const result={omega, omegaPhase, omegaPhaseLabel, omegaAbsZ,
       from:a,to:b,trend1,zScore,expectedRevertGain,swingPct,plain_explanation,corr};
-    _scoreCache[key]=result; _scoreCacheTime[key]=now;
+    _scoreCache[key]=result; _scoreCacheTime[key]=Date.now();
     return result;
-  }catch(e){return null;}
+  }catch(e){ return null; }
+  finally{ delete _scorePending[key]; }
+  })();
+  return _scorePending[key];
 }
 
 /* ══════════════════════════════════════════════════════════════
