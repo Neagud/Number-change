@@ -5489,6 +5489,49 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
             : currentZ < -1.5 ? 21 : currentZ < -0.8 ? 14 : currentZ < -0.3 ? 7 : 3;
   }
 
+  // ── Trade invalidation check — warns user if trade is genuinely broken ──
+  // These are intentionally conservative thresholds so this fires very rarely.
+  const hurst = et ? (et.hurst || 0) : 0;
+  let exitWarning = null;
+
+  // ── Exit warning thresholds are INTENTIONALLY EXTREME ──
+  // Normal losing trades, slow recoveries, and temporary dips must NEVER trigger this.
+  // Only fire when the trade is statistically broken beyond reasonable doubt.
+
+  // Condition 1: Pair turned strongly trending AND deep in the hole
+  // Hurst > 0.88 = strongly trending (not just slightly elevated)
+  // Z < -1.8 = significantly below mean on top of it
+  // Both must be true simultaneously — either alone is normal
+  if (hurst > 0.88 && currentZ < -1.8) {
+    exitWarning = {
+      icon: '📉',
+      headline: 'This pair has stopped cycling — consider cutting your loss',
+      detail: `The market structure changed. Hurst = ${hurst.toFixed(2)} means this pair is now strongly trending, not reverting. This is rare — most dips recover. But when Hurst is this high and the position is this deep, holding longer may increase the loss rather than fix it.`,
+      severity: 'high'
+    };
+  }
+  // Condition 2: Structural break — 3.2σ is an extreme outlier in any healthy pair
+  // Statistically this happens in less than 0.1% of candles — near impossible in normal conditions
+  else if (currentZ < -3.2) {
+    exitWarning = {
+      icon: '⚠️',
+      headline: 'Extreme move — something may have fundamentally changed',
+      detail: `The ratio is ${Math.abs(currentZ).toFixed(1)}σ from normal. This level is almost never seen in healthy pairs. It may signal a structural event — major news, loss of correlation, or a market shift. Consider a partial exit to protect capital while you investigate.`,
+      severity: 'high'
+    };
+  }
+  // Condition 3: Trade continuously deteriorating for 3+ weeks with no sign of recovery
+  // Must be: held 21+ days AND Z got 1.5σ WORSE than entry AND still clearly negative
+  // A trade that went from Z=-1.0 to Z=-2.5 over 3 weeks is broken, not just slow
+  else if (daysSinceEntry > 21 && currentZ < -0.8 && currentZ < entryZ - 1.5) {
+    exitWarning = {
+      icon: '🔻',
+      headline: 'Position steadily worsening after 3 weeks — review this trade',
+      detail: `After ${Math.floor(daysSinceEntry)} days, the ratio has moved ${Math.abs(currentZ - entryZ).toFixed(1)}σ further from normal since you entered — not closer. This is unusual. Healthy trades show at least some recovery within 3 weeks. Consider whether the original signal still applies.`,
+      severity: 'medium'
+    };
+  }
+
   // ── Plain-English status ──
   let statusIcon, statusLine, statusDetail, statusColor, statusBg;
   if (currentZ > 1.5) {
@@ -5570,6 +5613,19 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
       </div>
 
       <div style="padding:16px">
+
+        <!-- Exit warning — only shown when trade is genuinely broken -->
+        ${exitWarning ? `
+        <div style="background:rgba(239,68,68,0.10);border:2px solid rgba(239,68,68,${exitWarning.severity==='high'?'0.6':'0.35'});border-radius:10px;padding:14px 16px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:20px;line-height:1">${exitWarning.icon}</span>
+            <div style="font-size:13px;font-weight:700;color:#ef4444">${exitWarning.headline}</div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:8px">${exitWarning.detail}</div>
+          <div style="font-size:10px;font-family:monospace;color:rgba(239,68,68,0.7);border-top:1px solid rgba(239,68,68,0.2);padding-top:6px">
+            ℹ️ This alert is rare and only shown when the data is clearly against the trade. The final decision is always yours.
+          </div>
+        </div>` : ''}
 
         <!-- Status message -->
         <div style="background:${statusBg};border-radius:8px;padding:11px 14px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start">
