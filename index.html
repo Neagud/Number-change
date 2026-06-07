@@ -5499,6 +5499,9 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   const ouForcePct = et ? (et.ouForcePct || 0) : 0;
   const halfLife   = et && et.halfLife < 990 ? et.halfLife : null;
 
+  // Define exitThreshold here — used by estDays, status messages, progress bar, and exitLabel
+  const exitThreshold = isScalp ? 0.8 : 1.5;
+
   let estDays;
   if (isScalp) {
     // Scalp: 30-day window, exits at Z=0.8 — typically resolves in 2–7 days
@@ -5508,11 +5511,10 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     // Swing: must travel from currentZ all the way to exitThreshold (1.5)
     // OU mean reversion: time ≈ halfLife × distance_to_exit / ln(2)
     // A Z=-2.0 trade with halfLife=14 needs ~5–7 weeks, not 10 days
-    const distToExit = Math.max(0.5, exitThreshold - currentZ); // σ still to travel
+    const distToExit = Math.max(0.5, exitThreshold - currentZ);
     if (halfLife) {
       estDays = Math.max(7, Math.min(120, Math.round(halfLife * distToExit / 0.693)));
     } else {
-      // Fallback without halfLife — purely Z-distance based
       estDays = currentZ < -2.0 ? 56 : currentZ < -1.5 ? 42 : currentZ < -0.8 ? 28
               : currentZ < -0.3 ? 14 : 7;
     }
@@ -5591,6 +5593,17 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     };
   }
 
+  // ── Labels — defined here so status messages and progress bar can both use them ──
+  const exitLabel = currentZ > exitThreshold ? 'NOW'
+    : isScalp ? `~${estDays}d`
+    : estDays <= 10 ? `~${estDays}d`
+    : estDays <= 21 ? `~${Math.round(estDays/7)} wks`
+    : estDays <= 49 ? `~${Math.round(estDays/7)} wks`
+    : `~${Math.round(estDays/7)}+ wks`;
+  const exitSubLabel = currentZ > exitThreshold ? 'sell now'
+    : isScalp ? 'days'
+    : estDays <= 10 ? 'days' : 'weeks (est.)';
+
   // ── Plain-English status ──
   let statusIcon, statusLine, statusDetail, statusColor, statusBg;
   if (currentZ > 1.5) {
@@ -5636,8 +5649,7 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     }
   }
 
-  // ── Progress bar (the journey) ──
-  const exitThreshold = isScalp ? 0.8 : 1.5; // scalp exits near mean, swing exits at overshoot
+  // ── Progress bar (the journey) ── exitThreshold already defined above
   const rangeMin = -3, rangeMax = 2.5, rangeTotal = rangeMax - rangeMin;
   const toPct = z => Math.max(1, Math.min(99, (z - rangeMin) / rangeTotal * 100));
   const entryPct   = toPct(entryZ);
@@ -5656,16 +5668,7 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   const targetLabel = '+' + (displayGain + (remainingToMean > 0 ? remainingToMean : 0)).toFixed(1) + '%';
   const monitorNowId = 'monitor-now-' + tr.id.replace(/[^a-z0-9]/gi,'_');
   const dayStr = daysSinceEntry < 1 ? 'today' : daysSinceEntry < 2 ? '1 day ago' : `${Math.floor(daysSinceEntry)} days ago`;
-  // Human-readable time label: days for scalps, weeks for swings
-  const exitLabel = currentZ > exitThreshold ? 'NOW'
-    : isScalp ? `~${estDays}d`
-    : estDays <= 10 ? `~${estDays}d`
-    : estDays <= 21 ? `~${Math.round(estDays/7)} wks`
-    : estDays <= 49 ? `~${Math.round(estDays/7)} wks`
-    : `~${Math.round(estDays/7)}+ wks`;
-  const exitSubLabel = currentZ > exitThreshold ? 'sell now'
-    : isScalp ? 'days'
-    : estDays <= 10 ? 'days' : 'weeks (est.)';
+  // exitLabel and exitSubLabel already defined above
   const decFmt = v => v > 1 ? v.toFixed(4) : v.toFixed(7);
 
   return `
