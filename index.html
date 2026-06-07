@@ -641,15 +641,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .best-partner-title{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.7rem;display:flex;align-items:center;gap:6px}
 .bp-grid{display:flex;flex-wrap:wrap;gap:8px}
 /* ── Quick Scalps ── */
-.qs-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:border-color .2s;cursor:default}
+.qs-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;transition:border-color .2s;cursor:default}
 .qs-card.qs-hot{border-color:rgba(245,166,35,.5);background:rgba(245,166,35,.04)}
 .qs-card.qs-go{border-color:rgba(0,192,118,.5);background:rgba(0,192,118,.04)}
 .qs-card.qs-weak{opacity:.6}
-.qs-score{font-size:28px;font-weight:700;font-family:monospace}
-.qs-pair{font-size:16px;font-weight:700}
-.qs-badge{font-size:10px;font-family:monospace;padding:2px 8px;border-radius:10px;font-weight:700}
-.qs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
-.qs-bar-track{height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-top:3px}
+.qs-score{font-size:20px;font-weight:700;font-family:monospace}
+.qs-pair{font-size:13px;font-weight:700}
+.qs-badge{font-size:9px;font-family:monospace;padding:1px 6px;border-radius:8px;font-weight:700}
+.qs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:7px}
+.qs-bar-track{height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-top:2px}
 .qs-bar-fill{height:100%;border-radius:3px;transition:width .4s}
 /* ── /Quick Scalps ── */
 .bp-card{background:var(--bg3);border:2px solid var(--border);border-radius:var(--rs);padding:.6rem .8rem;cursor:pointer;transition:all .2s;min-width:110px;flex:1}
@@ -782,13 +782,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <!-- Quick Scalps tab -->
 <div class="tab-pane" id="tab-scalps">
-  <div style="max-width:860px;margin:0 auto;padding:1rem 0">
+  <div style="max-width:860px;margin:0 auto;padding:.6rem 0">
 
     <!-- Header -->
-    <div style="margin-bottom:16px">
-      <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">⚡ Quick Scalps</div>
-      <div style="font-size:12px;color:var(--text3);line-height:1.5">
-        Short-term mean-reversion trades · Z &gt; 1.2 · Hold 1–4 days · Target 1.5–4% gain · Uses 30-day window
+    <div style="margin-bottom:10px">
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px">⚡ Quick Scalps</div>
+      <div style="font-size:11px;color:var(--text3)">
+        Short-term mean-reversion · Z &gt; 1.2 · Hold 1–7 days · Target 1.5–4% · 30-day window
       </div>
     </div>
 
@@ -3048,7 +3048,7 @@ function renderScore(j){
 
     const zCol2=z2>2?'#00c076':z2>1?'#f5a623':z2<-2?'#ef4444':z2<-1?'#f5a623':'var(--text3)';
     const zBar=Math.min(100,Math.max(0,(z2+3)/6*100)); // map -3..+3 to 0..100%
-    const _isTrending = _lastHurst > 0.72;
+    const _isTrending = _lastHurst > 0.80;
     const _hurstWarn = _isTrending ? ` ⚠️ Hurst ${_lastHurst.toFixed(2)}: pair is trending` : '';
     const zLabel=(z2>2.5?'Extreme deviation' + (_isTrending ? '' : ' — very high reversion probability'):
       z2>2?'Overbought' + (_isTrending ? '' : ' — high reversion probability'):
@@ -3959,10 +3959,10 @@ function triggerQuantumRefresh() {
 
 /* ═══════════════════════════════════════════════════════════
    OMEGA SCORE — physics-inspired unified readiness number
-   Five forces, one number. Range 0–100.
+   Four scored forces + two gates + one modifier. Range 0–100.
 
    SE   = Signal Edge       — how far the ratio is from equilibrium (Z-score)
-   MRQ  = Mean-Reversion Quality — Hurst < 0.5 = spring-like, < 0.72 = acceptable
+   MRQ  = Mean-Reversion Quality — Hurst < 0.5 = spring-like, < 0.80 = acceptable
    EPM  = Entry Phase Multiplier — hard phase gate; 0 = no signal, 1.0 = perfect decel
    OURF = Ornstein-Uhlenbeck Restoring Force — "spring tension" pulling back to mean
    MQ   = Market Quality  — RMT: low sync = market is NOT herding, your edge is real
@@ -3975,15 +3975,14 @@ function triggerQuantumRefresh() {
    — EPM never zeros out: phase-0=0.20, phase-1=0.40, phase-2=0.62, phase-3=1.0, 4=0.90, 5=0.70
    — This ensures ranking is always meaningful across 50-100 pairs
 ═══════════════════════════════════════════════════════════ */
-function computeOmegaScan(et, rmtQ) {
+function computeOmegaScan(et, rmtQ, pairCorr) {
   // IDENTICAL formula to computeOmegaScore so scanner and analyzer always show the same number.
-  // MQ uses _lastRmtQ (global RMT — same 10 coins, same metric for every pair).
-  // For pairs with OMEGA=0 (phase 0 / no signal), the scanner sorts by swap score as tiebreak.
+  // pairCorr is passed explicitly so each scanned pair uses its own correlation (not the global).
   if (!et) return 0;
-  const { omega } = computeOmegaScore(et, rmtQ);
+  const { omega } = computeOmegaScore(et, rmtQ, pairCorr);
   return omega;
 }
-function computeOmegaScore(et, rmtQ) {
+function computeOmegaScore(et, rmtQ, pairCorrOverride) {
   if (!et) return { omega: 0, se: 0, mrq: 0, epm: 0, ourf: 0, mq: rmtQ };
 
   const hurst      = et.hurst      || 0.5;
@@ -3999,8 +3998,9 @@ function computeOmegaScore(et, rmtQ) {
   const zForSE = signedZ; // keep signed — only positive Z earns Signal Edge
   const se = Math.max(0, Math.min(100, Math.round((zForSE - 1.0) / 2.5 * 100)));
 
-  // MRQ — Mean-Reversion Quality (Hurst ≤ 0.25 = perfect, 0.72 = neutral, > 0.72 = trending)
-  const mrq = Math.max(0, Math.min(100, Math.round((0.72 - hurst) / 0.47 * 100)));
+  // MRQ — Mean-Reversion Quality (Hurst ≤ 0.25 = perfect, 0.80 = zero, > 0.80 = strongly trending)
+  // Zero point raised from 0.72 → 0.80 so H=0.73 still earns some credit (~13pts)
+  const mrq = Math.max(0, Math.min(100, Math.round((0.80 - hurst) / 0.55 * 100)));
 
   // EPM — Entry Phase Multiplier (physics gate — can't have a high score in wrong phase)
   const epmTable = [0, 0.30, 0.52, 1.0, 0.93, 0.72];
@@ -4016,7 +4016,10 @@ function computeOmegaScore(et, rmtQ) {
   // High pairwise correlation = coins normally move together = reversion is statistically supported.
   // Low correlation = coins are independent = divergence may just be permanent drift.
   // pairCorrScore: corr≥0.85→100, corr≥0.70→75, corr≥0.55→50, corr≥0.40→25, <0.40→0
-  const pairCorr = (typeof _lastPairCorr === 'number' && isFinite(_lastPairCorr)) ? _lastPairCorr : 0.65;
+  // Use explicit override (scanner passes per-pair corr) or fall back to global (main analyzer sets it)
+  const pairCorr = (typeof pairCorrOverride === 'number' && isFinite(pairCorrOverride))
+    ? pairCorrOverride
+    : (typeof _lastPairCorr === 'number' && isFinite(_lastPairCorr)) ? _lastPairCorr : 0.65;
   const pairCorrScore = Math.max(0, Math.min(100, Math.round((pairCorr - 0.40) / 0.50 * 100)));
   const mq = Math.round(rmtQ * 0.55 + pairCorrScore * 0.45);
 
@@ -4087,7 +4090,7 @@ function applyUnifiedVerdict(et) {
   const omega = om.omega;
 
   /* ── Hurst warning (pair may not be a good mean-reversion pair) ── */
-  const hurstWarn = hurst > 0.72
+  const hurstWarn = hurst > 0.80
     ? `<br><span style="color:#f5a623">⚠️ Hurst ${hurst.toFixed(2)} — this pair is currently trending, not oscillating. Consider XRP/XLM or XRP/ADA for more reliable mean reversion.</span>`
     : '';
 
@@ -4234,7 +4237,7 @@ function applyUnifiedVerdict(et) {
       { icon: '⚛',  lbl: 'Market Quality',  val: om.mq,   sub: mqSub,                             color: om.mq   >= 60 ? '#00c076' : om.mq   >= 30 ? '#f5a623' : '#ef4444' },
     ];
     omegaSec.innerHTML = `
-      <div class="omega-title">Ω OMEGA SCORE — 5-Force Breakdown</div>
+      <div class="omega-title">Ω OMEGA SCORE — Full Breakdown</div>
       ${forces.map(f => `
         <div class="omega-row">
           <span class="omega-icon">${f.icon}</span>
@@ -4271,6 +4274,15 @@ function applyUnifiedVerdict(et) {
         <div class="omega-track"><div class="omega-fill" style="width:${entMultPct}%;background:${entMultPct>=95?'#00c076':entMultPct>=85?'#f5a623':'#ef4444'}"></div></div>
         <span class="omega-val" style="color:${entMultPct>=95?'#00c076':entMultPct>=85?'#f5a623':'#ef4444'}">${entMultPct}%</span>
         <span class="omega-epm">entropy ${(om.entropy||1).toFixed(2)} · confidence modifier</span>
+      </div>
+      <div style="margin-top:8px;padding:6px 8px;background:rgba(255,255,255,.04);border-radius:5px;font-size:10px;font-family:monospace;color:var(--text3);line-height:1.7">
+        <span style="color:var(--text2)">How OMEGA is calculated:</span><br>
+        Inner = SE×35% + MRQ×25% + OU×20% + MktQ×20%<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${om.se}×.35 + ${om.mrq}×.25 + ${om.ourf}×.20 + ${om.mq}×.20
+        = <strong style="color:var(--text)">${Math.round(om.se*.35+om.mrq*.25+om.ourf*.20+om.mq*.20)}</strong><br>
+        OMEGA = Phase(${epmPct}%) × HM(${Math.round((om.hm||1)*100)}%) × Inner × Entropy(${entMultPct}%)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${(om.epm||0).toFixed(2)} × ${(om.hm||1).toFixed(2)} × ${Math.round(om.se*.35+om.mrq*.25+om.ourf*.20+om.mq*.20)} × ${(om.entropyMult||1).toFixed(2)}
+        = <strong style="color:${omega>=60?'#00c076':omega>=40?'#f5a623':'#ef4444'};font-size:12px">Ω ${omega}</strong>
       </div>`;
 
     // Small OMEGA label tag under the number
@@ -4291,7 +4303,7 @@ function applyUnifiedVerdict(et) {
     // Fix Z-score panel label — update now that we have the definitive current Hurst
     const zLabelEl = sp.querySelector('.sp-zscore-panel [style*="font-size:10px"]');
     if (zLabelEl) {
-      const isTrending = hurst > 0.72;
+      const isTrending = hurst > 0.80;
       const hurstNote = isTrending ? ` ⚠️ Hurst ${hurst.toFixed(2)}: pair is trending` : '';
       const currentZLabel = zLabelEl.textContent || '';
       // Replace any existing hurst warning then re-apply correctly
@@ -4501,7 +4513,7 @@ function initTabs(){
 /* ══════════════════════════════════════════════════════════════
    QUICK SCALPS ENGINE
    Independent short-term mean-reversion scanner.
-   Uses 30-day window, lower Z threshold, 5-force QSS score.
+   Uses 30-day window, lower Z threshold, 5-component QSS score.
    Completely separate from main OMEGA system.
 ══════════════════════════════════════════════════════════════ */
 
@@ -4649,9 +4661,9 @@ async function runScalpScan() {
       // holdDays always has a value now (OU-based or Z30-based fallback)
       // Only skip if Z30 is too weak to be worth trading
       if (q.z30 < 0.8) return;
-      // Filter 2: minimum gain after fees
+      // Filter 2: minimum gain after fees (compare net, not gross)
       const netGain = q.expGain - fee;
-      if (q.expGain < minGain) return;
+      if (netGain < minGain) return;
       scalpData.push({ sym, corr, netGain, ...q });
     } catch(e) { /* skip failed pairs */ }
   }));
@@ -4677,8 +4689,8 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
         <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">No scalp opportunities right now</div>
         <div style="font-size:12px;color:var(--text3)">
           No pair from ${holding} qualifies right now.<br><br>
-          Requirements: Z30 &gt; 0.8 · gain ≥ ${minGain}% · OU half-life ≤ 14 days (true short-term spring).<br>
-          The stricter OU filter ensures you only see pairs that can realistically revert within 1–7 days.
+          Requirements: Z30 &gt; 0.8 · net gain after fees ≥ ${minGain}%.<br>
+          Check again later or lower the minimum gain threshold.
         </div>
       </div>`;
     return;
@@ -4705,46 +4717,50 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
       { lbl:'OU',   val: d.qf,    raw: d.ouFPct20.toFixed(1)+'%/d' },
       { lbl:'Corr', val: d.corrQ, raw: d.corr.toFixed(2) },
     ].map(b => `
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px">
-        <span style="width:26px;color:var(--text3);font-family:monospace">${b.lbl}</span>
+      <div style="display:flex;align-items:center;gap:4px;font-size:9px">
+        <span style="width:22px;color:var(--text3);font-family:monospace">${b.lbl}</span>
         <div class="qs-bar-track" style="flex:1"><div class="qs-bar-fill" style="width:${b.val}%;background:${b.val>=60?'#00c076':b.val>=30?'#f5a623':'#ef4444'}"></div></div>
-        <span style="width:38px;text-align:right;color:var(--text3);font-family:monospace">${b.raw}</span>
+        <span style="width:34px;text-align:right;color:var(--text3);font-family:monospace">${b.raw}</span>
       </div>`).join('');
 
     return `
       <div class="qs-card ${cls}">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <div>
             <div class="qs-pair" style="color:${col}">${holding} → ${d.sym}</div>
-            <div style="margin-top:3px">${badge}</div>
+            <div style="margin-top:2px">${badge}</div>
           </div>
           <div style="text-align:right">
             <div class="qs-score" style="color:${col}">${d.qss}</div>
-            <div style="font-size:9px;color:var(--text3);font-family:monospace">QSS /100</div>
+            <div style="font-size:8px;color:var(--text3);font-family:monospace">QSS /100</div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;background:rgba(255,255,255,.03);border-radius:6px;padding:8px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:6px;background:rgba(255,255,255,.03);border-radius:5px;padding:5px">
           <div style="text-align:center">
-            <div style="font-size:9px;color:var(--text3);font-family:monospace">GAIN TARGET</div>
-            <div style="font-size:16px;font-weight:700;color:#00c076">+${d.expGain.toFixed(1)}%</div>
+            <div style="font-size:8px;color:var(--text3);font-family:monospace">GAIN</div>
+            <div style="font-size:13px;font-weight:700;color:#00c076">+${d.expGain.toFixed(1)}%</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:9px;color:var(--text3);font-family:monospace">HOLD TIME</div>
-            <div style="font-size:16px;font-weight:700;color:var(--text)">${holdStr}</div>
+            <div style="font-size:8px;color:var(--text3);font-family:monospace">HOLD</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${holdStr}</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:9px;color:var(--text3);font-family:monospace">AFTER FEES</div>
-            <div style="font-size:16px;font-weight:700;color:${netCol}">+${netStr}%</div>
+            <div style="font-size:8px;color:var(--text3);font-family:monospace">NET</div>
+            <div style="font-size:13px;font-weight:700;color:${netCol}">+${netStr}%</div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">${bars}</div>
-        <div style="font-size:10px;color:var(--text3)">
-          Target: <strong style="color:var(--text2)">${d.meanFmt}</strong> (30d mean) ·
-          Exit when Z30 &lt; 0.3
-          ${d.ouHL20 > 20 ? '<br><span style="opacity:.55">* Hold est. from Z30 — no fast OU spring (pair trending). Higher risk.</span>' : ''}
+        <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:5px">${bars}</div>
+        <div style="font-size:8px;font-family:monospace;color:var(--text3);background:rgba(255,255,255,.03);border-radius:4px;padding:4px 6px;margin-bottom:5px;line-height:1.6">
+          Inner = Z30×30%+Boll×25%+RSI×20%+OU×15%+Corr×10%<br>
+          &nbsp;= ${d.se_q}×.30+${d.bp}×.25+${d.re}×.20+${d.qf}×.15+${d.corrQ}×.10 = <strong style="color:var(--text)">${Math.round(d.se_q*.30+d.bp*.25+d.re*.20+d.qf*.15+d.corrQ*.10)}</strong>
+          &nbsp;·&nbsp;MT×${(d.mt*100).toFixed(0)}% = <strong style="color:${col}">QSS ${d.qss}</strong>
         </div>
-        <div style="margin-top:8px">
-          <button onclick="switchAnalyzerPair('${holding}','${d.sym}')" style="font-family:monospace;font-size:10px;padding:4px 12px;border-radius:6px;border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">
+        <div style="font-size:9px;color:var(--text3)">
+          → <strong style="color:var(--text2)">${d.meanFmt}</strong> · exit Z30&lt;0.3
+          ${d.ouHL20 > 20 ? ' · <span style="opacity:.55">*est. from Z30</span>' : ''}
+        </div>
+        <div style="margin-top:6px">
+          <button onclick="switchAnalyzerPair('${holding}','${d.sym}')" style="font-family:monospace;font-size:9px;padding:3px 10px;border-radius:5px;border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">
             Full analysis →
           </button>
         </div>
@@ -5368,7 +5384,7 @@ async function getScoreForPair(a,b){
     // Use _lastRmtQ — RMT is a global market metric (same 10 coins for every pair),
     // so the value from the last analyzer run applies to all pairs in the batch scan.
     // Falls back to 50 if quantum analysis has never run yet.
-    const omega = computeOmegaScan(etForOmega, _lastRmtQ);
+    const omega = computeOmegaScan(etForOmega, _lastRmtQ, corr);
     const omegaPhase = etForOmega ? etForOmega.phase : 0;
     const omegaPhaseLabel = etForOmega ? etForOmega.phaseLabel : '';
     const omegaAbsZ = etForOmega ? +(etForOmega.absZ || 0).toFixed(2) : 0;
