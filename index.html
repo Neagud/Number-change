@@ -5489,46 +5489,76 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
             : currentZ < -1.5 ? 21 : currentZ < -0.8 ? 14 : currentZ < -0.3 ? 7 : 3;
   }
 
-  // ── Trade invalidation check — warns user if trade is genuinely broken ──
-  // These are intentionally conservative thresholds so this fires very rarely.
-  const hurst = et ? (et.hurst || 0) : 0;
+  // ── Multi-signal trade health check ──
+  // Philosophy: any single metric can be noisy or normal. We require MULTIPLE independent
+  // signals pointing the same direction before warning. This makes false alarms near-impossible.
   let exitWarning = null;
 
-  // ── Exit warning thresholds are INTENTIONALLY EXTREME ──
-  // Normal losing trades, slow recoveries, and temporary dips must NEVER trigger this.
-  // Only fire when the trade is statistically broken beyond reasonable doubt.
+  if (ratioCloses.length >= 30 && daysSinceEntry > 7 && currentZ < entryZ) {
+    const last14 = ratioCloses.slice(-14);
+    const last30 = ratioCloses.slice(-30);
+    const last7  = ratioCloses.slice(-7);
 
-  // Condition 1: Pair turned strongly trending AND deep in the hole
-  // Hurst > 0.88 = strongly trending (not just slightly elevated)
-  // Z < -1.8 = significantly below mean on top of it
-  // Both must be true simultaneously — either alone is normal
-  if (hurst > 0.88 && currentZ < -1.8) {
-    exitWarning = {
-      icon: '📉',
-      headline: 'This pair has stopped cycling — consider cutting your loss',
-      detail: `The market structure changed. Hurst = ${hurst.toFixed(2)} means this pair is now strongly trending, not reverting. This is rare — most dips recover. But when Hurst is this high and the position is this deep, holding longer may increase the loss rather than fix it.`,
-      severity: 'high'
-    };
+    // Signal A — Mean drift: has the 14-day rolling average shifted 5%+ below the long-term mean?
+    // If yes, the mean ITSELF is moving away — this is structural, not a temporary dip.
+    const recentMean14 = last14.reduce((s,v) => s+v, 0) / 14;
+    const meanDriftPct = meanW > 0 ? (recentMean14 - meanW) / meanW * 100 : 0;
+    const signalMeanDrift = meanDriftPct < -5;
+
+    // Signal B — Consistent downslope over 14 days (normalized by mean price level)
+    // Distinguishes a structural trend from random noise bouncing around the mean.
+    const slope14 = meanW > 0 ? (last14[last14.length-1] - last14[0]) / (14 * meanW) : 0;
+    const signalDownslope = slope14 < -0.003; // >0.3% per day decline, consistently
+
+    // Signal C — No mean crossings in 30 days
+    // A healthy cycling pair crosses its mean regularly. Zero crossings in a month = stuck.
+    let crossings30 = 0;
+    for (let i = 1; i < last30.length; i++) {
+      if ((last30[i-1] - meanW) * (last30[i] - meanW) < 0) crossings30++;
+    }
+    const signalNoCrossings = crossings30 === 0 && daysSinceEntry > 14;
+
+    // Signal D — Accelerating away this week: Z got worse over last 7 days, not better.
+    // Mean reversion should show at least small improvement within a week of being this deep.
+    const zWeekAgo = last7.length >= 2 ? (last7[0] - meanW) / stdW : currentZ;
+    const signalAccelerating = currentZ < -1.5 && (currentZ - zWeekAgo) < -0.4;
+
+    const activeSignals = [
+      signalMeanDrift    ? 'the average price level has shifted structurally lower' : null,
+      signalDownslope    ? 'steady decline every day for 2 weeks' : null,
+      signalNoCrossings  ? 'no recovery attempt at all in 30 days' : null,
+      signalAccelerating ? 'position worsened further this week' : null
+    ].filter(Boolean);
+
+    const signalCount = activeSignals.length;
+
+    if (signalCount >= 3) {
+      // 3+ independent signals: near-impossible by coincidence — trade is genuinely broken
+      exitWarning = {
+        icon: '⚠️',
+        headline: 'Multiple warning signs — this trade may be broken',
+        detail: `${signalCount} independent signals all point against recovery: ${activeSignals.join(', ')}. Each one alone is normal — all together at once is very unusual. Review whether the original trade basis still holds.`,
+        severity: 'high'
+      };
+    } else if (signalCount >= 2 && currentZ < -2.2) {
+      // 2 signals + very deep = soft watch (not urgent, but worth knowing)
+      exitWarning = {
+        icon: '🔻',
+        headline: 'Trade showing unusual weakness — monitor closely',
+        detail: `Two warning signs detected: ${activeSignals.join(' and ')}. Not enough to recommend exiting, but worth checking daily. If the position continues worsening this week, consider a review.`,
+        severity: 'medium'
+      };
+    }
   }
-  // Condition 2: Structural break — 3.2σ is an extreme outlier in any healthy pair
-  // Statistically this happens in less than 0.1% of candles — near impossible in normal conditions
-  else if (currentZ < -3.2) {
+
+  // Absolute backstop regardless of hold time: Z < -3.5 is a structural break.
+  // Statistically this is 1-in-1000 territory — almost impossible without a major event.
+  if (!exitWarning && currentZ < -3.5 && daysSinceEntry > 5) {
     exitWarning = {
-      icon: '⚠️',
-      headline: 'Extreme move — something may have fundamentally changed',
-      detail: `The ratio is ${Math.abs(currentZ).toFixed(1)}σ from normal. This level is almost never seen in healthy pairs. It may signal a structural event — major news, loss of correlation, or a market shift. Consider a partial exit to protect capital while you investigate.`,
+      icon: '🚨',
+      headline: 'Extreme price move — check the news before holding further',
+      detail: `The ratio is ${Math.abs(currentZ).toFixed(1)}σ from normal. Moves this extreme almost never happen in healthy pairs and typically signal a major external event. Check what happened to both coins before deciding to hold or exit.`,
       severity: 'high'
-    };
-  }
-  // Condition 3: Trade continuously deteriorating for 3+ weeks with no sign of recovery
-  // Must be: held 21+ days AND Z got 1.5σ WORSE than entry AND still clearly negative
-  // A trade that went from Z=-1.0 to Z=-2.5 over 3 weeks is broken, not just slow
-  else if (daysSinceEntry > 21 && currentZ < -0.8 && currentZ < entryZ - 1.5) {
-    exitWarning = {
-      icon: '🔻',
-      headline: 'Position steadily worsening after 3 weeks — review this trade',
-      detail: `After ${Math.floor(daysSinceEntry)} days, the ratio has moved ${Math.abs(currentZ - entryZ).toFixed(1)}σ further from normal since you entered — not closer. This is unusual. Healthy trades show at least some recovery within 3 weeks. Consider whether the original signal still applies.`,
-      severity: 'medium'
     };
   }
 
