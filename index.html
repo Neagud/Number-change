@@ -5432,11 +5432,19 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   let meanW = 0, stdW = 0.001, currentZ = 0, entryZ = 0, entryRatioHist = null;
   let et = null;
 
+  // Fetch with 10-second timeout — never hangs the UI
+  const fetchJ = (url) => Promise.race([
+    fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
+  ]);
+
   try {
     const [fk, tk] = await Promise.all([
-      fetch(`https://api.binance.com/api/v3/klines?symbol=${curAsset}USDT&interval=1d&limit=92`).then(r=>r.json()),
-      fetch(`https://api.binance.com/api/v3/klines?symbol=${tr.assetA}USDT&interval=1d&limit=92`).then(r=>r.json())
+      fetchJ(`https://api.binance.com/api/v3/klines?symbol=${curAsset}USDT&interval=1d&limit=92`),
+      fetchJ(`https://api.binance.com/api/v3/klines?symbol=${tr.assetA}USDT&interval=1d&limit=92`)
     ]);
+    // Validate — Binance returns an object with "code" on error, not an array
+    if (!Array.isArray(fk) || !Array.isArray(tk) || fk.length < 10 || tk.length < 10) throw new Error('bad data');
     const fC = fk.map(k => +k[4]);
     const tC = tk.map(k => +k[4]);
     const fT = fk.map(k => +k[0]);
@@ -5820,7 +5828,13 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
       </div>`;
     }
 
-    sigEl.innerHTML = spikeBannerHtml + exitBannerHtml + (monitorHtml || `<div style="font-size:11px;color:var(--text3);padding:8px">Could not load monitor data. Check connection.</div>`);
+    const monitorFallback = `
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:.75rem;text-align:center">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:4px">📡 Trade Progress</div>
+        <div style="font-size:11px;color:var(--text3)">Chart data unavailable right now — score and signals above are still live.</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">Try refreshing or check back in a minute.</div>
+      </div>`;
+    sigEl.innerHTML = spikeBannerHtml + exitBannerHtml + (monitorHtml || monitorFallback);
     return;
   }
 
