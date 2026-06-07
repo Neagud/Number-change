@@ -1289,6 +1289,18 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
           <input type="number" id="sf-score" placeholder="e.g. 78" min="0" max="100">
         </div>
       </div>
+      <!-- Trade type selector -->
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button type="button" id="sf-type-swing" onclick="setSwapType('swing')"
+          style="flex:1;padding:8px;border-radius:8px;border:2px solid rgba(59,143,255,0.5);background:rgba(59,143,255,0.12);color:#3b8fff;font-family:monospace;font-size:11px;font-weight:700;cursor:pointer">
+          📊 SWING TRADE<br><span style="font-weight:400;font-size:10px;opacity:.8">OMEGA signal · weeks · 5–20%</span>
+        </button>
+        <button type="button" id="sf-type-scalp" onclick="setSwapType('scalp')"
+          style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--text3);font-family:monospace;font-size:11px;font-weight:700;cursor:pointer">
+          ⚡ QUICK SCALP<br><span style="font-weight:400;font-size:10px;opacity:.8">QSS signal · days · 1–5%</span>
+        </button>
+      </div>
+      <input type="hidden" id="sf-trade-type" value="swing">
       <div class="st-form-group" style="margin-bottom:12px">
         <label>Notes (optional)</label>
         <textarea id="sf-notes" placeholder="Why did you make this swap?"></textarea>
@@ -4939,13 +4951,20 @@ function renderTrackerList(){
     card.style.opacity=isClosed?'0.75':'1';
     const scoreId='card-score-'+tr.id.replace(/[^a-z0-9]/gi,'_');
     const closedBadge=isClosed?`<span style="font-size:10px;font-family:monospace;font-weight:700;padding:2px 7px;border-radius:8px;background:rgba(0,192,118,0.12);color:#00c076;border:1px solid rgba(0,192,118,0.3);margin-left:6px">✅ CLOSED</span>`:'';
+    // Last active swap determines trade type
+    const lastSwapType=(()=>{const s=[...swaps].reverse().find(sw=>sw.toAsset===curAsset);return s?s.tradeType||'swing':'swing';})();
+    const typeBadge=curAsset!==tr.assetA
+      ?(lastSwapType==='scalp'
+        ?`<span style="font-size:9px;font-family:monospace;font-weight:700;padding:1px 6px;border-radius:5px;background:rgba(245,166,35,0.12);color:#f5a623;border:1px solid rgba(245,166,35,0.35);margin-left:6px">⚡ SCALP</span>`
+        :`<span style="font-size:9px;font-family:monospace;font-weight:700;padding:1px 6px;border-radius:5px;background:rgba(59,143,255,0.10);color:#3b8fff;border:1px solid rgba(59,143,255,0.3);margin-left:6px">📊 SWING</span>`)
+      :'';
     const holdingLabel=curAsset!==tr.assetA
       ?`<span style="font-size:10px;color:var(--text3);font-family:monospace">holding <strong style="color:var(--amber)">${curAsset}</strong></span>`
       :`<span style="font-size:10px;color:var(--text3);font-family:monospace">holding <strong style="color:var(--green)">${tr.assetA}</strong></span>`;
 
     card.innerHTML=`
       <div class="stc-left">
-        <div class="stc-name">${tr.name||tr.assetA+'↔'+tr.assetB}${closedBadge}</div>
+        <div class="stc-name">${tr.name||tr.assetA+'↔'+tr.assetB}${closedBadge}${typeBadge}</div>
         <div class="stc-pair">${tr.assetA} ↔ ${tr.assetB} &nbsp;·&nbsp; ${holdingLabel}</div>
         <div class="stc-meta">${swaps.length} swap${swaps.length!==1?'s':''} &middot; started with ${tr.startAmount} ${tr.assetA}</div>
       </div>
@@ -5389,11 +5408,12 @@ async function buildLiveMonitor(tr, curAsset) {
 
   const entryDateMs = new Date(lastSwap.date).getTime();
   const daysSinceEntry = Math.max(0, (Date.now() - entryDateMs) / 86400000);
+  const isScalp = (lastSwap.tradeType || 'swing') === 'scalp';
 
-  // Fetch 90-day ratio history: curAsset/assetA
+  // Fetch ratio history
   let ratioCloses = [], ratioTs = [];
-  let mean60 = 0, std60 = 0.001, currentZ = 0, entryZ = 0, entryRatioHist = null;
-  let et = null, corr = 0.65;
+  let meanW = 0, stdW = 0.001, currentZ = 0, entryZ = 0, entryRatioHist = null;
+  let et = null;
 
   try {
     const [fk, tk] = await Promise.all([
@@ -5402,91 +5422,107 @@ async function buildLiveMonitor(tr, curAsset) {
     ]);
     const fC = fk.map(k => +k[4]);
     const tC = tk.map(k => +k[4]);
-    const fT = fk.map(k => +k[0]); // open timestamps
+    const fT = fk.map(k => +k[0]);
     const n = Math.min(fC.length, tC.length);
     ratioCloses = Array.from({length:n}, (_,i) => fC[fC.length-n+i] / tC[tC.length-n+i]);
     ratioTs     = fT.slice(fT.length-n);
 
-    // 60-day mean/std for Z calculation
-    const w60 = ratioCloses.slice(-60);
-    mean60 = w60.reduce((a,b)=>a+b,0) / w60.length;
-    std60  = Math.sqrt(w60.reduce((s,v)=>s+(v-mean60)**2,0)/w60.length) || 0.001;
+    // Window: scalp uses 30d mean (short-term target), swing uses 60d
+    const window = isScalp ? 30 : 60;
+    const wSlice = ratioCloses.slice(-window);
+    meanW = wSlice.reduce((a,b)=>a+b,0) / wSlice.length;
+    stdW  = Math.sqrt(wSlice.reduce((s,v)=>s+(v-meanW)**2,0)/wSlice.length) || 0.001;
 
-    // Current Z
     const currentRatio = ratioCloses[ratioCloses.length-1];
-    currentZ = (currentRatio - mean60) / std60;
+    currentZ = (currentRatio - meanW) / stdW;
 
-    // Entry Z — find closest historical candle to entry date
-    const ONEDAY = 86400000;
+    // Entry Z from historical data
     let closestIdx = ratioTs.reduce((best, ts, i) =>
       Math.abs(ts - entryDateMs) < Math.abs(ratioTs[best] - entryDateMs) ? i : best, 0);
     entryRatioHist = ratioCloses[closestIdx];
-    entryZ = (entryRatioHist - mean60) / std60;
+    entryZ = (entryRatioHist - meanW) / stdW;
 
-    // Correlation
-    corr = calcCorrelation(fC.slice(-60), tC.slice(-60));
-
-    // Entry timing on current ratio
     et = analyzeEntryTiming(ratioCloses);
   } catch(e) { return null; }
 
-  // ── Progress calculation ──
-  // Trade is: entered when curAsset/assetA was LOW (Z negative), exit when HIGH (Z > +1.2σ)
-  // Progress: how much of the journey from entryZ → 0 (mean) has been completed
-  const journeyTotal = Math.abs(entryZ); // how far below mean we entered
-  const journeyCovered = currentZ - entryZ; // how much ratio has moved toward mean
-  const progressPct = journeyTotal > 0 ? Math.max(0, Math.min(100, journeyCovered / journeyTotal * 100)) : 50;
+  const currentRatioNow = ratioCloses[ratioCloses.length-1];
 
-  // Gain so far (ratio improvement)
-  const gainSoFar = entryRatioHist > 0 ? (ratioCloses[ratioCloses.length-1] / entryRatioHist - 1) * 100 : 0;
-  const remainingToMean = mean60 > 0 ? (mean60 / ratioCloses[ratioCloses.length-1] - 1) * 100 : 0;
+  // Progress
+  const journeyTotal  = Math.abs(entryZ);
+  const journeyCovered = currentZ - entryZ;
+  const progressPct   = journeyTotal > 0 ? Math.max(0, Math.min(100, journeyCovered / journeyTotal * 100)) : 50;
 
-  // Phase + OU
-  const phase = et ? et.phase : 0;
-  const phaseLabel = et ? et.phaseLabel : '—';
+  // Gain
+  const gainSoFar      = entryRatioHist > 0 ? (currentRatioNow / entryRatioHist - 1) * 100 : 0;
+  const remainingToMean = meanW > 0 ? (meanW / currentRatioNow - 1) * 100 : 0;
+
+  // Phase + estimated days
+  const phase      = et ? et.phase : 0;
   const ouForcePct = et ? (et.ouForcePct || 0) : 0;
-  const halfLife = et && et.halfLife < 990 ? et.halfLife : null;
-  const estDays = halfLife
-    ? Math.max(1, Math.round(halfLife * 0.7))
-    : currentZ < -1.5 ? 14 : currentZ < -0.8 ? 8 : currentZ < -0.3 ? 4 : 1;
+  const halfLife   = et && et.halfLife < 990 ? et.halfLife : null;
+
+  let estDays;
+  if (isScalp) {
+    // Scalp: exit in days, not weeks — Z30-based estimate
+    estDays = currentZ > 1.2 ? 0 : currentZ > 0.5 ? 1 : currentZ > -0.5 ? 2
+            : currentZ > -1.0 ? 3 : currentZ > -1.5 ? 5 : 7;
+  } else {
+    // Swing: OU half-life based
+    estDays = halfLife ? Math.max(1, Math.round(halfLife * 0.7))
+            : currentZ < -1.5 ? 21 : currentZ < -0.8 ? 14 : currentZ < -0.3 ? 7 : 3;
+  }
 
   // ── Plain-English status ──
   let statusIcon, statusLine, statusDetail, statusColor, statusBg;
   if (currentZ > 1.5) {
     statusIcon = '🎯'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.10)';
-    statusLine = 'Time to sell — you are in the profit zone';
-    statusDetail = `${curAsset} has risen well above its normal range. Swap back to ${tr.assetA} now to lock in your gains.`;
+    statusLine = isScalp ? 'Sell now — target reached!' : 'Time to sell — you are in the profit zone';
+    statusDetail = isScalp
+      ? `${curAsset} has hit the scalp target. Swap back to ${tr.assetA} and take your profit. Do not get greedy — scalps are quick in and out.`
+      : `${curAsset} has risen well above its average vs ${tr.assetA}. Swap back now to lock in your gains.`;
   } else if (currentZ > 0.8) {
     statusIcon = '✅'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.08)';
-    statusLine = 'Looking good — consider selling soon';
-    statusDetail = `${curAsset} is above average and still climbing. You can sell now for a solid gain, or wait a few more days for the peak.`;
+    statusLine = isScalp ? 'Good — approaching sell zone' : 'Looking good — consider selling soon';
+    statusDetail = isScalp
+      ? `You are close to the scalp exit. ${estDays === 0 ? 'Consider selling now.' : `Est. ${estDays} more day${estDays>1?'s':''} to reach full target.`}`
+      : `${curAsset} is above average. You can exit now for a solid gain, or hold a few more days for the peak.`;
   } else if (currentZ > 0.2) {
     statusIcon = '📈'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.06)';
     statusLine = 'Almost there — keep holding';
-    statusDetail = `${curAsset} is nearly back to its normal price vs ${tr.assetA}. A little more patience and you will be in sell territory.`;
+    statusDetail = `${curAsset} is nearly back to its ${isScalp?'30-day':'normal'} average vs ${tr.assetA}. ${isScalp?'A day or two more.':'A little more patience and you will be in sell territory.'}`;
   } else if (currentZ > -0.3) {
     statusIcon = '⚖️'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
     statusLine = 'Back to normal — wait for the overshoot';
-    statusDetail = `The price is back to its average. Hold a bit longer — it usually overshoots above average before settling. That is your best exit point.`;
+    statusDetail = isScalp
+      ? `Price is at its 30-day average. For a scalp, wait for it to go slightly above average — that is your exit. Est. ${estDays} day${estDays>1?'s':''}.`
+      : `Price is back to average. Hold a bit longer — it usually overshoots above average before settling. That is your best exit.`;
   } else if (phase === 3 || phase === 4 || phase === 5) {
     statusIcon = '🔄'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-    statusLine = 'Turning around now — stay patient';
-    statusDetail = `The price move is slowing down and starting to reverse. This is exactly what you were waiting for. Hold — it should reach the sell zone in about ${estDays} days.`;
+    statusLine = 'Turning around — stay patient';
+    statusDetail = `The price move is slowing and starting to reverse. ${isScalp?`Quick scalps usually recover in ${estDays}–${estDays+2} days.`:`Hold — should reach the sell zone in about ${estDays} days.`}`;
   } else {
     statusIcon = '⏳'; statusColor = '#ef4444'; statusBg = 'rgba(239,68,68,0.06)';
-    statusLine = daysSinceEntry < 8 ? 'Normal — trades often dip before recovering' : 'Still waiting — hold your position';
-    statusDetail = daysSinceEntry < 8
-      ? `It has only been ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} — being temporarily down is completely normal. The price usually takes 1–3 weeks to reverse. Do not panic.`
-      : `${curAsset} is still below its average vs ${tr.assetA}. The deeper it falls, the stronger it bounces back. Keep holding and check back daily.`;
+    if (isScalp) {
+      statusLine = daysSinceEntry < 4 ? 'Holding — waiting for the bounce' : 'Taking longer than expected';
+      statusDetail = daysSinceEntry < 4
+        ? `Scalps normally move within 2–5 days. It has been ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} — keep holding, the bounce is coming.`
+        : `This scalp is taking longer than usual. If it stays red after 7 days, consider whether to cut losses or hold. Est. ${estDays} more days.`;
+    } else {
+      statusLine = daysSinceEntry < 10 ? 'Normal — trades often dip before recovering' : 'Still waiting — hold your position';
+      statusDetail = daysSinceEntry < 10
+        ? `Only ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} in — being temporarily down is completely normal. Swing trades take 2–6 weeks. Do not panic.`
+        : `${curAsset} is still below its average vs ${tr.assetA}. The deeper it falls, the stronger the bounce back. Hold and check daily.`;
+    }
   }
 
   // ── Progress bar (the journey) ──
+  const exitThreshold = isScalp ? 0.8 : 1.5; // scalp exits near mean, swing exits at overshoot
   const rangeMin = -3, rangeMax = 2.5, rangeTotal = rangeMax - rangeMin;
   const toPct = z => Math.max(1, Math.min(99, (z - rangeMin) / rangeTotal * 100));
   const entryPct   = toPct(entryZ);
   const currentPct = toPct(currentZ);
   const meanPct    = toPct(0);
-  const exitPct    = toPct(1.5);
+  const exitPct    = toPct(exitThreshold);
   // Filled segment: from entry up to current (shows how far we've traveled)
   const fillLeft  = Math.min(entryPct, currentPct);
   const fillWidth = Math.abs(currentPct - entryPct);
@@ -5496,7 +5532,7 @@ async function buildLiveMonitor(tr, curAsset) {
   const nowLabel    = (gainSoFar >= 0 ? '+' : '') + gainSoFar.toFixed(1) + '%';
   const targetLabel = '+' + (gainSoFar + (remainingToMean > 0 ? remainingToMean : 0)).toFixed(1) + '%';
   const dayStr = daysSinceEntry < 1 ? 'today' : daysSinceEntry < 2 ? '1 day ago' : `${Math.floor(daysSinceEntry)} days ago`;
-  const exitLabel = currentZ > 1.2 ? 'NOW' : `~${estDays}d`;
+  const exitLabel = currentZ > exitThreshold ? 'NOW' : `~${estDays}d`;
   const decFmt = v => v > 1 ? v.toFixed(4) : v.toFixed(7);
 
   return `
@@ -5504,7 +5540,12 @@ async function buildLiveMonitor(tr, curAsset) {
 
       <!-- Header strip -->
       <div style="background:var(--bg3);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.3px">📡 Trade Progress</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.3px">📡 Trade Progress</div>
+          ${isScalp
+            ? `<span style="font-size:9px;font-family:monospace;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(245,166,35,0.15);color:#f5a623;border:1px solid rgba(245,166,35,0.4)">⚡ QUICK SCALP</span>`
+            : `<span style="font-size:9px;font-family:monospace;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(59,143,255,0.12);color:#3b8fff;border:1px solid rgba(59,143,255,0.4)">📊 SWING TRADE</span>`}
+        </div>
         <div style="font-size:10px;color:var(--text3)">started ${dayStr}</div>
       </div>
 
@@ -5953,6 +5994,7 @@ function renderSwapTable(tr){
       document.getElementById('sf-to-amt').value=sw.toAmt;
       document.getElementById('sf-score').value=sw.score||'';
       document.getElementById('sf-notes').value=sw.notes||'';
+      setSwapType(sw.tradeType||'swing');
       const saveBtn=document.getElementById('stSaveSwapBtn');
       saveBtn.textContent='Update swap';
       saveBtn.dataset.editIdx=btn.dataset.idx;
@@ -5962,12 +6004,28 @@ function renderSwapTable(tr){
   });
 }
 
+/* ── Trade type toggle ── */
+function setSwapType(type){
+  document.getElementById('sf-trade-type').value=type;
+  const swingBtn=document.getElementById('sf-type-swing');
+  const scalpBtn=document.getElementById('sf-type-scalp');
+  if(!swingBtn||!scalpBtn) return;
+  if(type==='swing'){
+    swingBtn.style.borderColor='rgba(59,143,255,0.5)'; swingBtn.style.background='rgba(59,143,255,0.12)'; swingBtn.style.color='#3b8fff';
+    scalpBtn.style.borderColor='var(--border)'; scalpBtn.style.background='transparent'; scalpBtn.style.color='var(--text3)';
+  } else {
+    scalpBtn.style.borderColor='rgba(245,166,35,0.6)'; scalpBtn.style.background='rgba(245,166,35,0.10)'; scalpBtn.style.color='#f5a623';
+    swingBtn.style.borderColor='var(--border)'; swingBtn.style.background='transparent'; swingBtn.style.color='var(--text3)';
+  }
+}
+
 /* ── Swap form ── */
 function resetSwapForm(tr){
   const form=document.getElementById('stSwapForm');
   document.getElementById('sf-date').value=new Date().toISOString().slice(0,10);
   document.getElementById('sf-from-amt').value='';
   document.getElementById('sf-to-amt').value='';
+  setSwapType('swing'); // default to swing
   document.getElementById('sf-score').value='';
   document.getElementById('sf-notes').value='';
   document.getElementById('stSwapFormTitle').textContent='Record a swap';
@@ -6036,6 +6094,7 @@ function bindSwapForm(tr){
     const toAmt=parseFloat(document.getElementById('sf-to-amt').value);
     const score=parseInt(document.getElementById('sf-score').value)||null;
     const notes=document.getElementById('sf-notes').value.trim();
+    const tradeType=document.getElementById('sf-trade-type')?.value||'swing';
 
     if(!date||!fromAsset||!toAsset||isNaN(fromAmt)||isNaN(toAmt)||fromAmt<=0||toAmt<=0){
       alert('Please fill in date, assets, and amounts.');return;
@@ -6045,7 +6104,7 @@ function bindSwapForm(tr){
     document.getElementById('sf-from-asset').disabled=false;
     document.getElementById('sf-to-asset').disabled=false;
 
-    const swap={date,fromAsset,fromAmt,toAsset,toAmt,score,notes};
+    const swap={date,fromAsset,fromAmt,toAsset,toAmt,score,notes,tradeType};
     const trackers=loadTrackers();
     const t=trackers.find(x=>x.id===activeTrackerId);
     if(!t) return;
