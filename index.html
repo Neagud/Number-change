@@ -4929,12 +4929,13 @@ function renderTrackerList(){
     let curAsset=tr.assetA;
     swaps.forEach(sw=>{ if(sw.fromAsset===curAsset) curAsset=sw.toAsset; });
 
-    // Single formula: fees are already embedded in swap amounts — no double-deduction
-    const growth=baseAmt!==null&&tr.startAmount>0?((baseAmt-tr.startAmount)/tr.startAmount*100):null;
+    // Deduct exit fee from current value (entry fee already in amounts)
+    const baseAmtCard=baseAmt!==null?baseAmt*(1-SWAP_FEE_RATE):null;
+    const growth=baseAmtCard!==null&&tr.startAmount>0?((baseAmtCard-tr.startAmount)/tr.startAmount*100):null;
     const col=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
 
     // Profit badge
-    const profitAmtCard=baseAmt!==null?baseAmt-tr.startAmount:null;
+    const profitAmtCard=baseAmtCard!==null?baseAmtCard-tr.startAmount:null;
     const profitColCard=profitAmtCard===null?'var(--text2)':profitAmtCard>=0?'#00c076':'#ef4444';
     const profitBadge=profitAmtCard!==null
       ?`<span style="font-size:11px;font-family:monospace;color:${profitColCard};font-weight:700">${profitAmtCard>=0?'+':''}${profitAmtCard.toFixed(4)} ${tr.assetA}</span>`
@@ -5225,7 +5226,7 @@ function calcMonthlyAccumulation(tr){
   return found?total:null;
 }
 
-const SWAP_FEE_RATE=0.01;
+const SWAP_FEE_RATE=0.005; // 0.5% exit fee deducted from all forward-looking numbers
 function calcTotalFees(tr){
   const swaps=tr.swaps||[];
   if(!swaps.length) return 0;
@@ -5281,10 +5282,11 @@ function renderDetailStats(tr){
   // Open = holding non-base = estimate, deduct fees
   let curAssetD=tr.assetA;
   (tr.swaps||[]).forEach(sw=>{ if(sw.fromAsset===curAssetD) curAssetD=sw.toAsset; });
-  // Single formula everywhere: (currentValue - startAmount) / startAmount × 100
-  // Exchange fees are already embedded in the actual toAmt/fromAmt swap records — no double-deduction
-  const profitAmt=baseAmt!==null?baseAmt-tr.startAmount:null;
-  const growth=baseAmt!==null&&tr.startAmount>0?(profitAmt/tr.startAmount*100):null;
+  // Single formula everywhere: deduct one exit fee (swap back) from current value
+  // Entry fee is already in swap amounts; exit fee hasn't happened yet so we deduct it here
+  const baseAmtAfterFee=baseAmt!==null?baseAmt*(1-SWAP_FEE_RATE):null;
+  const profitAmt=baseAmtAfterFee!==null?baseAmtAfterFee-tr.startAmount:null;
+  const growth=baseAmtAfterFee!==null&&tr.startAmount>0?(profitAmt/tr.startAmount*100):null;
   const growthCol=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
   const profitCol=profitAmt===null?'var(--text2)':profitAmt>=0?'#00c076':'#ef4444';
   const profitStr=profitAmt!==null?(profitAmt>=0?'+':'')+profitAmt.toFixed(4)+' '+tr.assetA:'—';
@@ -5302,9 +5304,9 @@ function renderDetailStats(tr){
       let curA2=t2.assetA;
       (t2.swaps||[]).forEach(sw=>{ if(sw.fromAsset===curA2) curA2=sw.toAsset; });
       if(baseAmt2===null) return;
-      // Single formula: (currentValue - startAmount) / startAmount × 100
-      // Fees are already baked into swap amounts; no double-deduction
-      const profit2=baseAmt2-t2.startAmount;
+      // Deduct exit fee — entry fee already in amounts, exit fee not happened yet
+      const baseAmt2AfterFee=baseAmt2*(1-SWAP_FEE_RATE);
+      const profit2=baseAmt2AfterFee-t2.startAmount;
       const growth2=t2.startAmount>0?(profit2/t2.startAmount*100):null;
       const col2=profit2>=0?'#00c076':'#ef4444';
       const gcol2=growth2!==null?(growth2>=0?'#00c076':'#ef4444'):'var(--text2)';
@@ -5467,9 +5469,9 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   const journeyCovered = currentZ - entryZ;
   const progressPct   = journeyTotal > 0 ? Math.max(0, Math.min(100, journeyCovered / journeyTotal * 100)) : 50;
 
-  // Gain
-  const gainSoFar      = entryRatioHist > 0 ? (currentRatioNow / entryRatioHist - 1) * 100 : 0;
-  const remainingToMean = meanW > 0 ? (meanW / currentRatioNow - 1) * 100 : 0;
+  // Gain — deduct one exit fee (0.5%) since you'll pay it when swapping back
+  const gainSoFar      = entryRatioHist > 0 ? ((currentRatioNow / entryRatioHist) * (1 - SWAP_FEE_RATE) - 1) * 100 : 0;
+  const remainingToMean = meanW > 0 ? ((meanW / currentRatioNow) * (1 - SWAP_FEE_RATE) - 1) * 100 : 0;
 
   // Phase + estimated days
   const phase      = et ? et.phase : 0;
