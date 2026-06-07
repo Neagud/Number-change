@@ -5480,13 +5480,21 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
 
   let estDays;
   if (isScalp) {
-    // Scalp: exit in days, not weeks — Z30-based estimate
+    // Scalp: 30-day window, exits at Z=0.8 — typically resolves in 2–7 days
     estDays = currentZ > 1.2 ? 0 : currentZ > 0.5 ? 1 : currentZ > -0.5 ? 2
             : currentZ > -1.0 ? 3 : currentZ > -1.5 ? 5 : 7;
   } else {
-    // Swing: OU half-life based
-    estDays = halfLife ? Math.max(1, Math.round(halfLife * 0.7))
-            : currentZ < -1.5 ? 21 : currentZ < -0.8 ? 14 : currentZ < -0.3 ? 7 : 3;
+    // Swing: must travel from currentZ all the way to exitThreshold (1.5)
+    // OU mean reversion: time ≈ halfLife × distance_to_exit / ln(2)
+    // A Z=-2.0 trade with halfLife=14 needs ~5–7 weeks, not 10 days
+    const distToExit = Math.max(0.5, exitThreshold - currentZ); // σ still to travel
+    if (halfLife) {
+      estDays = Math.max(7, Math.min(120, Math.round(halfLife * distToExit / 0.693)));
+    } else {
+      // Fallback without halfLife — purely Z-distance based
+      estDays = currentZ < -2.0 ? 56 : currentZ < -1.5 ? 42 : currentZ < -0.8 ? 28
+              : currentZ < -0.3 ? 14 : 7;
+    }
   }
 
   // ── Multi-signal trade health check ──
@@ -5600,8 +5608,10 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     } else {
       statusLine = daysSinceEntry < 10 ? 'Normal — trades often dip before recovering' : 'Still waiting — hold your position';
       statusDetail = daysSinceEntry < 10
-        ? `Only ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} in — being temporarily down is completely normal. Swing trades take 2–6 weeks. Do not panic.`
-        : `${curAsset} is still below its average vs ${tr.assetA}. The deeper it falls, the stronger the bounce back. Hold and check daily.`;
+        ? `Only ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} in — being temporarily down is completely normal. Swing trades typically take 3–8 weeks from entry to exit. Do not panic.`
+        : daysSinceEntry < 30
+          ? `${Math.floor(daysSinceEntry)} days in — still within normal swing timeframe. These trades need weeks, not days. The deeper the dip, the stronger the recovery tends to be.`
+          : `${Math.floor(daysSinceEntry)} days in — this is a longer swing. Estimated ${exitLabel} more. Hold unless you see the exit warning above fire.`;
     }
   }
 
@@ -5625,7 +5635,16 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   const targetLabel = '+' + (displayGain + (remainingToMean > 0 ? remainingToMean : 0)).toFixed(1) + '%';
   const monitorNowId = 'monitor-now-' + tr.id.replace(/[^a-z0-9]/gi,'_');
   const dayStr = daysSinceEntry < 1 ? 'today' : daysSinceEntry < 2 ? '1 day ago' : `${Math.floor(daysSinceEntry)} days ago`;
-  const exitLabel = currentZ > exitThreshold ? 'NOW' : `~${estDays}d`;
+  // Human-readable time label: days for scalps, weeks for swings
+  const exitLabel = currentZ > exitThreshold ? 'NOW'
+    : isScalp ? `~${estDays}d`
+    : estDays <= 10 ? `~${estDays}d`
+    : estDays <= 21 ? `~${Math.round(estDays/7)} wks`
+    : estDays <= 49 ? `~${Math.round(estDays/7)} wks`
+    : `~${Math.round(estDays/7)}+ wks`;
+  const exitSubLabel = currentZ > exitThreshold ? 'sell now'
+    : isScalp ? 'days'
+    : estDays <= 10 ? 'days' : 'weeks (est.)';
   const decFmt = v => v > 1 ? v.toFixed(4) : v.toFixed(7);
 
   return `
@@ -5730,7 +5749,7 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
           <div style="background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--border)">
             <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Est. sell in</div>
             <div style="font-size:20px;font-weight:700;color:${currentZ>1.2?'#00c076':'var(--text)'}">${exitLabel}</div>
-            <div style="font-size:9px;color:var(--text3)">${currentZ>1.2?'right now':'days'}</div>
+            <div style="font-size:9px;color:var(--text3)">${exitSubLabel}</div>
           </div>
         </div>
 
