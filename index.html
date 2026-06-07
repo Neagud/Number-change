@@ -5226,7 +5226,7 @@ function calcMonthlyAccumulation(tr){
   return found?total:null;
 }
 
-const SWAP_FEE_RATE=0.005; // 0.5% exit fee deducted from all forward-looking numbers
+const SWAP_FEE_RATE=0.01; // 1% exit fee deducted from all forward-looking numbers
 function calcTotalFees(tr){
   const swaps=tr.swaps||[];
   if(!swaps.length) return 0;
