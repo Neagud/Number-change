@@ -4929,15 +4929,12 @@ function renderTrackerList(){
     let curAsset=tr.assetA;
     swaps.forEach(sw=>{ if(sw.fromAsset===curAsset) curAsset=sw.toAsset; });
 
-    // If closed (back to base) → real profit, fees already baked in
-    // If open (holding non-base) → estimate with fee deduction
-    const isBackToBase=curAsset===tr.assetA;
-    const fgc=isBackToBase?0:calcTotalFees(tr);
-    const growth=baseAmt!==null?((baseAmt-tr.startAmount-fgc)/tr.startAmount*100):null;
+    // Single formula: fees are already embedded in swap amounts — no double-deduction
+    const growth=baseAmt!==null&&tr.startAmount>0?((baseAmt-tr.startAmount)/tr.startAmount*100):null;
     const col=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
 
     // Profit badge
-    const profitAmtCard=baseAmt!==null?baseAmt-tr.startAmount-fgc:null;
+    const profitAmtCard=baseAmt!==null?baseAmt-tr.startAmount:null;
     const profitColCard=profitAmtCard===null?'var(--text2)':profitAmtCard>=0?'#00c076':'#ef4444';
     const profitBadge=profitAmtCard!==null
       ?`<span style="font-size:11px;font-family:monospace;color:${profitColCard};font-weight:700">${profitAmtCard>=0?'+':''}${profitAmtCard.toFixed(4)} ${tr.assetA}</span>`
@@ -5284,10 +5281,10 @@ function renderDetailStats(tr){
   // Open = holding non-base = estimate, deduct fees
   let curAssetD=tr.assetA;
   (tr.swaps||[]).forEach(sw=>{ if(sw.fromAsset===curAssetD) curAssetD=sw.toAsset; });
-  const isClosedD=curAssetD===tr.assetA;
-  const totalFees=isClosedD?0:calcTotalFees(tr);
-  const profitAmt=baseAmt!==null?baseAmt-tr.startAmount-totalFees:null;
-  const growth=baseAmt!==null&&tr.startAmount>0?((baseAmt-tr.startAmount-totalFees)/tr.startAmount*100):null;
+  // Single formula everywhere: (currentValue - startAmount) / startAmount × 100
+  // Exchange fees are already embedded in the actual toAmt/fromAmt swap records — no double-deduction
+  const profitAmt=baseAmt!==null?baseAmt-tr.startAmount:null;
+  const growth=baseAmt!==null&&tr.startAmount>0?(profitAmt/tr.startAmount*100):null;
   const growthCol=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
   const profitCol=profitAmt===null?'var(--text2)':profitAmt>=0?'#00c076':'#ef4444';
   const profitStr=profitAmt!==null?(profitAmt>=0?'+':'')+profitAmt.toFixed(4)+' '+tr.assetA:'—';
@@ -5296,23 +5293,35 @@ function renderDetailStats(tr){
   let curAsset=tr.assetA, curAmt=tr.startAmount;
   swaps.forEach(sw=>{if(sw.fromAsset===curAsset){curAsset=sw.toAsset;curAmt=sw.toAmt;}});
 
-  // Live refresh — updates profit AND total return together so they always match
+  // Live refresh — one formula, updates stats + monitor card together
+  const monitorNowIdD = 'monitor-now-' + tr.id.replace(/[^a-z0-9]/gi,'_');
   if(!tr._liveLoaded){
     fetchTrackerPrices(tr).then(()=>{
       const t2={...tr,_liveLoaded:true};
       const baseAmt2=calcBaseAmount(t2);
       let curA2=t2.assetA;
       (t2.swaps||[]).forEach(sw=>{ if(sw.fromAsset===curA2) curA2=sw.toAsset; });
-      const fees2=(curA2===t2.assetA)?0:calcTotalFees(t2);
       if(baseAmt2===null) return;
-      const profit2=baseAmt2-t2.startAmount-fees2;
-      const growth2=t2.startAmount>0?((baseAmt2-t2.startAmount-fees2)/t2.startAmount*100):null;
+      // Single formula: (currentValue - startAmount) / startAmount × 100
+      // Fees are already baked into swap amounts; no double-deduction
+      const profit2=baseAmt2-t2.startAmount;
+      const growth2=t2.startAmount>0?(profit2/t2.startAmount*100):null;
       const col2=profit2>=0?'#00c076':'#ef4444';
       const gcol2=growth2!==null?(growth2>=0?'#00c076':'#ef4444'):'var(--text2)';
-      const profEl=document.querySelector('#stDetailStats .profit-live');
-      const retEl=document.querySelector('#stDetailStats .total-return-live');
-      if(profEl) profEl.innerHTML=`<span style="color:${col2}">${profit2>=0?'+':''}${profit2.toFixed(4)} ${t2.assetA}</span> <span style="font-size:10px;color:var(--blue)">● live · after 1% fees</span>`;
-      if(retEl&&growth2!==null) retEl.innerHTML=`<span style="color:${gcol2}">${growth2>=0?'+':''}${growth2.toFixed(2)}%</span> <span style="font-size:10px;color:var(--blue)">● live</span>`;
+      const profStr2=`${profit2>=0?'+':''}${profit2.toFixed(4)} ${t2.assetA}`;
+      const pctStr2=growth2!==null?`${growth2>=0?'+':''}${growth2.toFixed(2)}%`:'—';
+      // Update unified return stat
+      const retEl=document.querySelector('#stDetailStats .return-live');
+      if(retEl) retEl.innerHTML=`
+        <span style="color:${gcol2};font-size:18px;font-weight:700">${pctStr2}</span>
+        <div style="font-size:10px;color:${col2};font-family:monospace;margin-top:2px">${profStr2}</div>
+        <div style="font-size:9px;color:var(--blue);margin-top:1px">● live</div>`;
+      // Update monitor "RIGHT NOW" card to same number
+      const monEl=document.getElementById(monitorNowIdD);
+      if(monEl&&growth2!==null){
+        monEl.style.color=gcol2;
+        monEl.textContent=pctStr2;
+      }
     }).catch(()=>{});
   }
 
@@ -5327,8 +5336,14 @@ function renderDetailStats(tr){
     </div>
     <div class="st-stat"><div class="st-stat-label">Total swaps</div><div class="st-stat-value nu">${swaps.length}</div></div>
     <div class="st-stat"><div class="st-stat-label">Current holding</div><div class="st-stat-value">${curAmt.toLocaleString(undefined,{maximumFractionDigits:4})} ${curAsset}</div></div>
-    <div class="st-stat"><div class="st-stat-label">Profit in ${tr.assetA} <span style="font-size:9px;color:var(--text3)">(live)</span></div><div class="st-stat-value profit-live" style="color:${profitCol}">${profitStr}</div></div>
-    <div class="st-stat"><div class="st-stat-label">Total return</div><div class="st-stat-value total-return-live" style="color:${growthCol}">${growth!==null?(growth>=0?'+':'')+growth.toFixed(2)+'%':'Open position'}</div></div>
+    <div class="st-stat" style="grid-column:span 2">
+      <div class="st-stat-label">Your return <span style="font-size:9px;color:var(--text3)">(if you swapped back now)</span></div>
+      <div class="st-stat-value return-live" style="color:${growthCol}">
+        <span style="font-size:18px;font-weight:700">${growth!==null?(growth>=0?'+':'')+growth.toFixed(2)+'%':'—'}</span>
+        <div style="font-size:10px;color:${profitCol};font-family:monospace;margin-top:2px">${profitStr}</div>
+        <div style="font-size:9px;color:var(--blue);margin-top:1px">● loading live price...</div>
+      </div>
+    </div>
     <div class="st-stat" style="grid-column:1/-1"><div class="st-stat-label">30-day accumulation <span style="font-size:9px;color:var(--text3)">closed cycles only</span></div><div class="st-stat-value" style="color:${(()=>{const g=calcMonthlyAccumulation(tr);return g>0?'#00c076':g<0?'#ef4444':'var(--text2)'})()}">${(()=>{const g=calcMonthlyAccumulation(tr);return g!==null?(g>=0?'+':'')+g.toFixed(4)+' '+tr.assetA:'—'})()}</div></div>
   `;
 
@@ -5400,7 +5415,7 @@ async function getScoreForPair(a,b){
    Fetches ratio history, identifies entry point, measures progress
    toward reversion. Shows smart recommendation for open positions.
 ══════════════════════════════════════════════════════════════ */
-async function buildLiveMonitor(tr, curAsset) {
+async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   const swaps = tr.swaps || [];
   // Find last swap that landed us into curAsset
   const lastSwap = [...swaps].reverse().find(s => s.toAsset === curAsset);
@@ -5528,9 +5543,12 @@ async function buildLiveMonitor(tr, curAsset) {
   const fillWidth = Math.abs(currentPct - entryPct);
   const dotColor  = currentZ > 0.3 ? '#00c076' : currentZ > -0.8 ? '#f5a623' : '#ef4444';
 
-  // Gain labels
-  const nowLabel    = (gainSoFar >= 0 ? '+' : '') + gainSoFar.toFixed(1) + '%';
-  const targetLabel = '+' + (gainSoFar + (remainingToMean > 0 ? remainingToMean : 0)).toFixed(1) + '%';
+  // Gain labels — use live price % if provided, fall back to ratio estimate
+  const displayGain = (typeof liveGrowthPct === 'number' && isFinite(liveGrowthPct))
+    ? liveGrowthPct : gainSoFar;
+  const nowLabel    = (displayGain >= 0 ? '+' : '') + displayGain.toFixed(1) + '%';
+  const targetLabel = '+' + (displayGain + (remainingToMean > 0 ? remainingToMean : 0)).toFixed(1) + '%';
+  const monitorNowId = 'monitor-now-' + tr.id.replace(/[^a-z0-9]/gi,'_');
   const dayStr = daysSinceEntry < 1 ? 'today' : daysSinceEntry < 2 ? '1 day ago' : `${Math.floor(daysSinceEntry)} days ago`;
   const exitLabel = currentZ > exitThreshold ? 'NOW' : `~${estDays}d`;
   const decFmt = v => v > 1 ? v.toFixed(4) : v.toFixed(7);
@@ -5613,8 +5631,8 @@ async function buildLiveMonitor(tr, curAsset) {
           </div>
           <div style="background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--border)">
             <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Right now</div>
-            <div style="font-size:20px;font-weight:700;color:${gainSoFar>=0?'#00c076':'#ef4444'}">${nowLabel}</div>
-            <div style="font-size:9px;color:var(--text3)">profit / loss</div>
+            <div id="${monitorNowId}" style="font-size:20px;font-weight:700;color:${displayGain>=0?'#00c076':'#ef4444'}">${nowLabel}</div>
+            <div style="font-size:9px;color:var(--text3)">if you sold now</div>
           </div>
           <div style="background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--border)">
             <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Potential gain</div>
@@ -5654,7 +5672,7 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
 
     // Fetch live monitor + swap-back score in parallel
     const [monitorHtml, res] = await Promise.all([
-      buildLiveMonitor(tr, curAsset),
+      buildLiveMonitor(tr, curAsset, currentGrowth),
       getScoreForPair(curAsset, tr.assetA)
     ]);
     if(!sigEl.isConnected) return;
@@ -6023,7 +6041,11 @@ function setSwapType(type){
 function resetSwapForm(tr){
   const form=document.getElementById('stSwapForm');
   document.getElementById('sf-date').value=new Date().toISOString().slice(0,10);
-  document.getElementById('sf-from-amt').value='';
+  // Pre-fill "amount sent" with what we currently hold
+  const _swaps=tr?tr.swaps||[]:[];
+  const _lastSwap=_swaps.length?_swaps[_swaps.length-1]:null;
+  const _prefill=_lastSwap?_lastSwap.toAmt:(tr?tr.startAmount:'');
+  document.getElementById('sf-from-amt').value=_prefill||'';
   document.getElementById('sf-to-amt').value='';
   setSwapType('swing'); // default to swing
   document.getElementById('sf-score').value='';
