@@ -5678,8 +5678,12 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   // Progress: % of the entry→exit journey covered (0=at entry, 100=at exit, negative=went deeper)
   const _journeySpan    = exitThreshold - entryZ;
   const progressToExit  = _journeySpan > 0 ? (currentZ - entryZ) / _journeySpan * 100 : 0;
-  // Velocity: avg daily Z change over last 7 candles (positive = toward exit)
-  const _velN     = Math.min(7, ratioCloses.length);
+
+  // Velocity: avg daily Z change — ONLY since entry, not pre-entry candles
+  // Pre-entry the ratio was falling (that's WHY the signal fired). Including those days
+  // makes velocity look negative even when the trade itself is improving.
+  const _maxVelDays = Math.max(2, Math.min(7, Math.ceil(daysSinceEntry) + 1));
+  const _velN     = Math.min(_maxVelDays, ratioCloses.length);
   const _velSlice = ratioCloses.slice(-_velN).map(v => stdW > 0 ? (v - meanW) / stdW : 0);
   const velocityZ = _velSlice.length >= 2
     ? (_velSlice[_velSlice.length - 1] - _velSlice[0]) / (_velSlice.length - 1)
@@ -5814,10 +5818,17 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
       statusDetail = `Live gain is +${displayGain.toFixed(1)}%, but the pair ratio is ${velDesc} — the mean-reversion hasn't fully engaged yet. The profit may partly reflect a general market move rather than the pair resolving. Hold and watch for the ratio to start climbing. Progress toward exit: ${progressToExit > 0 ? progressToExit.toFixed(0)+'%' : 'building'}. Est. ${exitLabel}.`;
 
     } else if (livePositive && velocityZ < -0.05) {
-      // ── In profit but ratio pulling back — decide: take gain or hold ──
-      statusIcon = '⚠️'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.09)';
-      statusLine = `Up ${displayGain.toFixed(1)}% — ratio drifting back, stay alert`;
-      statusDetail = `Live gain +${displayGain.toFixed(1)}%, but the pair ratio has pulled back ${(Math.abs(velocityZ)*velN).toFixed(1)} Z-points over the last ${velN} days. The gain could compress if this continues. You can hold for the full target (${exitLabel}) or consider whether the current profit meets your goal. Progress from entry: ${progDesc}.`;
+      // ── In profit but ratio pulling back — tone depends on entry confidence ──
+      const isStrongEntry = entryConfidence === 'strong' || entryConfidence === 'good';
+      statusIcon = isStrongEntry ? '📊' : '⚠️';
+      statusColor = isStrongEntry ? '#f5a623' : '#f5a623';
+      statusBg = 'rgba(245,166,35,0.08)';
+      statusLine = isStrongEntry
+        ? `Up ${displayGain.toFixed(1)}% — ratio pulling back slightly, normal for this pair`
+        : `Up ${displayGain.toFixed(1)}% — ratio pulling back, watch closely`;
+      statusDetail = isStrongEntry
+        ? `You are up ${displayGain.toFixed(1)}% and your entry was ${scoreLabel} ${entryScore} at Z ${entryZ.toFixed(2)} — a very strong position. The ratio pulled back ${(Math.abs(velocityZ)*velN).toFixed(1)} Z-points over ${velN} days, which is normal oscillation for pairs at this depth. You have covered ${progressToExit.toFixed(0)}% of the journey. Hold — this kind of pullback is expected before the main recovery move. Target: ${exitLabel}.`
+        : `Live gain +${displayGain.toFixed(1)}%, but the pair ratio has pulled back ${(Math.abs(velocityZ)*velN).toFixed(1)} Z-points over ${velN} days. Could compress if it continues. You can hold for the full target (${exitLabel}) or decide if the current gain meets your goal. Progress: ${progDesc}.`;
 
     } else if (!livePositive && velocityZ > 0.12 && consistency >= 0.6) {
       // ── Not yet in profit — but ratio bouncing hard and consistently ───
