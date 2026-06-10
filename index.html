@@ -6132,7 +6132,7 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
     // Panel always shown (so user sees what's coming), but buttons locked until profit >= 1%.
     let chainHtml = '';
     if (chainOpps && chainOpps.length > 0) {
-      const inProfit    = profit >= 1.0;  // must be at least +1% to chain (covers the extra fee)
+      const inProfit    = profit >= 1.0;  // must be at least +1% to chain — needs to cover the 1% chain fee
       const baseOpp     = chainOpps.find(o => o.isBase);
       const topChains   = chainOpps.filter(o => !o.isBase).slice(0, 3);
       const bestChain   = topChains[0];
@@ -6171,8 +6171,8 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
 
       // Header message depends on profit state
       const headerMsg = !inProfit
-        ? `<div style="font-size:11px;color:#ef4444;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:7px 10px;margin-bottom:10px">
-            🔒 <b>Locked until in profit</b> — chaining at a loss (currently ${profit >= 0 ? '+' : ''}${profit.toFixed(1)}%) would permanently lock in that loss. Wait until this trade reaches at least +1% before chaining.
+        ? `<div style="font-size:11px;color:#f5a623;background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.25);border-radius:6px;padding:7px 10px;margin-bottom:10px">
+            🔒 <b>Available at +1%</b> — you are at ${profit >= 0 ? '+' : ''}${profit.toFixed(1)}% right now. Chaining costs 1 fee (~1%), so you need at least +1% profit first — otherwise the chain swap eats your entire gain. ${1.0 - profit > 0 ? `Only ${(1.0 - profit).toFixed(1)}% more to go.` : ''}
            </div>`
         : chainBeatBase
           ? `<div style="font-size:11px;color:#00c076;background:rgba(0,192,118,0.07);border:1px solid rgba(0,192,118,0.25);border-radius:6px;padding:7px 10px;margin-bottom:10px">
@@ -6184,7 +6184,7 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
         <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:.75rem">
           <div style="background:var(--bg3);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">
             <div style="font-size:11px;font-weight:700;color:var(--text2)">🔀 Next Move from ${curAsset}</div>
-            <div style="font-size:10px;color:${inProfit?'#00c076':'#ef4444'};font-family:monospace">${inProfit ? '✅ unlocked — in profit' : '🔒 locked — not in profit yet'}</div>
+            <div style="font-size:10px;color:${inProfit?'#00c076':'#f5a623'};font-family:monospace">${inProfit ? '✅ unlocked — ready to chain' : `🔒 available at +1% · now ${profit>=0?'+':''}${profit.toFixed(1)}%`}</div>
           </div>
           <div style="padding:12px 16px">
             ${headerMsg}
