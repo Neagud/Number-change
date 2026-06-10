@@ -1303,6 +1303,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         </button>
       </div>
       <input type="hidden" id="sf-trade-type" value="swing">
+      <input type="hidden" id="sf-entry-z" value="">
       <div class="st-form-group" style="margin-bottom:12px">
         <label>Notes (optional)</label>
         <textarea id="sf-notes" placeholder="Why did you make this swap?"></textarea>
@@ -5119,6 +5120,14 @@ function bindTrackerListUI(){
           document.getElementById('sf-to-asset').value=toSym;
           const scoreEl=document.querySelector('.sp-num');
           if(scoreEl) document.getElementById('sf-score').value=scoreEl.textContent;
+          // Capture Z-score at entry moment from score cache
+          const _ezKey1=fromSym+'_'+toSym, _ezKey2=toSym+'_'+fromSym;
+          const _ezRes=(_scoreCache&&(_scoreCache[_ezKey1]||_scoreCache[_ezKey2]))||null;
+          if(_ezRes && typeof _ezRes.zScore==='number') {
+            document.getElementById('sf-entry-z').value=_ezRes.zScore.toFixed(4);
+          } else if(_ezRes && typeof _ezRes.omegaAbsZ==='number') {
+            document.getElementById('sf-entry-z').value=(-_ezRes.omegaAbsZ).toFixed(4); // negative = cheap
+          }
           document.getElementById('sf-date').value=new Date().toISOString().slice(0,10);
           document.getElementById('stSwapForm').style.display='block';
           document.getElementById('stSwapForm').scrollIntoView({behavior:'smooth'});
@@ -5492,11 +5501,19 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     const currentRatio = ratioCloses[ratioCloses.length-1];
     currentZ = (currentRatio - meanW) / stdW;
 
-    // Entry Z from historical data
-    let closestIdx = ratioTs.reduce((best, ts, i) =>
-      Math.abs(ts - entryDateMs) < Math.abs(ratioTs[best] - entryDateMs) ? i : best, 0);
-    entryRatioHist = ratioCloses[closestIdx];
-    entryZ = (entryRatioHist - meanW) / stdW;
+    // Entry Z: prefer value stored at swap time (exact), fall back to historical candle lookup
+    if (lastSwap.storedEntryZ && isFinite(lastSwap.storedEntryZ)) {
+      entryZ = lastSwap.storedEntryZ;
+      // Still find historical ratio for gainSoFar calculation
+      let closestIdx = ratioTs.reduce((best, ts, i) =>
+        Math.abs(ts - entryDateMs) < Math.abs(ratioTs[best] - entryDateMs) ? i : best, 0);
+      entryRatioHist = ratioCloses[closestIdx];
+    } else {
+      let closestIdx = ratioTs.reduce((best, ts, i) =>
+        Math.abs(ts - entryDateMs) < Math.abs(ratioTs[best] - entryDateMs) ? i : best, 0);
+      entryRatioHist = ratioCloses[closestIdx];
+      entryZ = (entryRatioHist - meanW) / stdW;
+    }
 
     et = analyzeEntryTiming(ratioCloses);
   } catch(e) { return null; }
@@ -5622,26 +5639,72 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     : isScalp ? 'days'
     : estDays <= 10 ? 'days' : 'weeks (est.)';
 
-  // ── Entry quality context — honest signal about how good the entry was ──
-  const entryScore = lastSwap.score || 0; // OMEGA score stored at time of swap
-  const weakEntry  = entryScore > 0 && entryScore < 50;
-  const slowPair   = estDays > 70; // > 10 weeks = this pair barely mean-reverts
-  const entryNote  = weakEntry
-    ? ` (entered at OMEGA ${entryScore} — below recommended threshold of 60)`
+  // ── Entry quality context — full analysis combining score + Z-depth ──
+  const entryScore = lastSwap.score || 0; // OMEGA (swing) or QSS (scalp) stored at swap time
+  const scoreLabel = isScalp ? 'QSS' : 'OMEGA';
+  const entryZDepth = Math.abs(entryZ); // how deep into the anomaly the entry was
+
+  // 4-level confidence: combines signal score AND Z-depth — both matter
+  // High score + deep Z = very reliable statistical edge
+  // Low score + shallow Z = weaker basis (but still a valid trade — they entered, so they believed)
+  const entryConfidence =
+    entryScore >= 68 && entryZDepth >= 1.2 ? 'strong'  // Best case: high score + deep anomaly
+    : entryScore >= 55 && entryZDepth >= 0.8 ? 'good'  // Solid signal
+    : entryScore >= 40 || entryZDepth >= 0.7 ? 'fair'  // Decent — one signal was good
+    : entryScore > 0 ? 'low'                            // Known weak entry
+    : 'unknown';                                        // Score not recorded (older swaps)
+
+  const weakEntry = entryConfidence === 'low'; // kept for backward compatibility with earlier branches
+  const slowPair  = estDays > 70; // > 10 weeks = this pair moves slowly
+
+  // One-line entry context for display (constructive, never alarming)
+  const entryContextLine =
+    entryConfidence === 'strong'  ? `${scoreLabel} ${entryScore} · Z ${entryZ.toFixed(2)} — strong signal, deep anomaly`
+    : entryConfidence === 'good'  ? `${scoreLabel} ${entryScore} · Z ${entryZ.toFixed(2)} — good entry conditions`
+    : entryConfidence === 'fair'  ? `${scoreLabel} ${entryScore} · Z ${entryZ.toFixed(2)} — moderate entry signal`
+    : entryConfidence === 'low'   ? `${scoreLabel} ${entryScore} · Z ${entryZ.toFixed(2)} — below ideal threshold (60+)`
+    :                               `Z ${entryZ.toFixed(2)} at entry — score not recorded`;
+
+  const entryNote = weakEntry
+    ? ` (entered at ${scoreLabel} ${entryScore} — below recommended threshold of 60)`
     : '';
+
+  // Gain labels — needed by status messages below (also used in the progress bar later)
+  const displayGain = (typeof liveGrowthPct === 'number' && isFinite(liveGrowthPct))
+    ? liveGrowthPct : gainSoFar;
+  const targetLabel = '+' + (displayGain + (remainingToMean > 0 ? remainingToMean : 0)).toFixed(1) + '%';
+
+  // ── Trajectory metrics — computed here so entry context row + status messages both use them ──
+  // Progress: % of the entry→exit journey covered (0=at entry, 100=at exit, negative=went deeper)
+  const _journeySpan    = exitThreshold - entryZ;
+  const progressToExit  = _journeySpan > 0 ? (currentZ - entryZ) / _journeySpan * 100 : 0;
+  // Velocity: avg daily Z change over last 7 candles (positive = toward exit)
+  const _velN     = Math.min(7, ratioCloses.length);
+  const _velSlice = ratioCloses.slice(-_velN).map(v => stdW > 0 ? (v - meanW) / stdW : 0);
+  const velocityZ = _velSlice.length >= 2
+    ? (_velSlice[_velSlice.length - 1] - _velSlice[0]) / (_velSlice.length - 1)
+    : 0;
+  // Consistency: fraction of those days that moved in the right direction
+  let _rightDays = 0;
+  for (let i = 1; i < _velSlice.length; i++) { if (_velSlice[i] > _velSlice[i-1]) _rightDays++; }
+  const consistency = _velSlice.length > 1 ? _rightDays / (_velSlice.length - 1) : 0.5;
 
   // ── Plain-English status ──
   let statusIcon, statusLine, statusDetail, statusColor, statusBg;
 
-  // Slow pair override — honest about long recovery regardless of other signals
+  // Slow pair note — informational, not alarming. This pair just has a longer cycle.
   if (!isScalp && slowPair && currentZ < 0) {
     statusIcon = '🐢'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-    statusLine = weakEntry
-      ? 'Slow recovery — this was a weak entry'
-      : 'Slow recovery — this pair moves at its own pace';
-    statusDetail = weakEntry
-      ? `This trade was opened at OMEGA ${entryScore}, below the recommended 60+. The pair is recovering but slowly — estimated ${exitLabel}. Consider whether the wait is worth it for ${displayGain > -10 ? 'a small' : 'this'} loss recovery, or cut and redeploy into a stronger signal.`
-      : `This pair has a long mean-reversion cycle — estimated ${exitLabel} to reach the sell zone. Not broken, just slow. Only hold if you are comfortable with the timeline.`;
+    statusLine = entryConfidence === 'strong' || entryConfidence === 'good'
+      ? 'Patient pair — the signal was real, the journey is long'
+      : entryConfidence === 'fair'
+        ? 'Slow-moving pair — giving it the time it needs'
+        : 'Slow-moving pair — lower entry signal, longer timeline';
+    statusDetail = entryConfidence === 'strong' || entryConfidence === 'good'
+      ? `${scoreLabel} ${entryScore} at Z ${entryZ.toFixed(2)} — the entry signal was ${entryConfidence}. This pair has a long mean-reversion cycle (est. ${exitLabel}). Not broken — just measured. The statistical edge is real; it just plays out over weeks, not days.`
+      : entryConfidence === 'fair'
+        ? `Moderate entry signal (${scoreLabel} ${entryScore}) in a slow-moving pair. The pair is recovering — est. ${exitLabel}. These longer-cycle trades need patience. Only hold if comfortable with the timeline.`
+        : `Lower entry signal (${scoreLabel} ${entryScore}) combined with a slow pair means recovery will take time. Est. ${exitLabel}. The trade can still work — just be prepared for the longer hold.`;
   } else if (currentZ > 1.5) {
     statusIcon = '🎯'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.10)';
     statusLine = isScalp ? 'Sell now — target reached!' : 'Time to sell — you are in the profit zone';
@@ -5666,31 +5729,139 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
       : `Price is back to average. Hold a bit longer — it usually overshoots above average before settling. That is your best exit.`;
   } else if (phase === 3 || phase === 4 || phase === 5) {
     statusIcon = '🔄'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-    statusLine = weakEntry ? 'Showing signs of recovery — but entry was weak' : 'Turning around — stay patient';
-    statusDetail = weakEntry
-      ? `Signs of reversal are appearing${entryNote}. Recovery is possible but may take longer given the weak entry signal. Est. ${exitLabel}.`
-      : `The price move is slowing and starting to reverse. ${isScalp?`Quick scalps usually recover in ${estDays}–${estDays+2} days.`:`Est. ${exitLabel} to reach the sell zone.`}`;
+    statusLine = 'Turning around — reversal signs appearing';
+    statusDetail = entryConfidence === 'strong' || entryConfidence === 'good'
+      ? `The ratio is slowing its descent and beginning to reverse — exactly what a ${scoreLabel} ${entryScore} entry (Z ${entryZ.toFixed(2)}) is designed to catch. ${isScalp ? `Quick scalps usually complete the recovery in ${estDays}–${estDays+2} days.` : `Est. ${exitLabel} to reach the sell zone.`}`
+      : entryConfidence === 'fair'
+        ? `Reversal signs are forming. Moderate entry signal (${scoreLabel} ${entryScore}) — recovery is underway. ${isScalp ? `Est. ${estDays}–${estDays+2} more days.` : `Est. ${exitLabel}.`}`
+        : `Reversal signs are forming${entryNote}. The pair is turning around. ${isScalp ? `Est. ${estDays}–${estDays+2} more days.` : `Est. ${exitLabel}.`}`;
   } else {
-    statusIcon = '⏳'; statusColor = '#ef4444'; statusBg = 'rgba(239,68,68,0.06)';
-    if (isScalp) {
-      statusLine = daysSinceEntry < 4 ? 'Holding — waiting for the bounce' : 'Taking longer than expected';
-      statusDetail = daysSinceEntry < 4
-        ? `Scalps normally move within 2–5 days. It has been ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} — keep holding.`
-        : `This scalp is taking longer than usual. If it stays red after 7 days, consider whether to cut losses or hold. Est. ${estDays} more days.`;
-    } else {
-      if (weakEntry) {
-        statusLine = daysSinceEntry < 10 ? 'In the red — this was a weak entry signal' : 'Waiting — low-quality entry takes longer';
-        statusDetail = daysSinceEntry < 10
-          ? `This trade was opened at OMEGA ${entryScore}${entryNote}. Weak entries spend more time in the red before recovering. Est. ${exitLabel}. Next time wait for OMEGA 60+.`
-          : `${Math.floor(daysSinceEntry)} days in. Low entry score means slower recovery — est. ${exitLabel} remaining. Hold only if you believe in the pair long-term, or consider cutting and re-entering on a stronger signal.`;
+    // ══════════════════════════════════════════════════════════════════════
+    // SOPHISTICATED TRAJECTORY ANALYSIS
+    // Looks at: progress made, velocity, consistency, live vs ratio agreement
+    // ══════════════════════════════════════════════════════════════════════
+
+    // Trajectory metrics already computed above (progressToExit, velocityZ, consistency)
+    const velN = _velN;
+
+    // 4. ETA at current velocity — only meaningful when positive (actually moving toward exit)
+    const distToExitNow   = exitThreshold - currentZ;
+    const daysAtVelocity  = velocityZ > 0.03 ? Math.round(distToExitNow / velocityZ) : null;
+    const etaStr = daysAtVelocity
+      ? (daysAtVelocity <= 7 ? `~${daysAtVelocity} days at current pace`
+        : daysAtVelocity <= 21 ? `~${Math.round(daysAtVelocity/7)} wks at current pace`
+        : `~${Math.round(daysAtVelocity/7)}+ wks`)
+      : exitLabel;
+
+    // 5. Agreement check: do live prices and the ratio tell the same story?
+    const livePositive    = displayGain > 0.2;
+    const ratioRecovering = velocityZ > 0.04;
+    const signalsMixed    = livePositive && !ratioRecovering; // profit but ratio not confirmed
+
+    // 6. Time overrun: are we significantly past the expected window?
+    const timeOverrun = daysSinceEntry > estDays * 1.2 && estDays > 0;
+
+    // Human-readable velocity descriptor
+    const velDesc = velocityZ > 0.15  ? 'moving strongly toward exit'
+                  : velocityZ > 0.06  ? 'moving steadily toward exit'
+                  : velocityZ > 0.02  ? 'moving slowly toward exit'
+                  : velocityZ > -0.02 ? 'essentially flat — no movement yet'
+                  : velocityZ > -0.08 ? 'drifting slightly away from exit'
+                  :                     'drifting away from exit';
+
+    // Progress descriptor
+    const progDesc = progressToExit >= 60 ? 'more than halfway to the exit'
+                   : progressToExit >= 35 ? 'making solid progress toward exit'
+                   : progressToExit >= 15 ? 'some progress since entry'
+                   : progressToExit >= 0  ? 'barely moved from entry yet'
+                   :                        `${Math.abs(progressToExit).toFixed(0)}% deeper than entry`;
+
+    // ── DETERMINE STATUS CATEGORY ────────────────────────────────────────
+    // Philosophy: you entered with a statistical edge — this is a journey.
+    // We track WHERE you are on that journey, not whether you're "winning or losing."
+    // Alarm language only appears if genuinely broken (exit warning system handles that).
+
+    // Entry confidence context — used to adjust tone (not doom-and-gloom either way)
+    const confSuffix =
+      entryConfidence === 'strong' ? ` Your ${scoreLabel} ${entryScore} entry gives this strong statistical backing.`
+      : entryConfidence === 'good' ? ` Entry signal was solid (${scoreLabel} ${entryScore}).`
+      : entryConfidence === 'fair' ? ` Entry signal was moderate (${scoreLabel} ${entryScore}).`
+      : entryConfidence === 'low'  ? ` Entry signal was below ideal (${scoreLabel} ${entryScore} — aim for 60+).`
+      : '';
+
+    if (progressToExit >= 55 && velocityZ >= 0) {
+      // ── More than halfway, still moving right ────────────────────────
+      statusIcon = '🚀'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.09)';
+      statusLine = `${progressToExit.toFixed(0)}% of the journey covered — on track`;
+      statusDetail = `You have crossed ${progressToExit.toFixed(0)}% of the distance from entry (Z ${entryZ.toFixed(2)}) to the exit zone (Z ${exitThreshold}). ${livePositive ? `Gain so far: +${displayGain.toFixed(1)}%. ` : ''}Ratio is ${velDesc}. ${etaStr !== exitLabel ? `At current pace: ${etaStr}.` : `Est. ${exitLabel}.`}${confSuffix}`;
+
+    } else if (livePositive && ratioRecovering && progressToExit >= 15) {
+      // ── In profit + ratio moving + made real progress ─────────────────
+      statusIcon = '📈'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.08)';
+      statusLine = `Up ${displayGain.toFixed(1)}% — ratio recovering steadily`;
+      statusDetail = `Gain: +${displayGain.toFixed(1)}%. Ratio ${velDesc} (${(velocityZ*10).toFixed(2)} Z/10 days). Journey: ${progressToExit.toFixed(0)}% covered from entry Z ${entryZ.toFixed(2)} toward exit. ${etaStr !== exitLabel ? `At current pace: ${etaStr}.` : `Est. ${exitLabel}.`} Hold — the trade is working.`;
+
+    } else if (livePositive && ratioRecovering) {
+      // ── In profit + ratio just starting to move — early stage ─────────
+      statusIcon = '📈'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.07)';
+      statusLine = `Up ${displayGain.toFixed(1)}% — ratio starting to move`;
+      statusDetail = `Up ${displayGain.toFixed(1)}% after ${Math.floor(daysSinceEntry)} days. The ratio is ${velDesc} — early but correct direction. Progress toward exit: ${progressToExit > 0 ? progressToExit.toFixed(0)+'%' : 'just beginning'}. Consistency: ${(consistency*100).toFixed(0)}% of recent days moved the right way. ${etaStr !== exitLabel ? `ETA: ${etaStr}.` : `Est. ${exitLabel}.`}`;
+
+    } else if (livePositive && !ratioRecovering && velocityZ > -0.05) {
+      // ── In profit but ratio flat — market moved, pair not yet resolved ─
+      statusIcon = '⚖️'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.08)';
+      statusLine = `Up ${displayGain.toFixed(1)}% — waiting for the ratio to engage`;
+      statusDetail = `Live gain is +${displayGain.toFixed(1)}%, but the pair ratio is ${velDesc} — the mean-reversion hasn't fully engaged yet. The profit may partly reflect a general market move rather than the pair resolving. Hold and watch for the ratio to start climbing. Progress toward exit: ${progressToExit > 0 ? progressToExit.toFixed(0)+'%' : 'building'}. Est. ${exitLabel}.`;
+
+    } else if (livePositive && velocityZ < -0.05) {
+      // ── In profit but ratio pulling back — decide: take gain or hold ──
+      statusIcon = '⚠️'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.09)';
+      statusLine = `Up ${displayGain.toFixed(1)}% — ratio drifting back, stay alert`;
+      statusDetail = `Live gain +${displayGain.toFixed(1)}%, but the pair ratio has pulled back ${(Math.abs(velocityZ)*velN).toFixed(1)} Z-points over the last ${velN} days. The gain could compress if this continues. You can hold for the full target (${exitLabel}) or consider whether the current profit meets your goal. Progress from entry: ${progDesc}.`;
+
+    } else if (!livePositive && velocityZ > 0.12 && consistency >= 0.6) {
+      // ── Not yet in profit — but ratio bouncing hard and consistently ───
+      const zGained = (velocityZ * velN).toFixed(1);
+      statusIcon = '🔄'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
+      statusLine = isScalp ? 'Not in profit zone yet — but bouncing strongly' : 'Not in profit zone yet — strong recovery underway';
+      statusDetail = `The ratio has gained +${zGained} Z-points in ${velN} days — a ${entryConfidence === 'strong' || entryConfidence === 'good' ? 'strong' : 'meaningful'} recovery pace. ${progressToExit > 0 ? `${progressToExit.toFixed(0)}% of the entry→exit journey covered. ` : ''}${consistency >= 0.7 ? `${(consistency*100).toFixed(0)}% of recent days moved the right direction — consistent momentum. ` : ''}${daysAtVelocity ? `At this pace, est. ${daysAtVelocity} more days to profit zone.` : `Est. ${exitLabel}.`}${confSuffix}`;
+
+    } else if (!livePositive && velocityZ > 0.03) {
+      // ── Not yet in profit — ratio slowly recovering — normal hold state ─
+      statusIcon = '⏳'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
+      statusLine = isScalp ? 'Holding — ratio heading the right way' : 'Recovering — ratio trending toward the exit';
+      statusDetail = `Not in profit zone yet — ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} in. Ratio is ${velDesc}. Progress since entry: ${progressToExit > 0 ? progressToExit.toFixed(0)+'%' : 'starting to move'}. ${(consistency*100).toFixed(0)}% of recent days moved correctly. ${etaStr !== exitLabel ? `At current pace: ${etaStr}.` : `Est. ${exitLabel}.`}${confSuffix}`;
+
+    } else if (!livePositive && Math.abs(velocityZ) <= 0.03) {
+      // ── Not in profit + flat — waiting for the move to begin ──────────
+      const isLate = isScalp ? daysSinceEntry > 5 : timeOverrun;
+      statusIcon = '⏳';
+      statusColor = isLate && entryConfidence === 'low' ? '#ef4444' : '#f5a623';
+      statusBg = isLate && entryConfidence === 'low' ? 'rgba(239,68,68,0.06)' : 'rgba(245,166,35,0.07)';
+      if (isLate) {
+        statusLine = isScalp ? 'Scalp taking longer than the window — watching closely' : 'Trade in a holding pattern — past estimated timeline';
+        statusDetail = isScalp
+          ? `Day ${Math.floor(daysSinceEntry)}: ratio ${velDesc}. Scalps typically resolve in 2–7 days. ${entryConfidence === 'strong' || entryConfidence === 'good' ? `Your ${scoreLabel} ${entryScore} entry gives a real edge — the move can still come.` : `Monitor daily.`} The exit warning system above will trigger if this becomes genuinely concerning.`
+          : `${Math.floor(daysSinceEntry)} days in, past the estimated ${Math.round(estDays)}-day window, but ratio is ${velDesc} — no clear deterioration. ${entryConfidence === 'strong' || entryConfidence === 'good' ? `Strong entry (${scoreLabel} ${entryScore}) — the thesis is intact, the pair just needs more time.` : `Consider whether to hold for the full recovery or redeploy.`} Est. ${exitLabel}.`;
       } else {
-        statusLine = daysSinceEntry < 10 ? 'Normal start — trades often dip before recovering' : 'Still waiting — hold your position';
-        statusDetail = daysSinceEntry < 10
-          ? `Only ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} in — being temporarily down is completely normal. Swing trades typically take 3–8 weeks. Do not panic.`
-          : daysSinceEntry < 30
-            ? `${Math.floor(daysSinceEntry)} days in — still within normal swing timeframe. These trades need weeks, not days. Est. ${exitLabel} remaining.`
-            : `${Math.floor(daysSinceEntry)} days in — this is a longer trade. Est. ${exitLabel} more. Hold unless you see the exit warning above fire.`;
+        statusLine = isScalp ? 'Holding — ratio flat, watching for the trigger' : 'Building — ratio setting up before the move';
+        statusDetail = `${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} in. The ratio is ${velDesc} — the mean-reversion engine is loading, not failing. ${isScalp ? 'Scalps trigger fast once they move — 2–7 day window.' : 'Swing setups often have a flat consolidation phase before they break toward the exit.'} Progress toward exit: ${progressToExit > 0 ? progressToExit.toFixed(0)+'%' : 'building'}. Est. ${exitLabel}.${confSuffix}`;
       }
+
+    } else {
+      // ── Not in profit + ratio drifting away — extended timeline only ──
+      // This is NOT a "you are losing" message. The trade extends — it doesn't break.
+      // Only the exit warning system (3+ independent signals) can flag a genuinely broken trade.
+      const deepening = progressToExit < -30;
+      statusIcon = deepening ? '⚠️' : '⏳';
+      statusColor = deepening && entryConfidence === 'low' ? '#ef4444' : '#f5a623';
+      statusBg = deepening && entryConfidence === 'low' ? 'rgba(239,68,68,0.07)' : 'rgba(245,166,35,0.07)';
+      statusLine = deepening
+        ? 'Ratio extended further — timeline lengthening'
+        : 'Ratio pulling back slightly — within normal swing variance';
+      statusDetail = deepening
+        ? `The pair ratio has moved ${Math.abs(progressToExit).toFixed(0)}% deeper than the entry point over the last ${velN} days. This extends the time to the exit, not the eventual outcome. ${entryConfidence === 'strong' || entryConfidence === 'good' ? `Your ${scoreLabel} ${entryScore} entry at Z ${entryZ.toFixed(2)} gives a real statistical edge — deeper Z just means a larger recovery when it comes. ` : `Monitor the exit warning system above for multi-signal alerts. `}Est. ${exitLabel}.`
+        : `Ratio drifted ${(Math.abs(velocityZ)*velN).toFixed(1)} Z-points in the wrong direction over ${velN} days — normal oscillation in swing trades. Current position: ${progDesc}. The exit warning system (3 independent signals) will alert you if this becomes structural. Est. ${exitLabel}.${confSuffix}`;
     }
   }
 
@@ -5706,11 +5877,8 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   const fillWidth = Math.abs(currentPct - entryPct);
   const dotColor  = currentZ > 0.3 ? '#00c076' : currentZ > -0.8 ? '#f5a623' : '#ef4444';
 
-  // Gain labels — use live price % if provided, fall back to ratio estimate
-  const displayGain = (typeof liveGrowthPct === 'number' && isFinite(liveGrowthPct))
-    ? liveGrowthPct : gainSoFar;
-  const nowLabel    = (displayGain >= 0 ? '+' : '') + displayGain.toFixed(1) + '%';
-  const targetLabel = '+' + (displayGain + (remainingToMean > 0 ? remainingToMean : 0)).toFixed(1) + '%';
+  // displayGain and targetLabel already defined above (before status messages)
+  const nowLabel = (displayGain >= 0 ? '+' : '') + displayGain.toFixed(1) + '%';
   const monitorNowId = 'monitor-now-' + tr.id.replace(/[^a-z0-9]/gi,'_');
   const dayStr = daysSinceEntry < 1 ? 'today' : daysSinceEntry < 2 ? '1 day ago' : `${Math.floor(daysSinceEntry)} days ago`;
   // exitLabel and exitSubLabel already defined above
@@ -5751,6 +5919,31 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
           <div>
             <div style="font-size:14px;font-weight:700;color:${statusColor};margin-bottom:3px">${statusLine}</div>
             <div style="font-size:12px;color:var(--text2);line-height:1.6">${statusDetail}</div>
+          </div>
+        </div>
+
+        <!-- ══ ENTRY CONTEXT — what was the signal quality when you entered ══ -->
+        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:14px;gap:8px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:11px;color:var(--text3);font-family:monospace">Entry signal</span>
+            ${entryScore > 0
+              ? `<span style="font-size:12px;font-family:monospace;font-weight:700;color:${entryConfidence==='strong'?'#00c076':entryConfidence==='good'?'#3b8fff':entryConfidence==='fair'?'#f5a623':'#ef4444'}">${scoreLabel} ${entryScore}</span>
+                 <span style="font-size:10px;font-family:monospace;padding:1px 6px;border-radius:4px;background:${entryConfidence==='strong'?'rgba(0,192,118,0.12)':entryConfidence==='good'?'rgba(59,143,255,0.10)':entryConfidence==='fair'?'rgba(245,166,35,0.10)':'rgba(239,68,68,0.10)'};color:${entryConfidence==='strong'?'#00c076':entryConfidence==='good'?'#3b8fff':entryConfidence==='fair'?'#f5a623':'#ef4444'};border:1px solid currentColor">${entryConfidence.toUpperCase()}</span>`
+              : `<span style="font-size:11px;font-family:monospace;color:var(--text3)">score not recorded</span>`}
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="text-align:right">
+              <div style="font-size:9px;color:var(--text3);letter-spacing:.3px">Z AT ENTRY</div>
+              <div style="font-size:12px;font-family:monospace;font-weight:700;color:${entryZ < -1.2 ? '#00c076' : entryZ < -0.7 ? '#f5a623' : 'var(--text2)'}">${entryZ.toFixed(2)}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:9px;color:var(--text3);letter-spacing:.3px">JOURNEY</div>
+              <div style="font-size:12px;font-family:monospace;font-weight:700;color:${progressToExit > 40 ? '#00c076' : progressToExit > 10 ? '#f5a623' : 'var(--text2)'}">${Math.max(0,progressToExit).toFixed(0)}%</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:9px;color:var(--text3);letter-spacing:.3px">VELOCITY</div>
+              <div style="font-size:12px;font-family:monospace;font-weight:700;color:${velocityZ > 0.05 ? '#00c076' : velocityZ > -0.05 ? '#f5a623' : '#ef4444'}">${velocityZ >= 0 ? '+' : ''}${(velocityZ*10).toFixed(2)}<span style="font-size:8px;font-weight:400">/10d</span></div>
+            </div>
           </div>
         </div>
 
@@ -6193,6 +6386,7 @@ function renderSwapTable(tr){
       document.getElementById('sf-from-amt').value=sw.fromAmt;
       document.getElementById('sf-to-amt').value=sw.toAmt;
       document.getElementById('sf-score').value=sw.score||'';
+      document.getElementById('sf-entry-z').value=sw.storedEntryZ||'';
       document.getElementById('sf-notes').value=sw.notes||'';
       setSwapType(sw.tradeType||'swing');
       const saveBtn=document.getElementById('stSaveSwapBtn');
@@ -6231,6 +6425,7 @@ function resetSwapForm(tr){
   document.getElementById('sf-to-amt').value='';
   setSwapType('swing'); // default to swing
   document.getElementById('sf-score').value='';
+  document.getElementById('sf-entry-z').value='';
   document.getElementById('sf-notes').value='';
   document.getElementById('stSwapFormTitle').textContent='Record a swap';
   const saveBtn=document.getElementById('stSaveSwapBtn');
@@ -6296,6 +6491,7 @@ function bindSwapForm(tr){
     const toAsset=document.getElementById('sf-to-asset').value;
     const toAmt=parseFloat(document.getElementById('sf-to-amt').value);
     const score=parseInt(document.getElementById('sf-score').value)||null;
+    const storedEntryZ=parseFloat(document.getElementById('sf-entry-z').value)||null;
     const notes=document.getElementById('sf-notes').value.trim();
     const tradeType=document.getElementById('sf-trade-type')?.value||'swing';
 
@@ -6307,7 +6503,7 @@ function bindSwapForm(tr){
     document.getElementById('sf-from-asset').disabled=false;
     document.getElementById('sf-to-asset').disabled=false;
 
-    const swap={date,fromAsset,fromAmt,toAsset,toAmt,score,notes,tradeType};
+    const swap={date,fromAsset,fromAmt,toAsset,toAmt,score,storedEntryZ,notes,tradeType};
     const trackers=loadTrackers();
     const t=trackers.find(x=>x.id===activeTrackerId);
     if(!t) return;
