@@ -6099,25 +6099,25 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
 
     // Exit signal banner — shown on top of monitor when swap-back conditions met
     let exitBannerHtml = '';
-    if (isSpike || omega >= 60 || (profit >= 1 && omega <= 20)) {
+    // Exit signal: ONLY fire when OMEGA is HIGH (≥60) or spike detected.
+    // Low OMEGA on swap-back means the held asset is still cheap vs base = reason to HOLD, not exit.
+    if (isSpike || omega >= 60) {
       const col    = '#00c076', bg = 'rgba(0,192,118,0.1)', border = 'rgba(0,192,118,0.4)';
-      const title  = isSpike ? '⚡ EXIT NOW — spike detected' : omega >= 60
-        ? '✅ SWAP BACK NOW — peak confirmed by OMEGA' : '✅ CONSIDER SWAPPING BACK';
+      const title  = isSpike ? '⚡ EXIT NOW — spike detected' : '✅ SWAP BACK NOW — peak confirmed by OMEGA';
       const body   = isSpike
         ? `${curAsset} spiked ${t1.toFixed(1)}% in 24h. News moves don't last — lock in your +${profit.toFixed(2)}% profit now.`
-        : omega >= 60
-          ? `${curAsset} is at a confirmed ratio peak vs ${tr.assetA}. OMEGA ${omega}/100 — all forces say the overextension is ending. You have +${profit.toFixed(2)}% profit. Close this position.`
-          : `${curAsset} is weakening vs ${tr.assetA} (Ω ${omega}). You have +${profit.toFixed(2)}% — consider closing before it gives back gains.`;
+        : `${curAsset} is at a confirmed ratio peak vs ${tr.assetA}. OMEGA ${omega}/100 — the overextension is ending. You have +${profit.toFixed(2)}% profit. Time to close this position.`;
       exitBannerHtml = `<div style="background:${bg};border:2px solid ${border};border-radius:var(--rs);padding:10px 14px;margin-bottom:8px">
         <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">🔔 EXIT SIGNAL TRIGGERED</div>
         <div style="font-size:14px;font-weight:700;color:${col};margin-bottom:4px">${title}</div>
         <div style="font-size:11px;color:var(--text2);line-height:1.5">${body}</div>
         <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Confirm in analyzer →</button>
       </div>`;
-    } else if (profit >= 1 && omega >= 40) {
+    } else if (omega >= 40 && profit >= 1) {
+      // OMEGA building but not confirmed — watch, don't act yet
       exitBannerHtml = `<div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.3);border-radius:var(--rs);padding:8px 14px;margin-bottom:8px">
-        <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">💰 +${profit.toFixed(2)}% profit — watch for exit</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">Ratio is mixed (Ω ${omega}). You're in profit. Check daily — exit when Z rises above +1.2σ or OMEGA drops below 25.</div>
+        <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">👁 Exit signal building — Ω ${omega}/100</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Not confirmed yet (need Ω 60+). You have +${profit.toFixed(2)}% profit. Keep holding — exit when OMEGA crosses 60.</div>
       </div>`;
     }
 
@@ -6136,12 +6136,13 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
       const baseOpp     = chainOpps.find(o => o.isBase);
       const topChains   = chainOpps.filter(o => !o.isBase).slice(0, 3);
       const bestChain   = topChains[0];
-      const chainBeatBase = inProfit && bestChain && baseOpp && bestChain.omega > baseOpp.omega + 15;
+      // Chain only beats base if it has a genuinely good signal (≥50) AND beats base by margin
+      const chainBeatBase = inProfit && bestChain && bestChain.omega >= 50 && baseOpp && bestChain.omega > baseOpp.omega + 15;
 
       const oppCards = [...topChains, ...(baseOpp ? [baseOpp] : [])].map(o => {
         const col     = inProfit ? (o.omega >= 60 ? '#00c076' : o.omega >= 35 ? '#f5a623' : 'var(--text3)') : 'var(--text3)';
         const border  = inProfit && o.omega >= 60 ? 'rgba(0,192,118,0.4)' : 'var(--border)';
-        const badge   = o.omega >= 60 ? '⭐ BEST' : o.omega >= 40 ? 'WATCH' : '';
+        const badge   = o.omega >= 60 ? '⭐ BEST CHAIN' : o.omega >= 50 ? 'GOOD SIGNAL' : o.omega >= 35 ? 'WEAK' : 'NO SIGNAL';
         const zStr    = o.z !== 0 ? ` · Z ${o.z.toFixed(2)}` : '';
         const feeTag  = o.isBase
           ? `<span style="font-size:9px;color:var(--text3);font-family:monospace">base</span>`
