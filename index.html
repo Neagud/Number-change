@@ -5358,9 +5358,10 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
    Format: [ { id, name, assetA, assetB, startAmount, swaps:[] }, ... ]
    Each swap: { date, fromAsset, fromAmt, toAsset, toAmt, score, notes }
 ══════════════════════════════════════ */
-const COINS_LIST=['BTC','ETH','SOL','ADA','XRP','XLM','ALGO','HBAR','QNT','LINK'];
+const COINS_LIST=['BTC','ETH','SOL','ADA','XRP','XLM','ALGO','HBAR','QNT','LINK','DOT','AVAX','ATOM'];
 // Coins excluded from quick scalp and micro scalp scanning (high fees / low suitability)
-const SCALP_EXCLUDE = new Set(['BTC']);
+// High on-chain fee coins excluded from quick/micro scalps (BTC network, ETH gas, ETH-based tokens)
+const SCALP_EXCLUDE = new Set(['BTC','ETH','QNT','LINK']);
 
 /* Weak coins exclusion — bottom 4 by 7-day performance are hidden from recommendations.
    They still appear in the coin selector but won't show up in BSN scanner results.
