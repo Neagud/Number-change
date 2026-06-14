@@ -6259,32 +6259,32 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
 
     if (atTarget || displayGain >= 1.0) {
       statusIcon = '🎯'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.10)';
-      statusLine = 'Micro target reached — swap back now';
-      statusDetail = `${curAsset} has reverted to its 7-day mean (Z ${currentZ.toFixed(2)}). Swap back to ${tr.assetA} and take the ${displayGain.toFixed(1)}% gain. Micro scalps exit fast — don't wait.`;
+      statusLine = `Gap closed — swap back and take the +${displayGain.toFixed(1)}%`;
+      statusDetail = `${curAsset} has caught up to ${tr.assetA}. The price gap that triggered this trade has closed. Swap back now and lock in your gain. Micro scalps exit as soon as the target is hit — don't wait for more.`;
     } else if (daysLeft === 0) {
       statusIcon = '⏱'; statusColor = '#ef4444'; statusBg = 'rgba(239,68,68,0.08)';
-      statusLine = 'Day 5 reached — exit regardless of profit';
-      statusDetail = `Micro scalps have a hard 5-day rule. The noise has had its time. ${inProfit ? `You are up ${displayGain.toFixed(1)}% — take it.` : `Exit now to protect capital. Small loss on a micro is acceptable — the rule protects you from noise becoming a trend.`}`;
+      statusLine = 'Day 3 — hard exit rule. Swap back now.';
+      statusDetail = `Micro scalps have a strict 3-day limit. The gap had its time to close and didn't fully. ${inProfit ? `You are up ${displayGain.toFixed(1)}% — take it.` : `Exit now. A small loss on a micro scalp is fine — the rule protects you from holding a losing position indefinitely.`}`;
     } else if (gainLock && displayGain < floorPct + 0.1) {
       statusIcon = '🔒'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.08)';
-      statusLine = `Gain lock — protect the +${floorPct.toFixed(1)}% floor`;
-      statusDetail = `You hit +${(floorPct+0.4).toFixed(1)}% earlier. If the ratio pulls further back and you drop below +${floorPct.toFixed(1)}%, exit immediately and lock in that partial gain. Don't let a winning micro become a loss.`;
+      statusLine = `Protect your gain — floor at +${floorPct.toFixed(1)}%`;
+      statusDetail = `You reached +${(floorPct+0.4).toFixed(1)}% profit earlier. The position is pulling back slightly. If it drops below +${floorPct.toFixed(1)}%, exit and keep the gain. Don't let a winning trade turn into a loss.`;
     } else if (inProfit && currentZ > 0) {
       statusIcon = '📈'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.07)';
-      statusLine = `Up ${displayGain.toFixed(1)}% — approaching exit zone · ${daysLeft}d left`;
-      statusDetail = `Ratio is moving the right way (Z ${currentZ.toFixed(2)} of target ${exitThreshold}). ${gainLock ? `Gain lock active — protect +${floorPct.toFixed(1)}% floor. ` : ''}${daysLeft <= 2 ? `Only ${daysLeft} day${daysLeft===1?'':'s'} left — exit soon even if not at target.` : `Hold and watch. ${daysLeft} days remain.`}`;
+      statusLine = `Up ${displayGain.toFixed(1)}% — gap closing, ${daysLeft}d left`;
+      statusDetail = `${curAsset} is catching up to ${tr.assetA} as expected. ${gainLock ? `Gain lock active — protect +${floorPct.toFixed(1)}% floor. ` : ''}${daysLeft <= 2 ? `Only ${daysLeft} day${daysLeft===1?'':'s'} left — prepare to exit soon.` : `Hold and monitor. ${daysLeft} days remain.`}`;
     } else if (inProfit && currentZ <= 0) {
       statusIcon = '⚖️'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-      statusLine = `Up ${displayGain.toFixed(1)}% — ratio not there yet · ${daysLeft}d left`;
-      statusDetail = `Profit is from price movement, not ratio reversion yet (Z ${currentZ.toFixed(2)}). The noise should push Z positive within ${daysLeft} day${daysLeft===1?'':'s'}. ${daysLeft <= 2 ? 'Close to deadline — consider taking partial profit.' : 'Monitor daily.'}`;
-    } else if (daysLeft >= 3) {
+      statusLine = `Up ${displayGain.toFixed(1)}% — gap still closing · ${daysLeft}d left`;
+      statusDetail = `You are in profit but the gap hasn't fully closed yet. ${curAsset} is still catching up. ${daysLeft <= 2 ? 'Close to the deadline — consider taking the partial gain now.' : `Hold. ${daysLeft} days remain for the gap to close further.`}`;
+    } else if (daysLeft >= 2) {
       statusIcon = '⏳'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-      statusLine = `Day ${Math.floor(daysSinceEntry)} of 5 — noise is loading · ${daysLeft}d left`;
-      statusDetail = `Micro scalps typically resolve in 2–4 days. Ratio at Z ${currentZ.toFixed(2)} — mean reversion hasn't fired yet but ${daysLeft} days remain. OU half-life is short by design. Hold.`;
+      statusLine = `Day ${Math.floor(daysSinceEntry)} of 3 — waiting for gap to close · ${daysLeft}d left`;
+      statusDetail = `You swapped because ${tr.assetA} had outperformed ${curAsset} over 3 days. Now you hold ${curAsset} and are waiting for that price gap to partially close. This typically takes 1–3 days. Currently ${displayGain >= 0 ? 'flat' : `down ${Math.abs(displayGain).toFixed(1)}%`} — the gap hasn't closed yet. Hold.`;
     } else {
       statusIcon = '⚠️'; statusColor = '#ef4444'; statusBg = 'rgba(239,68,68,0.07)';
-      statusLine = `Day ${Math.floor(daysSinceEntry)} — only ${daysLeft}d left, prepare to exit`;
-      statusDetail = `The 5-day micro scalp window closes in ${daysLeft} day${daysLeft===1?'':'s'}. If not profitable by then, the noise became a trend. Exit to protect capital — that is the rule that keeps micro scalps safe.`;
+      statusLine = `Last day — prepare to exit tomorrow regardless`;
+      statusDetail = `This is the final day of the 3-day micro scalp window. ${inProfit ? `You are up ${displayGain.toFixed(1)}% — a good result. Exit tomorrow.` : `The gap did not close as expected. Exit tomorrow to protect capital. A small loss now is better than holding further with no clear signal.`}`;
     }
 
     // Micro countdown bar injected into status (handled in HTML template below via microCountdown flag)
