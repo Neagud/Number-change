@@ -4879,6 +4879,7 @@ async function runMicroScan() {
 
   if (allMode) {
     const coinMap = await fetchAllCoinKlines(35);
+    Object.keys(coinMap).forEach(k => { if (SCALP_EXCLUDE.has(k)) delete coinMap[k]; });
     const pairs   = buildAllPairs(coinMap);
     const seen    = new Set();
     for (const { a, b, ratioAB, ratioBA, corr } of pairs) {
@@ -4895,7 +4896,7 @@ async function runMicroScan() {
       }
     }
   } else {
-    const candidates = COINS_LIST.filter(c => c !== holding);
+    const candidates = COINS_LIST.filter(c => c !== holding && !SCALP_EXCLUDE.has(c));
     await Promise.all(candidates.map(async sym => {
       try {
         const [fk, tk] = await Promise.all([
@@ -5050,14 +5051,14 @@ function openMicroSwap(holding, target, mss) {
     setTimeout(() => {
       openTracker(trId);
       setTimeout(() => {
-        // Open swap form
-        const form = document.getElementById('stSwapForm');
-        if (form) form.style.display = 'block';
-        // Pre-fill fields
+        // Open swap form properly (populates FROM/TO selects)
+        const _tr = loadTrackers().find(t => t.id === trId);
+        if (_tr) openAddSwap(_tr);
+        // Override micro-specific fields
         document.getElementById('sf-score').value = mss;
         document.getElementById('sf-date').value = new Date().toISOString().slice(0,10);
         setSwapType('micro');
-        // Pre-select TO asset
+        // TO is already locked by openAddSwap; just ensure correct selection
         const toSel = document.getElementById('sf-to-asset');
         if (toSel) [...toSel.options].forEach(o => { o.selected = o.value === target; });
         // Set form title
@@ -5120,6 +5121,7 @@ function openMicroSwap(holding, target, mss) {
       assetA: holding,
       assetB: target,
       startAmount: amt,
+      defaultTradeType: 'micro',
       swaps: []
     };
     const trs = loadTrackers();
@@ -5185,8 +5187,9 @@ async function runScalpScan() {
   const scalpData = [];
 
   if (allMode) {
-    // Fetch all coins at once (10 API calls), compute 45 pairs locally
+    // Fetch all coins at once, compute pairs — exclude BTC (high fees)
     const coinMap = await fetchAllCoinKlines(35);
+    Object.keys(coinMap).forEach(k => { if (SCALP_EXCLUDE.has(k)) delete coinMap[k]; });
     const pairs   = buildAllPairs(coinMap);
     for (const { a, b, ratioAB, ratioBA, corr } of pairs) {
       // Score both directions, keep whichever is stronger
@@ -5200,7 +5203,7 @@ async function runScalpScan() {
       }
     }
   } else {
-    const candidates = COINS_LIST.filter(c => c !== holding);
+    const candidates = COINS_LIST.filter(c => c !== holding && !SCALP_EXCLUDE.has(c));
     await Promise.all(candidates.map(async sym => {
       try {
         const [fk, tk] = await Promise.all([
@@ -5356,6 +5359,8 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
    Each swap: { date, fromAsset, fromAmt, toAsset, toAmt, score, notes }
 ══════════════════════════════════════ */
 const COINS_LIST=['BTC','ETH','SOL','ADA','XRP','XLM','ALGO','HBAR','QNT','LINK'];
+// Coins excluded from quick scalp and micro scalp scanning (high fees / low suitability)
+const SCALP_EXCLUDE = new Set(['BTC']);
 
 /* Weak coins exclusion — bottom 4 by 7-day performance are hidden from recommendations.
    They still appear in the coin selector but won't show up in BSN scanner results.
@@ -6694,7 +6699,7 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
 
   // Detect trade type for current position
   const _lastSwapOuter = [...(tr.swaps||[])].reverse().find(s => s.toAsset === curAsset);
-  const _tradeTypeOuter = _lastSwapOuter ? (_lastSwapOuter.tradeType || 'swing') : 'swing';
+  const _tradeTypeOuter = _lastSwapOuter ? (_lastSwapOuter.tradeType || 'swing') : (tr.defaultTradeType || 'swing');
   const isMicroOuter = _tradeTypeOuter === 'micro';
 
   // Two-coin tracker: only assetA ↔ assetB — no 3rd coins involved
@@ -6842,6 +6847,48 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
   }
 
   // Holding base — check only assetB (two-coin tracker, no 3rd coins)
+  if (isMicroOuter) {
+    // Micro scalp — holding base means no active trade yet. Show MSS-based entry signal.
+    sigEl.innerHTML=`<div style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.25);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
+      <div style="font-size:10px;font-family:monospace;color:#a855f7;margin-bottom:4px">🔬 MICRO SCALP SIGNAL — ${tr.assetA} → ${tr.assetB}</div>
+      <div style="font-size:12px;color:var(--text2)">⏳ Fetching live MSS...</div>
+    </div>`;
+    // Compute MSS live for assetA→assetB
+    try {
+      const _aKlines = await fetch(`https://api.binance.com/api/v3/klines?symbol=${tr.assetA}USDT&interval=1d&limit=35`).then(r=>r.json());
+      const _bKlines = await fetch(`https://api.binance.com/api/v3/klines?symbol=${tr.assetB}USDT&interval=1d&limit=35`).then(r=>r.json());
+      if(!sigEl.isConnected) return;
+      const _aC = Array.isArray(_aKlines) ? _aKlines.map(k=>+k[4]) : null;
+      const _bC = Array.isArray(_bKlines) ? _bKlines.map(k=>+k[4]) : null;
+      const _mssRes = (_aC && _bC) ? computeMSS(_aC.map((v,i)=>_bC[i]?v/_bC[i]:null).filter(Boolean)) : null;
+      if (_mssRes) {
+        const _mc = _mssRes.mss >= 55 ? '#00c076' : _mssRes.mss >= 35 ? '#f5a623' : '#a855f7';
+        const _mv = _mssRes.mss >= 55 ? '🔬 MICRO NOW — record your swap' : _mssRes.mss >= 35 ? '👁 WATCH — signal building' : '⏳ Waiting for entry conditions';
+        sigEl.innerHTML=`<div style="background:rgba(168,85,247,0.08);border:2px solid rgba(168,85,247,0.35);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
+          <div style="font-size:10px;font-family:monospace;color:#a855f7;font-weight:700;margin-bottom:6px">🔬 MICRO SCALP SIGNAL — holding ${tr.assetA}</div>
+          <div style="font-size:15px;font-weight:700;color:${_mc};margin-bottom:4px">${_mv}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:8px">MSS ${_mssRes.mss}/100 · OU half-life ${_mssRes.ouHL}d · Est. gain +${_mssRes.expGain.toFixed(1)}% · Max hold 5 days</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-family:monospace;font-size:22px;font-weight:700;color:#a855f7">${_mssRes.mss}<span style="font-size:12px;opacity:.6">/100 MSS</span></span>
+            <button onclick="document.getElementById('stSwapForm').style.display='block';setSwapType('micro')" style="font-family:monospace;font-size:10px;padding:4px 12px;border-radius:var(--rs);border:1px solid #a855f7;cursor:pointer;background:transparent;color:#a855f7">+ Record swap →</button>
+          </div>
+        </div>`;
+      } else {
+        sigEl.innerHTML=`<div style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
+          <div style="font-size:10px;font-family:monospace;color:#a855f7;font-weight:700;margin-bottom:4px">🔬 MICRO SCALP TRACKER — ${tr.assetA} → ${tr.assetB}</div>
+          <div style="font-size:12px;color:var(--text2)">Record your first swap to start tracking. Use the "+ Add swap" button above.</div>
+        </div>`;
+      }
+    } catch(_e) {
+      if(!sigEl.isConnected) return;
+      sigEl.innerHTML=`<div style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
+        <div style="font-size:10px;font-family:monospace;color:#a855f7;font-weight:700;margin-bottom:4px">🔬 MICRO SCALP TRACKER — ${tr.assetA} → ${tr.assetB}</div>
+        <div style="font-size:12px;color:var(--text2)">Record your first swap above to begin monitoring.</div>
+      </div>`;
+    }
+    return;
+  }
+
   sigEl.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
     <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:4px">SWAP SIGNAL — ${tr.assetA} → ${tr.assetB}</div>
     <div style="font-size:12px;color:var(--text2)">⏳ Fetching live score...</div>
