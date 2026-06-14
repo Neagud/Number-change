@@ -800,16 +800,16 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <label style="font-size:10px;color:var(--text3);font-family:monospace">HOLDING COIN</label>
         <select id="scalpHoldingCoin" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
           <option value="ALL" selected>⚡ ALL PAIRS</option>
-          <option value="XRP">XRP</option>
-          <option value="BTC">BTC</option>
           <option value="ETH">ETH</option>
           <option value="SOL">SOL</option>
           <option value="ADA">ADA</option>
+          <option value="XRP">XRP</option>
           <option value="XLM">XLM</option>
           <option value="ALGO">ALGO</option>
           <option value="HBAR">HBAR</option>
-          <option value="QNT">QNT</option>
-          <option value="LINK">LINK</option>
+          <option value="DOT">DOT</option>
+          <option value="AVAX">AVAX</option>
+          <option value="ATOM">ATOM</option>
         </select>
       </div>
       <div style="display:flex;flex-direction:column;gap:3px">
@@ -4664,7 +4664,7 @@ async function runScalpScan() {
   if (allMode) {
     // Fetch all coins in one parallel burst
     const coinMap = {};
-    await Promise.all(COINS_LIST.map(async sym => {
+    await Promise.all(COINS_LIST.filter(c => !SCALP_EXCLUDE.has(c)).map(async sym => {
       try {
         const d = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=35`).then(r=>r.json());
         if (Array.isArray(d)) coinMap[sym] = d.map(k=>+k[4]);
@@ -4692,7 +4692,7 @@ async function runScalpScan() {
     }
   } else {
     // Single-coin mode: holding is fixed
-    const candidates = COINS_LIST.filter(c => c !== holding);
+    const candidates = COINS_LIST.filter(c => c !== holding && !SCALP_EXCLUDE.has(c));
     await Promise.all(candidates.map(async (sym) => {
       try {
         const [fk, tk] = await Promise.all([
@@ -4832,7 +4832,9 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
    Format: [ { id, name, assetA, assetB, startAmount, swaps:[] }, ... ]
    Each swap: { date, fromAsset, fromAmt, toAsset, toAmt, score, notes }
 ══════════════════════════════════════ */
-const COINS_LIST=['BTC','ETH','SOL','ADA','XRP','XLM','ALGO','HBAR','QNT','LINK'];
+const COINS_LIST=['BTC','ETH','SOL','ADA','XRP','XLM','ALGO','HBAR','QNT','LINK','DOT','AVAX','ATOM'];
+// Excluded from quick scalps: high on-chain fees wipe small gains
+const SCALP_EXCLUDE = new Set(['BTC','QNT','LINK']);
 
 /* Weak coins exclusion — bottom 4 by 7-day performance are hidden from recommendations.
    They still appear in the coin selector but won't show up in BSN scanner results.
