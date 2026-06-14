@@ -882,16 +882,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <label style="font-size:10px;color:var(--text3);font-family:monospace">HOLDING COIN</label>
         <select id="microHoldingCoin" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
           <option value="ALL" selected>🔬 ALL PAIRS</option>
-          <option value="XRP">XRP</option>
-          <option value="BTC">BTC</option>
-          <option value="ETH">ETH</option>
           <option value="SOL">SOL</option>
           <option value="ADA">ADA</option>
+          <option value="XRP">XRP</option>
           <option value="XLM">XLM</option>
           <option value="ALGO">ALGO</option>
           <option value="HBAR">HBAR</option>
-          <option value="QNT">QNT</option>
-          <option value="LINK">LINK</option>
+          <option value="DOT">DOT</option>
+          <option value="AVAX">AVAX</option>
+          <option value="ATOM">ATOM</option>
         </select>
       </div>
       <div style="display:flex;flex-direction:column;gap:3px">
@@ -900,6 +899,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
           <option value="0.1">0.1% (CEX standard)</option>
           <option value="0.2" selected>0.2% (round trip)</option>
           <option value="0.5">0.5% (high fee)</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <label style="font-size:10px;color:var(--text3);font-family:monospace">SPREAD (exchange slippage)</label>
+        <select id="microSpread" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
+          <option value="0.2">0.2% (very liquid pair)</option>
+          <option value="0.5" selected>0.5% (typical)</option>
+          <option value="1.0">1.0% (less liquid)</option>
         </select>
       </div>
       <button id="microScanBtn" onclick="runMicroScan()" style="margin-left:auto;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;border-radius:8px;padding:9px 20px;color:#fff;font-weight:700;font-family:monospace;font-size:12px;cursor:pointer;white-space:nowrap">
@@ -4866,6 +4873,8 @@ async function runMicroScan() {
   const results = document.getElementById('microResults');
   const holding = document.getElementById('microHoldingCoin')?.value || 'ALL';
   const fee     = parseFloat(document.getElementById('microFee')?.value || '0.2');
+  const spread  = parseFloat(document.getElementById('microSpread')?.value || '0.5');
+  const totalCost = fee + spread; // fee + bid-ask spread both ways
   const allMode = holding === 'ALL';
 
   if (btn) { btn.disabled=true; btn.textContent='⏳ Scanning...'; }
@@ -4916,15 +4925,20 @@ async function runMicroScan() {
   }
 
   if (btn) { btn.disabled=false; btn.textContent='🔬 Scan Micro Scalps'; }
-  renderMicroResults(holding, microData, fee, scanTime);
+  renderMicroResults(holding, microData, fee, totalCost, scanTime);
 }
 
-function renderMicroResults(holding, data, fee, scanTime) {
+function renderMicroResults(holding, data, fee, totalCost, scanTime) {
+  // backward compat: if called without totalCost (old callers)
+  if (typeof totalCost === 'number' && totalCost > 100) { scanTime = totalCost; totalCost = fee + 0.5; }
+  if (!scanTime) { scanTime = totalCost; totalCost = fee + 0.5; }
   const results = document.getElementById('microResults');
   if (!results) return;
 
+  const MIN_NET = 1.0; // minimum net gain after fee+spread to show a signal
   const elapsed = Math.round((Date.now()-scanTime)/1000);
-  const active  = data.filter(d => d.mss > 0).sort((a,b) => b.mss - a.mss);
+  // Filter: must have positive MSS AND expected net gain > MIN_NET after all costs
+  const active  = data.filter(d => d.mss > 0 && (d.expGain - totalCost) >= MIN_NET).sort((a,b) => b.mss - a.mss);
   const blocked = data.filter(d => d.mss === 0);
 
   const BLOCK_LABELS = {
@@ -4976,7 +4990,7 @@ function renderMicroResults(holding, data, fee, scanTime) {
       ? `<span class="ms-badge" style="background:rgba(245,166,35,.15);color:#f5a623">👁 WATCH</span>`
       : `<span class="ms-badge" style="background:rgba(255,255,255,.05);color:var(--text3)">WEAK</span>`;
 
-    const netGain = Math.max(0, d.expGain - fee);
+    const netGain = Math.max(0, d.expGain - totalCost);
     const csdWarn = d.csdPenalty < 1 ? `<span style="font-size:9px;color:#f5a623;font-family:monospace;margin-left:4px">⚠️ CSD penalty</span>` : '';
 
     const bars = [
