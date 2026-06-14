@@ -799,6 +799,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <div style="display:flex;flex-direction:column;gap:3px">
         <label style="font-size:10px;color:var(--text3);font-family:monospace">HOLDING COIN</label>
         <select id="scalpHoldingCoin" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
+          <option value="ALL" selected>⚡ ALL PAIRS</option>
           <option value="XRP">XRP</option>
           <option value="BTC">BTC</option>
           <option value="ETH">ETH</option>
@@ -4646,50 +4647,74 @@ function initScalpTab() {
 async function runScalpScan() {
   const btn     = document.getElementById('scalpScanBtn');
   const results = document.getElementById('scalpResults');
-  const holding = document.getElementById('scalpHoldingCoin')?.value || 'XRP';
+  const holding = document.getElementById('scalpHoldingCoin')?.value || 'ALL';
   const minGain = parseFloat(document.getElementById('scalpMinGain')?.value || '1.5');
   const fee     = parseFloat(document.getElementById('scalpFee')?.value || '0.2');
+  const allMode = holding === 'ALL';
 
   if (btn) { btn.disabled=true; btn.textContent='⏳ Scanning...'; }
   results.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px;font-family:monospace">
-    ⚡ Scanning all pairs for short-term opportunities...<br>
-    <span style="opacity:.5;font-size:10px">Fetching 30-day data for each pair</span>
+    ⚡ ${allMode ? 'Scanning all 45 pairs...' : 'Scanning pairs from ' + holding + '...'}<br>
+    <span style="opacity:.5;font-size:10px">${allMode ? 'Fetching all 10 coins at once — comparing every combination' : 'Fetching 30-day data for each pair'}</span>
   </div>`;
 
-  const candidates = COINS_LIST.filter(c => c !== holding);
-  const scanTime   = Date.now();
-  const scalpData  = [];
+  const scanTime  = Date.now();
+  const scalpData = [];
 
-  // Fetch all pairs in parallel
-  await Promise.all(candidates.map(async (sym) => {
-    try {
-      const [fk, tk] = await Promise.all([
-        fetch(`https://api.binance.com/api/v3/klines?symbol=${holding}USDT&interval=1d&limit=35`).then(r=>r.json()),
-        fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=35`).then(r=>r.json())
-      ]);
-      const fC = fk.map(k=>+k[4]);
-      const tC = tk.map(k=>+k[4]);
-      const n  = Math.min(fC.length, tC.length);
-      // Build ratio closes
-      const ratioC = Array.from({length:n},(_,i)=>fC[fC.length-n+i]/tC[tC.length-n+i]);
-      const corr   = calcCorrelation(fC, tC);
-      const q      = computeQSS(ratioC, corr);
-      if (!q) return;
-      // holdDays always has a value now (OU-based or Z30-based fallback)
-      // Only skip if Z30 is too weak to be worth trading
-      if (q.z30 < 0.8) return;
-      // Filter 2: minimum gain after fees (compare net, not gross)
-      const netGain = q.expGain - fee;
-      if (netGain < minGain) return;
-      scalpData.push({ sym, corr, netGain, ...q });
-    } catch(e) { /* skip failed pairs */ }
-  }));
+  if (allMode) {
+    // Fetch all coins in one parallel burst
+    const coinMap = {};
+    await Promise.all(COINS_LIST.map(async sym => {
+      try {
+        const d = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=35`).then(r=>r.json());
+        if (Array.isArray(d)) coinMap[sym] = d.map(k=>+k[4]);
+      } catch(e) {}
+    }));
+    const coins = Object.keys(coinMap);
+    for (let i = 0; i < coins.length; i++) {
+      for (let j = i+1; j < coins.length; j++) {
+        const a = coins[i], b = coins[j];
+        const fC = coinMap[a], tC = coinMap[b];
+        const n  = Math.min(fC.length, tC.length);
+        const corr = calcCorrelation(fC, tC);
+        // Score both directions
+        const ratioAB = Array.from({length:n},(_,k)=>fC[fC.length-n+k]/tC[tC.length-n+k]);
+        const ratioBA = Array.from({length:n},(_,k)=>tC[tC.length-n+k]/fC[fC.length-n+k]);
+        const qAB = computeQSS(ratioAB, corr);
+        const qBA = computeQSS(ratioBA, corr);
+        for (const [h, s, q] of [[a,b,qAB],[b,a,qBA]]) {
+          if (!q || q.z30 < 0.8) continue;
+          const netGain = q.expGain - fee;
+          if (netGain < minGain) continue;
+          scalpData.push({ holding: h, sym: s, corr, netGain, ...q });
+        }
+      }
+    }
+  } else {
+    // Single-coin mode: holding is fixed
+    const candidates = COINS_LIST.filter(c => c !== holding);
+    await Promise.all(candidates.map(async (sym) => {
+      try {
+        const [fk, tk] = await Promise.all([
+          fetch(`https://api.binance.com/api/v3/klines?symbol=${holding}USDT&interval=1d&limit=35`).then(r=>r.json()),
+          fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=35`).then(r=>r.json())
+        ]);
+        const fC = fk.map(k=>+k[4]);
+        const tC = tk.map(k=>+k[4]);
+        const n  = Math.min(fC.length, tC.length);
+        const ratioC = Array.from({length:n},(_,i)=>fC[fC.length-n+i]/tC[tC.length-n+i]);
+        const corr   = calcCorrelation(fC, tC);
+        const q      = computeQSS(ratioC, corr);
+        if (!q || q.z30 < 0.8) return;
+        const netGain = q.expGain - fee;
+        if (netGain < minGain) return;
+        scalpData.push({ holding, sym, corr, netGain, ...q });
+      } catch(e) {}
+    }));
+  }
 
-  // Sort by QSS descending
   scalpData.sort((a,b) => b.qss - a.qss);
-
   if (btn) { btn.disabled=false; btn.textContent='⚡ Scan Quick Scalps'; }
-
   renderScalpResults(holding, scalpData, minGain, fee, scanTime);
 }
 
@@ -4705,7 +4730,7 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
         <div style="font-size:32px;margin-bottom:8px">🔍</div>
         <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">No scalp opportunities right now</div>
         <div style="font-size:12px;color:var(--text3)">
-          No pair from ${holding} qualifies right now.<br><br>
+          ${holding === 'ALL' ? 'No pairs qualify right now across all coins.' : 'No pair from ' + holding + ' qualifies right now.'}<br><br>
           Requirements: Z30 &gt; 0.8 · net gain after fees ≥ ${minGain}%.<br>
           Check again later or lower the minimum gain threshold.
         </div>
@@ -4744,7 +4769,7 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
       <div class="qs-card ${cls}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <div>
-            <div class="qs-pair" style="color:${col}">${holding} → ${d.sym}</div>
+            <div class="qs-pair" style="color:${col}">${d.holding || holding} → ${d.sym}</div>
             <div style="margin-top:2px">${badge}</div>
           </div>
           <div style="text-align:right">
