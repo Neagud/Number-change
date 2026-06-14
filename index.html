@@ -654,20 +654,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .qs-bar-track{height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-top:2px}
 .qs-bar-fill{height:100%;border-radius:3px;transition:width .4s}
 /* ── /Quick Scalps ── */
-/* ── Micro Scalps ── */
-.ms-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;transition:border-color .2s}
-.ms-card.ms-fire{border-color:rgba(0,192,118,.55);background:rgba(0,192,118,.05)}
-.ms-card.ms-warm{border-color:rgba(245,166,35,.5);background:rgba(245,166,35,.04)}
-.ms-card.ms-dim{opacity:.55}
-.ms-score{font-size:22px;font-weight:700;font-family:monospace}
-.ms-pair{font-size:13px;font-weight:700}
-.ms-badge{font-size:9px;font-family:monospace;padding:2px 7px;border-radius:8px;font-weight:700}
-.ms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
-.ms-bar-track{height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
-.ms-bar-fill{height:100%;border-radius:3px}
-.ms-gate-row{font-size:10px;font-family:monospace;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.ms-gate-row:last-child{border-bottom:none}
-/* ── /Micro Scalps ── */
 .bp-card{background:var(--bg3);border:2px solid var(--border);border-radius:var(--rs);padding:.6rem .8rem;cursor:pointer;transition:all .2s;min-width:110px;flex:1}
 .bp-card:hover{border-color:var(--blue);background:rgba(59,143,255,.06)}
 .bp-card.bp-best{border-color:rgba(0,192,118,.5);background:rgba(0,192,118,.06)}
@@ -791,7 +777,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <div class="tab-bar">
   <button class="tab-btn active" data-tab="analyzer">📊 Analyzer</button>
   <button class="tab-btn" data-tab="scalps">⚡ Quick Scalps</button>
-  <button class="tab-btn" data-tab="micro">🔬 Micro Scalps</button>
   <button class="tab-btn" data-tab="tracker">📈 Swap Tracker</button>
   <button class="tab-btn" data-tab="alerts">🔔 Alerts <span id="alertBadge" style="display:none;background:#ef4444;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:3px;font-family:monospace">0</span></button>
   <button class="tab-btn" data-tab="guide">📖 How To Use</button>
@@ -814,7 +799,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <div style="display:flex;flex-direction:column;gap:3px">
         <label style="font-size:10px;color:var(--text3);font-family:monospace">HOLDING COIN</label>
         <select id="scalpHoldingCoin" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
-          <option value="ALL" selected>⚡ ALL PAIRS</option>
           <option value="XRP">XRP</option>
           <option value="BTC">BTC</option>
           <option value="ETH">ETH</option>
@@ -859,70 +843,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div id="scalpResults">
       <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">
         Press <strong>⚡ Scan Quick Scalps</strong> to find short-term opportunities
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- Micro Scalps tab -->
-<div class="tab-pane" id="tab-micro">
-  <div style="max-width:860px;margin:0 auto;padding:.6rem 0">
-
-    <div style="margin-bottom:10px">
-      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px">🔬 Micro Scalps</div>
-      <div style="font-size:11px;color:var(--text3)">
-        Noise reversion · 7-day window · Hold 2–5 days · Target 1–2% · OU Half-Life gate ≤ 8d
-      </div>
-    </div>
-
-    <!-- Controls -->
-    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px">
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <label style="font-size:10px;color:var(--text3);font-family:monospace">HOLDING COIN</label>
-        <select id="microHoldingCoin" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
-          <option value="ALL" selected>🔬 ALL PAIRS</option>
-          <option value="SOL">SOL</option>
-          <option value="ADA">ADA</option>
-          <option value="XRP">XRP</option>
-          <option value="XLM">XLM</option>
-          <option value="ALGO">ALGO</option>
-          <option value="HBAR">HBAR</option>
-          <option value="DOT">DOT</option>
-          <option value="AVAX">AVAX</option>
-          <option value="ATOM">ATOM</option>
-        </select>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <label style="font-size:10px;color:var(--text3);font-family:monospace">EXCHANGE FEE (round trip)</label>
-        <select id="microFee" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
-          <option value="0.1">0.1% (CEX standard)</option>
-          <option value="0.2" selected>0.2% (round trip)</option>
-          <option value="0.5">0.5% (high fee)</option>
-        </select>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <label style="font-size:10px;color:var(--text3);font-family:monospace">SPREAD (exchange slippage)</label>
-        <select id="microSpread" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
-          <option value="0.2">0.2% (very liquid pair)</option>
-          <option value="0.5" selected>0.5% (typical)</option>
-          <option value="1.0">1.0% (less liquid)</option>
-        </select>
-      </div>
-      <button id="microScanBtn" onclick="runMicroScan()" style="margin-left:auto;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;border-radius:8px;padding:9px 20px;color:#fff;font-weight:700;font-family:monospace;font-size:12px;cursor:pointer;white-space:nowrap">
-        🔬 Scan Micro Scalps
-      </button>
-    </div>
-
-    <!-- Science note -->
-    <div style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--text3);line-height:1.7">
-      <strong style="color:#a855f7">📊 Relative Momentum Divergence:</strong> Even in a strong trend, coins never move in lockstep. When SOL gains 5% and XLM gains 1% over 3 days, that 4% gap tends to close 50–60% within 1–3 days. Works in any market — up, down, sideways. Signals are based on daily closes so they're stable all day, never flicker. Max hold: <strong style="color:var(--text)">3 days</strong> — hard rule, no exceptions.
-    </div>
-
-    <!-- Results -->
-    <div id="microResults">
-      <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">
-        Press <strong>🔬 Scan Micro Scalps</strong> to find fast noise-reversion opportunities
       </div>
     </div>
 
@@ -1380,10 +1300,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <button type="button" id="sf-type-scalp" onclick="setSwapType('scalp')"
           style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--text3);font-family:monospace;font-size:11px;font-weight:700;cursor:pointer">
           ⚡ QUICK SCALP<br><span style="font-weight:400;font-size:10px;opacity:.8">QSS signal · days · 1–5%</span>
-        </button>
-        <button type="button" id="sf-type-micro" onclick="setSwapType('micro')"
-          style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--text3);font-family:monospace;font-size:11px;font-weight:700;cursor:pointer">
-          🔬 MICRO SCALP<br><span style="font-weight:400;font-size:10px;opacity:.8">MSS signal · 2–5d · 1–2%</span>
         </button>
       </div>
       <input type="hidden" id="sf-trade-type" value="swing">
@@ -4607,7 +4523,6 @@ function initTabs(){
       if(tab==='tracker'){ Object.keys(_scoreCache).forEach(k=>{delete _scoreCache[k]; delete _scoreCacheTime[k];}); initTrackerUI(); startTrackerLiveRefresh(); }
       if(tab==='alerts'&&!window._alertsInited){ initAlerts(); window._alertsInited=true; }
       if(tab==='scalps') initScalpTab();
-      if(tab==='micro') initMicroTab();
     });
   });
 }
@@ -4728,509 +4643,54 @@ function initScalpTab() {
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   MICRO SCALP ENGINE
-   Physics-based noise-reversion scanner.
-   Uses Ornstein-Uhlenbeck half-life, negative autocorrelation,
-   critical slowing down detection, and momentum exhaustion.
-   Window: 7 days. Target: 1–2%. Max hold: 5 days hard.
-══════════════════════════════════════════════════════════════ */
-
-/* Lag-1 autocorrelation of the level series (not returns).
-   ρ = e^(-θ) for an OU process → used for Critical Slowing Down detection. */
-function calcLagAR1(arr) {
-  if (!arr || arr.length < 4) return 0;
-  const n = arr.length;
-  const m = arr.reduce((a,b)=>a+b,0) / n;
-  let num = 0, den = 0;
-  for (let i = 0; i < n - 1; i++) {
-    num += (arr[i] - m) * (arr[i+1] - m);
-    den += (arr[i] - m) ** 2;
-  }
-  return den > 0 ? num / den : 0;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   MICRO SCALP ENGINE v2 — Relative Momentum Divergence (RMD)
-
-   Core idea: even in a strong trend, coins in the same family
-   never move in lockstep. When A gains 5% while B gains 1%
-   over 3 days, that 4% gap tends to close partially (1.5–2.5%)
-   within 1–3 days. Works in ANY market condition — up, down,
-   sideways — because we trade the gap, not the direction.
-
-   Takes individual coin closes (not ratio) so we can compare
-   3-day returns separately. Signals are based on daily closes
-   so they're stable all day, never flicker minute-to-minute.
-══════════════════════════════════════════════════════════════ */
-function computeRMD(closesA, closesB) {
-  if (!closesA || !closesB || closesA.length < 10 || closesB.length < 10) return null;
-  const nA = closesA.length, nB = closesB.length;
-  const n  = Math.min(nA, nB);
-  const aC = closesA.slice(-n);
-  const bC = closesB.slice(-n);
-
-  // Gate 1: Must normally move together (corr > 0.45)
-  const corr = calcCorrelation(aC, bC);
-  if (corr < 0.45) return { rmd: 0, blocked: 'low_correlation', corr, div3: null };
-
-  // 3-day returns for each coin
-  const ret3A = aC[n-1] > 0 && aC[n-4] > 0 ? (aC[n-1] / aC[n-4] - 1) * 100 : 0;
-  const ret3B = bC[n-1] > 0 && bC[n-4] > 0 ? (bC[n-1] / bC[n-4] - 1) * 100 : 0;
-  const div3  = ret3A - ret3B; // +ve = A ran more = sell A buy B
-
-  // Gate 2: Divergence must be meaningful
-  if (Math.abs(div3) < 1.5) return { rmd: 0, blocked: 'no_divergence', corr, div3 };
-
-  // 1-day returns (trend check)
-  const ret1A = aC[n-1] > 0 && aC[n-2] > 0 ? (aC[n-1] / aC[n-2] - 1) * 100 : 0;
-  const ret1B = bC[n-1] > 0 && bC[n-2] > 0 ? (bC[n-1] / bC[n-2] - 1) * 100 : 0;
-  const div1  = ret1A - ret1B;
-
-  // Gate 3: Not already 60%+ reverting (if the gap already closed, we're late)
-  const alreadyReverting = Math.sign(div1) !== Math.sign(div3) && Math.abs(div1) > Math.abs(div3) * 0.6;
-  if (alreadyReverting) return { rmd: 0, blocked: 'already_reverting', corr, div3 };
-
-  // 14-day average daily ratio move (volatility context)
-  const ratioArr = aC.map((v, i) => bC[i] > 0 ? v / bC[i] : null).filter(Boolean);
-  const dailyMoves = [];
-  for (let i = Math.max(1, ratioArr.length - 14); i < ratioArr.length; i++) {
-    dailyMoves.push(Math.abs(ratioArr[i] / ratioArr[i-1] - 1) * 100);
-  }
-  const avgDailyMove = dailyMoves.length > 0 ? dailyMoves.reduce((a,b)=>a+b,0) / dailyMoves.length : 1;
-
-  // ── Scoring (0–100) ──
-  // DIV (40): how large is the gap relative to minimum threshold
-  const divScore = Math.min(40, Math.round(Math.abs(div3) / 1.5 * 15));
-
-  // COR (25): higher correlation = higher confidence in reversion
-  const corrScore = Math.round(Math.max(0, (corr - 0.45) / 0.55) * 25);
-
-  // VOL (20): gap should be large relative to normal daily moves (signal-to-noise)
-  const snr = avgDailyMove > 0 ? Math.abs(div3) / (avgDailyMove * 3) : 0;
-  const volScore = Math.min(20, Math.round(snr * 20));
-
-  // MOM (15): if still diverging today (div1 same direction as div3), momentum is still on entry side
-  const momScore = Math.sign(div1) === Math.sign(div3) ? 15 : 5;
-
-  const rmd = Math.min(100, divScore + corrScore + volScore + momScore);
-
-  // Expected gain: 55% reversion of the 3-day gap
-  const expGain = Math.round(Math.abs(div3) * 0.55 * 10) / 10;
-
-  // Hold: faster when high correlation (tighter pairs revert quicker)
-  const holdDays = corr > 0.75 ? 1 : corr > 0.6 ? 2 : 3;
-
-  return {
-    rmd,
-    corr: Math.round(corr * 100) / 100,
-    div3: Math.round(div3 * 100) / 100,
-    div1: Math.round(div1 * 100) / 100,
-    ret3A: Math.round(ret3A * 100) / 100,
-    ret3B: Math.round(ret3B * 100) / 100,
-    expGain,
-    holdDays,
-    avgDailyMove: Math.round(avgDailyMove * 100) / 100,
-    divScore, corrScore, volScore, momScore,
-    blocked: null
-  };
-}
-
-function initMicroTab() {
-  const sel = document.getElementById('microHoldingCoin');
-  if (sel && typeof fromSym !== 'undefined') {
-    if ([...sel.options].some(o=>o.value===fromSym)) sel.value = fromSym;
-  }
-}
-
-async function runMicroScan() {
-  const btn     = document.getElementById('microScanBtn');
-  const results = document.getElementById('microResults');
-  const holding = document.getElementById('microHoldingCoin')?.value || 'ALL';
-  const fee     = parseFloat(document.getElementById('microFee')?.value || '0.2');
-  const spread  = parseFloat(document.getElementById('microSpread')?.value || '0.5');
-  const totalCost = fee + spread; // fee + bid-ask spread both ways
-  const allMode = holding === 'ALL';
-
-  if (btn) { btn.disabled=true; btn.textContent='⏳ Scanning...'; }
-  results.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px;font-family:monospace">
-    🔬 ${allMode ? 'Scanning all 45 pairs with physics engine...' : 'Running physics-based micro scanner...'}<br>
-    <span style="opacity:.5;font-size:10px">Checking OU half-life, autocorrelation, and slowing-down signals</span>
-  </div>`;
-
-  const scanTime  = Date.now();
-  const microData = [];
-
-  if (allMode) {
-    // Fetch all coins at once, compare 3-day returns between every pair
-    const coinMap = await fetchAllCoinKlines(20);
-    Object.keys(coinMap).forEach(k => { if (SCALP_EXCLUDE.has(k)) delete coinMap[k]; });
-    const coins = Object.keys(coinMap);
-    for (let i = 0; i < coins.length; i++) {
-      for (let j = i + 1; j < coins.length; j++) {
-        const a = coins[i], b = coins[j];
-        const r = computeRMD(coinMap[a], coinMap[b]);
-        if (!r) continue;
-        if (r.rmd === 0) {
-          // blocked — store once for gate summary
-          microData.push({ holding: a, sym: b, ...r });
-          continue;
-        }
-        // Direction: positive div3 = A outperformed B = sell A, buy B
-        if (r.div3 > 0) {
-          microData.push({ holding: a, sym: b, ...r });
-        } else {
-          // B outperformed A = sell B, buy A — flip the view
-          microData.push({ holding: b, sym: a, ...r, div3: -r.div3, div1: -r.div1, ret3A: r.ret3B, ret3B: r.ret3A });
-        }
-      }
-    }
-  } else {
-    // Single-coin mode: holding is fixed, find where it diverged
-    const candidates = COINS_LIST.filter(c => c !== holding && !SCALP_EXCLUDE.has(c));
-    const holdingKlines = await fetch(`https://api.binance.com/api/v3/klines?symbol=${holding}USDT&interval=1d&limit=20`).then(r=>r.json()).catch(()=>[]);
-    const hC = Array.isArray(holdingKlines) ? holdingKlines.map(k=>+k[4]) : null;
-    if (!hC) { if (btn) { btn.disabled=false; btn.textContent='🔬 Scan Micro Scalps'; } return; }
-    await Promise.all(candidates.map(async sym => {
-      try {
-        const tk = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=20`).then(r=>r.json());
-        if (!Array.isArray(tk)) return;
-        const tC = tk.map(k=>+k[4]);
-        const r  = computeRMD(hC, tC);
-        if (!r) return;
-        if (r.rmd === 0) { microData.push({ holding, sym, ...r }); return; }
-        // Only relevant if holding outperformed sym (div3 > 0 = holding ran more)
-        if (r.div3 > 0) {
-          microData.push({ holding, sym, ...r });
-        }
-        // If sym outperformed holding, not actionable (user holds the laggard — no signal to swap)
-      } catch(e) {}
-    }));
-  }
-
-  if (btn) { btn.disabled=false; btn.textContent='🔬 Scan Micro Scalps'; }
-  renderMicroResults(holding, microData, totalCost, scanTime);
-}
-
-function renderMicroResults(holding, data, totalCost, scanTime) {
-  const results = document.getElementById('microResults');
-  if (!results) return;
-
-  const MIN_NET = 1.0;
-  const elapsed = Math.round((Date.now() - scanTime) / 1000);
-
-  const active  = data.filter(d => d.rmd > 0 && (d.expGain - totalCost) >= MIN_NET).sort((a,b) => b.rmd - a.rmd);
-  const blocked = data.filter(d => d.rmd === 0);
-
-  const BLOCK_LABELS = {
-    low_correlation:  'Pair doesn\'t move together',
-    no_divergence:    'Gap too small (<1.5%) — no edge',
-    already_reverting:'Gap already closing — too late to enter',
-  };
-
-  if (!active.length && !blocked.length) {
-    results.innerHTML = `<div style="text-align:center;padding:32px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
-      <div style="font-size:28px;margin-bottom:8px">🔬</div>
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">No data returned</div>
-      <div style="font-size:11px;color:var(--text3)">Check your connection and try again.</div>
-    </div>`;
-    return;
-  }
-
-  if (!active.length) {
-    const reasons = {};
-    blocked.forEach(d => { reasons[d.blocked] = (reasons[d.blocked]||0)+1; });
-    const reasonLines = Object.entries(reasons).map(([k,v])=>`${BLOCK_LABELS[k]||k} (${v} pair${v>1?'s':''})`).join(' · ');
-    results.innerHTML = `
-      <div style="text-align:center;padding:24px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
-        <div style="font-size:24px;margin-bottom:8px">⏳</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">No opportunities right now</div>
-        <div style="font-size:11px;color:var(--text3);line-height:1.6">${reasonLines}<br><br>Coins are moving too similarly today — no significant divergence between pairs. Check again tomorrow morning.</div>
-      </div>`;
-    return;
-  }
-
-  const cards = active.map(d => {
-    const isFire = d.rmd >= 55;
-    const isWarm = d.rmd >= 35;
-    const cls  = isFire ? 'ms-fire' : isWarm ? 'ms-warm' : 'ms-dim';
-    const col  = isFire ? '#00c076' : isWarm ? '#f5a623' : 'var(--text3)';
-    const badge = isFire
-      ? `<span class="ms-badge" style="background:rgba(0,192,118,.15);color:#00c076">🔬 MICRO NOW</span>`
-      : `<span class="ms-badge" style="background:rgba(245,166,35,.15);color:#f5a623">👁 WATCH</span>`;
-
-    const netGain = Math.max(0, d.expGain - totalCost);
-    const hRet = d.ret3A >= 0 ? `+${d.ret3A}%` : `${d.ret3A}%`;
-    const sRet = d.ret3B >= 0 ? `+${d.ret3B}%` : `${d.ret3B}%`;
-    const div3Str = `+${d.div3.toFixed(1)}%`;
-
-    const bars = [
-      { lbl:'DIV', val: d.divScore / 0.40,  raw: div3Str+' gap' },
-      { lbl:'COR', val: d.corrScore / 0.25,  raw: 'r='+d.corr },
-      { lbl:'VOL', val: d.volScore  / 0.20,  raw: 'SNR' },
-      { lbl:'MOM', val: d.momScore  / 0.15,  raw: d.momScore >= 15 ? 'widening' : 'peaking' },
-    ].map(b=>`
-      <div style="display:flex;align-items:center;gap:4px;font-size:9px;margin-bottom:2px">
-        <span style="width:22px;color:var(--text3);font-family:monospace">${b.lbl}</span>
-        <div class="ms-bar-track" style="flex:1"><div class="ms-bar-fill" style="width:${Math.min(100,b.val)}%;background:${b.val>=60?'#00c076':b.val>=30?'#f5a623':'#ef4444'}"></div></div>
-        <span style="width:52px;text-align:right;color:var(--text3);font-family:monospace;font-size:8px">${b.raw}</span>
-      </div>`).join('');
-
-    return `
-      <div class="ms-card ${cls}">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px">
-          <div>
-            <div class="ms-pair" style="color:${col}">${d.holding} → ${d.sym}</div>
-            <div style="margin-top:3px">${badge}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="ms-score" style="color:${col}">${d.rmd}</div>
-            <div style="font-size:8px;color:var(--text3);font-family:monospace">RMD /100</div>
-          </div>
-        </div>
-        <div style="background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.18);border-radius:6px;padding:6px 8px;margin-bottom:7px;font-size:10px;font-family:monospace">
-          <span style="color:var(--text3)">3d returns: </span>
-          <span style="color:#ef4444">${d.holding} ${hRet}</span>
-          <span style="color:var(--text3)"> vs </span>
-          <span style="color:#00c076">${d.sym} ${sRet}</span>
-          <span style="color:var(--text3)"> → gap </span>
-          <span style="color:${col};font-weight:700">${div3Str}</span>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:7px;background:rgba(255,255,255,.03);border-radius:5px;padding:5px">
-          <div style="text-align:center">
-            <div style="font-size:8px;color:var(--text3);font-family:monospace">EST GAIN</div>
-            <div style="font-size:13px;font-weight:700;color:#00c076">+${d.expGain.toFixed(1)}%</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:8px;color:var(--text3);font-family:monospace">HOLD</div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)">${d.holdDays}–${d.holdDays+1}d</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:8px;color:var(--text3);font-family:monospace">NET</div>
-            <div style="font-size:13px;font-weight:700;color:${netGain>0?'#00c076':'#ef4444'}">${netGain>0?'+':''}${netGain.toFixed(1)}%</div>
-          </div>
-        </div>
-        <div style="margin-bottom:7px">${bars}</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:7px">
-          <span>corr=${d.corr} · daily avg move=${d.avgDailyMove}%</span>
-          <span style="color:#a855f7">MAX 3 DAYS</span>
-        </div>
-        <button onclick="openMicroSwap('${d.holding}','${d.sym}',${d.rmd})" style="width:100%;padding:6px;border-radius:6px;border:1px solid ${isFire?'rgba(0,192,118,.4)':'rgba(245,166,35,.4)'};background:${isFire?'rgba(0,192,118,.10)':'rgba(245,166,35,.08)'};color:${col};font-family:monospace;font-size:10px;font-weight:700;cursor:pointer">Record Micro Swap →</button>
-      </div>`;
-  }).join('');
-
-  results.innerHTML = `
-    <div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:8px;display:flex;justify-content:space-between">
-      <span>${active.length} opportunit${active.length===1?'y':'ies'} found · scanned in ${elapsed}s</span>
-      <span style="color:#a855f7">⚠️ Use 20–30% of portfolio max per micro trade</span>
-    </div>
-    <div class="ms-grid">${cards}</div>`;
-}
-
-function openMicroSwap(holding, target, mss) {
-  const trackers = loadTrackers();
-  const existing = trackers.find(t => t.assetA === holding && (t.assetB === target || !t.assetB));
-
-  function _goToTrackerAndFill(trId) {
-    _activeTab = 'tracker'; savePrefs();
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
-    document.querySelector('[data-tab="tracker"]').classList.add('active');
-    document.getElementById('tab-tracker').classList.add('active');
-    Object.keys(_scoreCache).forEach(k=>{delete _scoreCache[k]; delete _scoreCacheTime[k];});
-    initTrackerUI(); startTrackerLiveRefresh();
-    setTimeout(() => {
-      openTracker(trId);
-      setTimeout(() => {
-        // Open swap form properly (populates FROM/TO selects)
-        const _tr = loadTrackers().find(t => t.id === trId);
-        if (_tr) openAddSwap(_tr);
-        // Override micro-specific fields
-        document.getElementById('sf-score').value = mss;
-        document.getElementById('sf-date').value = new Date().toISOString().slice(0,10);
-        setSwapType('micro');
-        // TO is already locked by openAddSwap; just ensure correct selection
-        const toSel = document.getElementById('sf-to-asset');
-        if (toSel) [...toSel.options].forEach(o => { o.selected = o.value === target; });
-        // Set form title
-        document.getElementById('stSwapFormTitle').textContent = `🔬 Record micro scalp: ${holding} → ${target}`;
-        // Add micro context note
-        let _mn = document.getElementById('sf-micro-note');
-        if (!_mn) {
-          _mn = document.createElement('div');
-          _mn.id = 'sf-micro-note';
-          const _sf = document.getElementById('stSwapForm');
-          if (_sf) _sf.insertBefore(_mn, _sf.querySelector('.st-form-row, .st-form-group'));
-        }
-        _mn.style.cssText = 'background:rgba(168,85,247,0.09);border:1px solid rgba(168,85,247,0.3);border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:11px;color:#a855f7;line-height:1.6';
-        _mn.innerHTML = `🔬 <strong>Micro scalp: ${holding} → ${target}</strong> · RMD ${mss}/100<br><span style="color:var(--text2)">Max hold: 3 days hard rule · Target: +1–2% · Exit when gap closes 50%<br>Enter the amounts (you can use test/hypothetical values).</span>`;
-        showToast('🔬 Micro swap form ready — enter your amounts', 'amber');
-      }, 250);
-    }, 350);
-  }
-
-  if (existing) {
-    _goToTrackerAndFill(existing.id);
-    return;
-  }
-
-  // No tracker for this holding coin — show quick-create modal
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:center;justify-content:center';
-  overlay.innerHTML = `
-    <div style="background:#12151f;border:1px solid rgba(168,85,247,0.4);border-radius:14px;padding:24px 28px;max-width:380px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.6)">
-      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">🔬 New micro scalp tracker</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:18px">${holding} → ${target} · MSS ${mss}/100</div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:10px;color:var(--text3);font-family:monospace;display:block;margin-bottom:4px">HOW MUCH ${holding} ARE YOU TESTING WITH?</label>
-        <input id="_microAmt" type="number" placeholder="e.g. 1" step="any" min="0"
-          style="width:100%;background:#0c0e14;border:1px solid rgba(168,85,247,0.4);border-radius:8px;padding:9px 12px;color:var(--text);font-family:monospace;font-size:14px;outline:none">
-        <div style="font-size:10px;color:var(--text3);margin-top:4px">Use a test/hypothetical amount — no real crypto needed</div>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:18px">
-        <button id="_microCreateBtn" style="flex:1;padding:10px;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;border-radius:8px;color:#fff;font-weight:700;font-family:monospace;font-size:12px;cursor:pointer">
-          Create &amp; Record Swap →
-        </button>
-        <button id="_microCancelBtn" style="padding:10px 16px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--text3);font-family:monospace;font-size:12px;cursor:pointer">
-          Cancel
-        </button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-  document.getElementById('_microCancelBtn').onclick = () => overlay.remove();
-  document.getElementById('_microCreateBtn').onclick = () => {
-    const amt = parseFloat(document.getElementById('_microAmt').value);
-    if (!amt || amt <= 0) {
-      document.getElementById('_microAmt').style.borderColor = '#ef4444';
-      return;
-    }
-    overlay.remove();
-    // Auto-create tracker
-    const newTr = {
-      id: 'tr_'+Date.now(),
-      name: `🔬 ${holding}↔${target} Micro`,
-      assetA: holding,
-      assetB: target,
-      startAmount: amt,
-      defaultTradeType: 'micro',
-      swaps: []
-    };
-    const trs = loadTrackers();
-    trs.push(newTr);
-    saveTrackers(trs);
-    _goToTrackerAndFill(newTr.id);
-  };
-  // Allow Enter key
-  document.getElementById('_microAmt').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('_microCreateBtn').click();
-  });
-  setTimeout(() => document.getElementById('_microAmt')?.focus(), 50);
-}
-
-/* ── Shared: fetch all coin klines in one parallel burst ── */
-async function fetchAllCoinKlines(limit=35) {
-  const results = {};
-  await Promise.all(COINS_LIST.map(async sym => {
-    try {
-      const d = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=${limit}`).then(r=>r.json());
-      if (Array.isArray(d) && d.length >= 10) results[sym] = d.map(k=>+k[4]);
-    } catch(e) {}
-  }));
-  return results;
-}
-
-/* ── Shared: build all unique pair combinations from a coin map ── */
-function buildAllPairs(coinMap) {
-  const coins = Object.keys(coinMap);
-  const pairs = [];
-  for (let i = 0; i < coins.length; i++) {
-    for (let j = i+1; j < coins.length; j++) {
-      const a = coins[i], b = coins[j];
-      const aC = coinMap[a], bC = coinMap[b];
-      if (!aC || !bC) continue;
-      const n = Math.min(aC.length, bC.length);
-      // Build A/B ratio
-      const ratioAB = Array.from({length:n}, (_,k) => aC[aC.length-n+k] / bC[bC.length-n+k]);
-      // Flip for B/A
-      const ratioBA = ratioAB.map(v => 1/v);
-      const corr = calcCorrelation(aC.slice(-n), bC.slice(-n));
-      pairs.push({ a, b, ratioAB, ratioBA, corr });
-    }
-  }
-  return pairs;
-}
-
 async function runScalpScan() {
   const btn     = document.getElementById('scalpScanBtn');
   const results = document.getElementById('scalpResults');
-  const holding = document.getElementById('scalpHoldingCoin')?.value || 'ALL';
+  const holding = document.getElementById('scalpHoldingCoin')?.value || 'XRP';
   const minGain = parseFloat(document.getElementById('scalpMinGain')?.value || '1.5');
   const fee     = parseFloat(document.getElementById('scalpFee')?.value || '0.2');
-  const allMode = holding === 'ALL';
 
   if (btn) { btn.disabled=true; btn.textContent='⏳ Scanning...'; }
   results.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px;font-family:monospace">
-    ⚡ ${allMode ? 'Scanning all 45 pairs for best opportunities...' : 'Scanning pairs from '+holding+'...'}<br>
-    <span style="opacity:.5;font-size:10px">${allMode ? 'Fetching data for all 10 coins — one burst' : 'Fetching 30-day data for each pair'}</span>
+    ⚡ Scanning all pairs for short-term opportunities...<br>
+    <span style="opacity:.5;font-size:10px">Fetching 30-day data for each pair</span>
   </div>`;
 
-  const scanTime  = Date.now();
-  const scalpData = [];
+  const candidates = COINS_LIST.filter(c => c !== holding);
+  const scanTime   = Date.now();
+  const scalpData  = [];
 
-  if (allMode) {
-    // Fetch all coins at once, compute pairs — exclude BTC (high fees)
-    const coinMap = await fetchAllCoinKlines(35);
-    Object.keys(coinMap).forEach(k => { if (SCALP_EXCLUDE.has(k)) delete coinMap[k]; });
-    const pairs   = buildAllPairs(coinMap);
-    for (const { a, b, ratioAB, ratioBA, corr } of pairs) {
-      // Score both directions, keep whichever is stronger
-      const qAB = computeQSS(ratioAB, corr);
-      const qBA = computeQSS(ratioBA, corr);
-      for (const [holding2, sym, q] of [[a,b,qAB],[b,a,qBA]]) {
-        if (!q || q.z30 < 0.8) continue;
-        const netGain = q.expGain - fee;
-        if (netGain < minGain) continue;
-        scalpData.push({ holding: holding2, sym, corr, netGain, ...q });
-      }
-    }
-  } else {
-    const candidates = COINS_LIST.filter(c => c !== holding && !SCALP_EXCLUDE.has(c));
-    await Promise.all(candidates.map(async sym => {
-      try {
-        const [fk, tk] = await Promise.all([
-          fetch(`https://api.binance.com/api/v3/klines?symbol=${holding}USDT&interval=1d&limit=35`).then(r=>r.json()),
-          fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=35`).then(r=>r.json())
-        ]);
-        const fC = fk.map(k=>+k[4]), tC = tk.map(k=>+k[4]);
-        const n  = Math.min(fC.length, tC.length);
-        const ratioC = Array.from({length:n},(_,i)=>fC[fC.length-n+i]/tC[tC.length-n+i]);
-        const corr   = calcCorrelation(fC, tC);
-        const q      = computeQSS(ratioC, corr);
-        if (!q || q.z30 < 0.8) return;
-        const netGain = q.expGain - fee;
-        if (netGain < minGain) return;
-        scalpData.push({ holding, sym, corr, netGain, ...q });
-      } catch(e) {}
-    }));
-  }
+  // Fetch all pairs in parallel
+  await Promise.all(candidates.map(async (sym) => {
+    try {
+      const [fk, tk] = await Promise.all([
+        fetch(`https://api.binance.com/api/v3/klines?symbol=${holding}USDT&interval=1d&limit=35`).then(r=>r.json()),
+        fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=35`).then(r=>r.json())
+      ]);
+      const fC = fk.map(k=>+k[4]);
+      const tC = tk.map(k=>+k[4]);
+      const n  = Math.min(fC.length, tC.length);
+      // Build ratio closes
+      const ratioC = Array.from({length:n},(_,i)=>fC[fC.length-n+i]/tC[tC.length-n+i]);
+      const corr   = calcCorrelation(fC, tC);
+      const q      = computeQSS(ratioC, corr);
+      if (!q) return;
+      // holdDays always has a value now (OU-based or Z30-based fallback)
+      // Only skip if Z30 is too weak to be worth trading
+      if (q.z30 < 0.8) return;
+      // Filter 2: minimum gain after fees (compare net, not gross)
+      const netGain = q.expGain - fee;
+      if (netGain < minGain) return;
+      scalpData.push({ sym, corr, netGain, ...q });
+    } catch(e) { /* skip failed pairs */ }
+  }));
 
-  // Sort by QSS descending; in all-pairs mode deduplicate so same pair can't appear twice
-  if (allMode) {
-    const seen = new Set();
-    scalpData.sort((a,b) => b.qss - a.qss);
-    const deduped = scalpData.filter(d => {
-      const key = [d.holding,d.sym].sort().join('/');
-      if (seen.has(key)) return false;
-      seen.add(key); return true;
-    });
-    deduped.sort((a,b) => b.qss - a.qss);
-    if (btn) { btn.disabled=false; btn.textContent='⚡ Scan Quick Scalps'; }
-    renderScalpResults('ALL', deduped, minGain, fee, scanTime);
-  } else {
-    scalpData.sort((a,b) => b.qss - a.qss);
-    if (btn) { btn.disabled=false; btn.textContent='⚡ Scan Quick Scalps'; }
-    renderScalpResults(holding, scalpData, minGain, fee, scanTime);
-  }
+  // Sort by QSS descending
+  scalpData.sort((a,b) => b.qss - a.qss);
+
+  if (btn) { btn.disabled=false; btn.textContent='⚡ Scan Quick Scalps'; }
+
+  renderScalpResults(holding, scalpData, minGain, fee, scanTime);
 }
 
 function renderScalpResults(holding, data, minGain, fee, scanTime) {
@@ -5239,15 +4699,13 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
 
   const elapsed = Math.round((Date.now()-scanTime)/1000);
 
-  const allMode = holding === 'ALL';
-
   if (!data.length) {
     results.innerHTML = `
       <div style="text-align:center;padding:32px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
         <div style="font-size:32px;margin-bottom:8px">🔍</div>
         <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">No scalp opportunities right now</div>
         <div style="font-size:12px;color:var(--text3)">
-          ${allMode ? 'No pair across all 45 combinations qualifies right now.' : `No pair from ${holding} qualifies right now.`}<br><br>
+          No pair from ${holding} qualifies right now.<br><br>
           Requirements: Z30 &gt; 0.8 · net gain after fees ≥ ${minGain}%.<br>
           Check again later or lower the minimum gain threshold.
         </div>
@@ -5256,7 +4714,6 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
   }
 
   const cards = data.map(d => {
-    const from   = d.holding || holding;
     const isGo   = d.qss >= 65;
     const isHot  = d.qss >= 45 && d.qss < 65;
     const cls    = isGo ? 'qs-go' : isHot ? 'qs-hot' : 'qs-weak';
@@ -5269,6 +4726,7 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
     const netStr   = (d.expGain - fee).toFixed(1);
     const netCol   = parseFloat(netStr) > 0 ? '#00c076' : '#ef4444';
 
+    // Mini force bars
     const bars = [
       { lbl:'Z30',  val: d.se_q,  raw: d.z30.toFixed(2)+'σ' },
       { lbl:'Boll', val: d.bp,    raw: d.bollPos.toFixed(0)+'%' },
@@ -5286,7 +4744,7 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
       <div class="qs-card ${cls}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <div>
-            <div class="qs-pair" style="color:${col}">${from} → ${d.sym}</div>
+            <div class="qs-pair" style="color:${col}">${holding} → ${d.sym}</div>
             <div style="margin-top:2px">${badge}</div>
           </div>
           <div style="text-align:right">
@@ -5319,7 +4777,7 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
           ${d.ouHL20 > 20 ? ' · <span style="opacity:.55">*est. from Z30</span>' : ''}
         </div>
         <div style="margin-top:6px">
-          <button onclick="switchAnalyzerPair('${from}','${d.sym}')" style="font-family:monospace;font-size:9px;padding:3px 10px;border-radius:5px;border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">
+          <button onclick="switchAnalyzerPair('${holding}','${d.sym}')" style="font-family:monospace;font-size:9px;padding:3px 10px;border-radius:5px;border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">
             Full analysis →
           </button>
         </div>
@@ -5339,7 +4797,7 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
     ${summary}
     <div class="qs-grid">${cards}</div>
     <div style="margin-top:10px;font-size:10px;color:var(--text3);text-align:right;font-family:monospace">
-      ${allMode ? `Scanned all 45 pairs` : `Scanned ${data.length} pairs from ${holding}`} · ${elapsed}s · Min gain ${minGain}% · Fee ${fee}%
+      Scanned ${data.length} pairs from ${holding} · ${elapsed}s · Min gain ${minGain}% · Fee ${fee}%
     </div>`;
 }
 
@@ -5349,10 +4807,7 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
    Format: [ { id, name, assetA, assetB, startAmount, swaps:[] }, ... ]
    Each swap: { date, fromAsset, fromAmt, toAsset, toAmt, score, notes }
 ══════════════════════════════════════ */
-const COINS_LIST=['BTC','ETH','SOL','ADA','XRP','XLM','ALGO','HBAR','QNT','LINK','DOT','AVAX','ATOM'];
-// Coins excluded from quick scalp and micro scalp scanning (high fees / low suitability)
-// High on-chain fee coins excluded from quick/micro scalps (BTC network, ETH gas, ETH-based tokens)
-const SCALP_EXCLUDE = new Set(['BTC','ETH','QNT','LINK']);
+const COINS_LIST=['BTC','ETH','SOL','ADA','XRP','XLM','ALGO','HBAR','QNT','LINK'];
 
 /* Weak coins exclusion — bottom 4 by 7-day performance are hidden from recommendations.
    They still appear in the coin selector but won't show up in BSN scanner results.
@@ -6010,9 +5465,7 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
 
   const entryDateMs = new Date(lastSwap.date).getTime();
   const daysSinceEntry = Math.max(0, (Date.now() - entryDateMs) / 86400000);
-  const tradeTypeSaved = lastSwap.tradeType || 'swing';
-  const isScalp = tradeTypeSaved === 'scalp';
-  const isMicro = tradeTypeSaved === 'micro';
+  const isScalp = (lastSwap.tradeType || 'swing') === 'scalp';
 
   // Fetch ratio history
   let ratioCloses = [], ratioTs = [];
@@ -6039,8 +5492,8 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     ratioCloses = Array.from({length:n}, (_,i) => fC[fC.length-n+i] / tC[tC.length-n+i]);
     ratioTs     = fT.slice(fT.length-n);
 
-    // Window: micro uses 7d mean, scalp uses 30d, swing uses 60d
-    const window = isMicro ? 7 : isScalp ? 30 : 60;
+    // Window: scalp uses 30d mean (short-term target), swing uses 60d
+    const window = isScalp ? 30 : 60;
     const wSlice = ratioCloses.slice(-window);
     meanW = wSlice.reduce((a,b)=>a+b,0) / wSlice.length;
     stdW  = Math.sqrt(wSlice.reduce((s,v)=>s+(v-meanW)**2,0)/wSlice.length) || 0.001;
@@ -6082,15 +5535,10 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   const halfLife   = et && et.halfLife < 990 ? et.halfLife : null;
 
   // Define exitThreshold here — used by estDays, status messages, progress bar, and exitLabel
-  const exitThreshold = isMicro ? 0.3 : isScalp ? 0.8 : 1.5;
+  const exitThreshold = isScalp ? 0.8 : 1.5;
 
   let estDays;
-  if (isMicro) {
-    // Micro: 7-day window, exits at Z=0.3 — resolves in 2–5 days, hard max 5 days
-    const daysLeft = Math.max(0, 3 - Math.floor(daysSinceEntry));
-    estDays = currentZ > 0.3 ? 0 : currentZ > 0 ? 1 : currentZ > -0.3 ? 2
-            : currentZ > -0.6 ? 3 : Math.min(daysLeft, 4);
-  } else if (isScalp) {
+  if (isScalp) {
     // Scalp: 30-day window, exits at Z=0.8 — typically resolves in 2–7 days
     estDays = currentZ > 1.2 ? 0 : currentZ > 0.5 ? 1 : currentZ > -0.5 ? 2
             : currentZ > -1.0 ? 3 : currentZ > -1.5 ? 5 : 7;
@@ -6112,7 +5560,7 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   // signals pointing the same direction before warning. This makes false alarms near-impossible.
   let exitWarning = null;
 
-  if (!isMicro && ratioCloses.length >= 30 && daysSinceEntry > 7 && currentZ < entryZ) {
+  if (ratioCloses.length >= 30 && daysSinceEntry > 7 && currentZ < entryZ) {
     const last14 = ratioCloses.slice(-14);
     const last30 = ratioCloses.slice(-30);
     const last7  = ratioCloses.slice(-7);
@@ -6192,8 +5640,8 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     : estDays <= 10 ? 'days' : 'weeks (est.)';
 
   // ── Entry quality context — full analysis combining score + Z-depth ──
-  const entryScore = lastSwap.score || 0; // OMEGA (swing) or QSS (scalp) or MSS (micro) stored at swap time
-  const scoreLabel = isMicro ? 'MSS' : isScalp ? 'QSS' : 'OMEGA';
+  const entryScore = lastSwap.score || 0; // OMEGA (swing) or QSS (scalp) stored at swap time
+  const scoreLabel = isScalp ? 'QSS' : 'OMEGA';
   const entryZDepth = Math.abs(entryZ); // how deep into the anomaly the entry was
 
   // 4-level confidence: combines signal score AND Z-depth — both matter
@@ -6248,53 +5696,8 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   // ── Plain-English status ──
   let statusIcon, statusLine, statusDetail, statusColor, statusBg;
 
-  // ── MICRO SCALP — dedicated fast-track status (3-day hard limit) ──
-  if (isMicro) {
-    const daysLeft  = Math.max(0, 3 - Math.floor(daysSinceEntry));
-    const pct5      = Math.min(100, Math.round(daysSinceEntry / 3 * 100));
-    const inProfit  = displayGain > 0;
-    const atTarget  = currentZ >= exitThreshold; // Z ≥ 0.3
-    const gainLock  = displayGain >= 0.7;        // trailing floor activates at +0.7%
-    const floorPct  = gainLock ? Math.max(0.3, displayGain - 0.4) : 0;
-
-    if (atTarget || displayGain >= 1.0) {
-      statusIcon = '🎯'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.10)';
-      statusLine = `Gap closed — swap back and take the +${displayGain.toFixed(1)}%`;
-      statusDetail = `${curAsset} has caught up to ${tr.assetA}. The price gap that triggered this trade has closed. Swap back now and lock in your gain. Micro scalps exit as soon as the target is hit — don't wait for more.`;
-    } else if (daysLeft === 0) {
-      statusIcon = '⏱'; statusColor = '#ef4444'; statusBg = 'rgba(239,68,68,0.08)';
-      statusLine = 'Day 3 — hard exit rule. Swap back now.';
-      statusDetail = `Micro scalps have a strict 3-day limit. The gap had its time to close and didn't fully. ${inProfit ? `You are up ${displayGain.toFixed(1)}% — take it.` : `Exit now. A small loss on a micro scalp is fine — the rule protects you from holding a losing position indefinitely.`}`;
-    } else if (gainLock && displayGain < floorPct + 0.1) {
-      statusIcon = '🔒'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.08)';
-      statusLine = `Protect your gain — floor at +${floorPct.toFixed(1)}%`;
-      statusDetail = `You reached +${(floorPct+0.4).toFixed(1)}% profit earlier. The position is pulling back slightly. If it drops below +${floorPct.toFixed(1)}%, exit and keep the gain. Don't let a winning trade turn into a loss.`;
-    } else if (inProfit && currentZ > 0) {
-      statusIcon = '📈'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.07)';
-      statusLine = `Up ${displayGain.toFixed(1)}% — gap closing, ${daysLeft}d left`;
-      statusDetail = `${curAsset} is catching up to ${tr.assetA} as expected. ${gainLock ? `Gain lock active — protect +${floorPct.toFixed(1)}% floor. ` : ''}${daysLeft <= 2 ? `Only ${daysLeft} day${daysLeft===1?'':'s'} left — prepare to exit soon.` : `Hold and monitor. ${daysLeft} days remain.`}`;
-    } else if (inProfit && currentZ <= 0) {
-      statusIcon = '⚖️'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-      statusLine = `Up ${displayGain.toFixed(1)}% — gap still closing · ${daysLeft}d left`;
-      statusDetail = `You are in profit but the gap hasn't fully closed yet. ${curAsset} is still catching up. ${daysLeft <= 2 ? 'Close to the deadline — consider taking the partial gain now.' : `Hold. ${daysLeft} days remain for the gap to close further.`}`;
-    } else if (daysLeft >= 2) {
-      statusIcon = '⏳'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-      statusLine = `Day ${Math.floor(daysSinceEntry)} of 3 — waiting for gap to close · ${daysLeft}d left`;
-      statusDetail = `You swapped because ${tr.assetA} had outperformed ${curAsset} over 3 days. Now you hold ${curAsset} and are waiting for that price gap to partially close. This typically takes 1–3 days. Currently ${displayGain >= 0 ? 'flat' : `down ${Math.abs(displayGain).toFixed(1)}%`} — the gap hasn't closed yet. Hold.`;
-    } else {
-      statusIcon = '⚠️'; statusColor = '#ef4444'; statusBg = 'rgba(239,68,68,0.07)';
-      statusLine = `Last day — prepare to exit tomorrow regardless`;
-      statusDetail = `This is the final day of the 3-day micro scalp window. ${inProfit ? `You are up ${displayGain.toFixed(1)}% — a good result. Exit tomorrow.` : `The gap did not close as expected. Exit tomorrow to protect capital. A small loss now is better than holding further with no clear signal.`}`;
-    }
-
-    // Micro countdown bar injected into status (handled in HTML template below via microCountdown flag)
-    statusColor = statusColor || '#a855f7';
-    statusBg    = statusBg    || 'rgba(168,85,247,0.07)';
-  }
-  // ── END MICRO SCALP status ──
-
   // Slow pair note — informational, not alarming. This pair just has a longer cycle.
-  else if (!isScalp && slowPair && currentZ < 0) {
+  if (!isScalp && slowPair && currentZ < 0) {
     statusIcon = '🐢'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
     statusLine = entryConfidence === 'strong' || entryConfidence === 'good'
       ? 'Patient pair — the signal was real, the journey is long'
@@ -6501,7 +5904,6 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
           <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.3px">📡 Trade Progress</div>
           ${isScalp
             ? `<span style="font-size:9px;font-family:monospace;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(245,166,35,0.15);color:#f5a623;border:1px solid rgba(245,166,35,0.4)">⚡ QUICK SCALP</span>`
-            : isMicro ? `<span style="font-size:9px;font-family:monospace;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.4)">🔬 MICRO SCALP</span>`
             : `<span style="font-size:9px;font-family:monospace;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(59,143,255,0.12);color:#3b8fff;border:1px solid rgba(59,143,255,0.4)">📊 SWING TRADE</span>`}
         </div>
         <div style="font-size:10px;color:var(--text3)">started ${dayStr}</div>
@@ -6530,29 +5932,6 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
             <div style="font-size:12px;color:var(--text2);line-height:1.6">${statusDetail}</div>
           </div>
         </div>
-
-        ${isMicro ? (() => {
-          const _dLeft  = Math.max(0, 3 - Math.floor(daysSinceEntry));
-          const _pct5   = Math.min(100, Math.round(daysSinceEntry / 3 * 100));
-          const _barCol = _dLeft <= 1 ? '#ef4444' : _dLeft === 2 ? '#f5a623' : '#a855f7';
-          const _gainLk = displayGain >= 0.7;
-          const _floor  = _gainLk ? Math.max(0.3, displayGain - 0.4).toFixed(1) : null;
-          return `<div style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:8px;padding:10px 14px;margin-bottom:14px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span style="font-size:10px;font-family:monospace;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:.5px">🔬 Micro Scalp Window</span>
-              <span style="font-size:11px;font-family:monospace;color:${_barCol};font-weight:700">${_dLeft === 0 ? 'EXIT NOW' : _dLeft+'d remaining of 3'}</span>
-            </div>
-            <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-bottom:6px">
-              <div style="height:100%;width:${_pct5}%;background:${_barCol};border-radius:4px;transition:width .5s"></div>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:9px;font-family:monospace;color:var(--text3)">
-              <span>Day 0</span>
-              <span style="color:${_dLeft<=2?_barCol:'var(--text3)'}">Day ${Math.floor(daysSinceEntry)} now</span>
-              <span>Day 5 → EXIT</span>
-            </div>
-            ${_gainLk ? `<div style="margin-top:6px;font-size:10px;font-family:monospace;color:#00c076">🔒 Gain lock active — floor at +${_floor}% · exit if gain drops below this</div>` : ''}
-          </div>`;
-        })() : ''}
 
         <!-- ══ ENTRY CONTEXT — what was the signal quality when you entered ══ -->
         <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:14px;gap:8px;flex-wrap:wrap">
@@ -6656,43 +6035,11 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     </div>`;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   CHAIN OPPORTUNITY SCANNER
-   When holding asset X, scans all COINS_LIST vs X to find the
-   best direct exit target — saving the fee of returning to base first.
-══════════════════════════════════════════════════════════════ */
-async function scanChainOpportunities(fromAsset, baseAsset) {
-  const targets = COINS_LIST.filter(c => c !== fromAsset);
-  const results = await Promise.all(
-    targets.map(async coin => {
-      try {
-        const res = await getScoreForPair(fromAsset, coin);
-        if (!res) return null;
-        return {
-          coin,
-          omega: res.omega || 0,
-          z: typeof res.zScore === 'number' ? res.zScore : 0,
-          isBase: coin === baseAsset
-        };
-      } catch(e) { return null; }
-    })
-  );
-  // Sort: non-base by omega descending, base always at end for comparison
-  const nonBase = results.filter(r => r && !r.isBase).sort((a,b) => b.omega - a.omega);
-  const base    = results.filter(r => r && r.isBase);
-  return [...nonBase, ...base];
-}
-
 async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
   const sigEl=document.getElementById(signalId);
   if(!sigEl) return;
 
   const holdingBase=curAsset===tr.assetA;
-
-  // Detect trade type for current position
-  const _lastSwapOuter = [...(tr.swaps||[])].reverse().find(s => s.toAsset === curAsset);
-  const _tradeTypeOuter = _lastSwapOuter ? (_lastSwapOuter.tradeType || 'swing') : (tr.defaultTradeType || 'swing');
-  const isMicroOuter = _tradeTypeOuter === 'micro';
 
   // Two-coin tracker: only assetA ↔ assetB — no 3rd coins involved
 
@@ -6703,11 +6050,10 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
       <div style="font-size:11px;color:var(--text3)">⏳ Analysing your position...</div>
     </div>`;
 
-    // Fetch live monitor + swap-back score + chain opportunities in parallel
-    const [monitorHtml, res, chainOpps] = await Promise.all([
+    // Fetch live monitor + swap-back score in parallel
+    const [monitorHtml, res] = await Promise.all([
       buildLiveMonitor(tr, curAsset, currentGrowth),
-      getScoreForPair(curAsset, tr.assetA),
-      scanChainOpportunities(curAsset, tr.assetA)
+      getScoreForPair(curAsset, tr.assetA)
     ]);
     if(!sigEl.isConnected) return;
 
@@ -6725,44 +6071,26 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
 
     // Exit signal banner — shown on top of monitor when swap-back conditions met
     let exitBannerHtml = '';
-    if (isMicroOuter) {
-      // Micro scalp exit: triggered by Z ≥ 0.3, day 5, or gain ≥ 1%
-      const swapTs    = _lastSwapOuter ? new Date(_lastSwapOuter.date).getTime() : 0;
-      const microDays = swapTs ? (Date.now() - swapTs) / 86400000 : 0;
-      const microLeft = Math.max(0, 3 - Math.floor(microDays));
-      if (profit >= 1.0 || microLeft === 0) {
-        exitBannerHtml = `<div style="background:rgba(0,192,118,0.1);border:2px solid rgba(0,192,118,0.4);border-radius:var(--rs);padding:10px 14px;margin-bottom:8px">
-          <div style="font-size:10px;font-family:monospace;color:#00c076;font-weight:700;margin-bottom:4px">🔔 MICRO EXIT — ${microLeft === 0 ? 'DAY 5 REACHED' : 'TARGET HIT'}</div>
-          <div style="font-size:14px;font-weight:700;color:#00c076;margin-bottom:4px">${microLeft === 0 ? '⏱ 5-day window closed — exit now' : '🎯 Micro target reached — swap back'}</div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.5">${microLeft === 0 ? `Hard rule: micro scalps exit at day 5 regardless. ${profit > 0 ? `You have +${profit.toFixed(2)}% — take it.` : 'Exit to protect capital.'}` : `You have +${profit.toFixed(2)}% profit. Micro scalps exit fast — don't wait for more.`}</div>
-        </div>`;
-      } else if (profit >= 0.5 && microLeft <= 2) {
-        exitBannerHtml = `<div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.35);border-radius:var(--rs);padding:8px 14px;margin-bottom:8px">
-          <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">⏳ Micro window closing — ${microLeft}d left · +${profit.toFixed(2)}%</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Only ${microLeft} day${microLeft===1?'':'s'} left. You have +${profit.toFixed(2)}%. Consider exiting — don't risk losing the gain.</div>
-        </div>`;
-      }
-    } else {
-      // Standard swing/scalp exit: ONLY fire when OMEGA is HIGH (≥60) or spike detected.
-      // Low OMEGA on swap-back means the held asset is still cheap vs base = reason to HOLD, not exit.
-      if (isSpike || omega >= 60) {
-        const col    = '#00c076', bg = 'rgba(0,192,118,0.1)', border = 'rgba(0,192,118,0.4)';
-        const title  = isSpike ? '⚡ EXIT NOW — spike detected' : '✅ SWAP BACK NOW — peak confirmed by OMEGA';
-        const body   = isSpike
-          ? `${curAsset} spiked ${t1.toFixed(1)}% in 24h. News moves don't last — lock in your +${profit.toFixed(2)}% profit now.`
-          : `${curAsset} is at a confirmed ratio peak vs ${tr.assetA}. OMEGA ${omega}/100 — the overextension is ending. You have +${profit.toFixed(2)}% profit. Time to close this position.`;
-        exitBannerHtml = `<div style="background:${bg};border:2px solid ${border};border-radius:var(--rs);padding:10px 14px;margin-bottom:8px">
-          <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">🔔 EXIT SIGNAL TRIGGERED</div>
-          <div style="font-size:14px;font-weight:700;color:${col};margin-bottom:4px">${title}</div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.5">${body}</div>
-          <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Confirm in analyzer →</button>
-        </div>`;
-      } else if (omega >= 40 && profit >= 1) {
-        exitBannerHtml = `<div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.3);border-radius:var(--rs);padding:8px 14px;margin-bottom:8px">
-          <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">👁 Exit signal building — Ω ${omega}/100</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Not confirmed yet (need Ω 60+). You have +${profit.toFixed(2)}% profit. Keep holding — exit when OMEGA crosses 60.</div>
-        </div>`;
-      }
+    if (isSpike || omega >= 60 || (profit >= 1 && omega <= 20)) {
+      const col    = '#00c076', bg = 'rgba(0,192,118,0.1)', border = 'rgba(0,192,118,0.4)';
+      const title  = isSpike ? '⚡ EXIT NOW — spike detected' : omega >= 60
+        ? '✅ SWAP BACK NOW — peak confirmed by OMEGA' : '✅ CONSIDER SWAPPING BACK';
+      const body   = isSpike
+        ? `${curAsset} spiked ${t1.toFixed(1)}% in 24h. News moves don't last — lock in your +${profit.toFixed(2)}% profit now.`
+        : omega >= 60
+          ? `${curAsset} is at a confirmed ratio peak vs ${tr.assetA}. OMEGA ${omega}/100 — all forces say the overextension is ending. You have +${profit.toFixed(2)}% profit. Close this position.`
+          : `${curAsset} is weakening vs ${tr.assetA} (Ω ${omega}). You have +${profit.toFixed(2)}% — consider closing before it gives back gains.`;
+      exitBannerHtml = `<div style="background:${bg};border:2px solid ${border};border-radius:var(--rs);padding:10px 14px;margin-bottom:8px">
+        <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">🔔 EXIT SIGNAL TRIGGERED</div>
+        <div style="font-size:14px;font-weight:700;color:${col};margin-bottom:4px">${title}</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.5">${body}</div>
+        <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Confirm in analyzer →</button>
+      </div>`;
+    } else if (profit >= 1 && omega >= 40) {
+      exitBannerHtml = `<div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.3);border-radius:var(--rs);padding:8px 14px;margin-bottom:8px">
+        <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">💰 +${profit.toFixed(2)}% profit — watch for exit</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Ratio is mixed (Ω ${omega}). You're in profit. Check daily — exit when Z rises above +1.2σ or OMEGA drops below 25.</div>
+      </div>`;
     }
 
     const monitorFallback = `
@@ -6771,116 +6099,11 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
         <div style="font-size:11px;color:var(--text3)">Chart data unavailable right now — score and signals above are still live.</div>
         <div style="font-size:10px;color:var(--text3);margin-top:4px">Try refreshing or check back in a minute.</div>
       </div>`;
-    // ── Chain opportunity panel ─────────────────────────────────────────
-    // RULE: only appears when profit >= 1% — that's the minimum needed to cover the chain fee.
-    // Showing it earlier would be a distraction since you can't act on it anyway.
-    let chainHtml = '';
-    if (!isMicroOuter && chainOpps && chainOpps.length > 0 && profit >= 1.0) {
-      const inProfit    = true;  // panel only renders at profit >= 1% — always unlocked here
-      const baseOpp     = chainOpps.find(o => o.isBase);
-      const topChains   = chainOpps.filter(o => !o.isBase).slice(0, 3);
-      const bestChain   = topChains[0];
-      // Chain only beats base if it has a genuinely good signal (≥50) AND beats base by margin
-      const chainBeatBase = inProfit && bestChain && bestChain.omega >= 50 && baseOpp && bestChain.omega > baseOpp.omega + 15;
-
-      const oppCards = [...topChains, ...(baseOpp ? [baseOpp] : [])].map(o => {
-        const col     = inProfit ? (o.omega >= 60 ? '#00c076' : o.omega >= 35 ? '#f5a623' : 'var(--text3)') : 'var(--text3)';
-        const border  = inProfit && o.omega >= 60 ? 'rgba(0,192,118,0.4)' : 'var(--border)';
-        const badge   = o.omega >= 60 ? '⭐ BEST CHAIN' : o.omega >= 50 ? 'GOOD SIGNAL' : o.omega >= 35 ? 'WEAK' : 'NO SIGNAL';
-        const zStr    = o.z !== 0 ? ` · Z ${o.z.toFixed(2)}` : '';
-        const feeTag  = o.isBase
-          ? `<span style="font-size:9px;color:var(--text3);font-family:monospace">base</span>`
-          : `<span style="font-size:9px;color:${inProfit?'#00c076':'var(--text3)'};font-family:monospace">saves 1% fee</span>`;
-        const btnStyle = inProfit
-          ? `border:1px solid ${col};cursor:pointer;background:transparent;color:${col}`
-          : `border:1px solid var(--border);cursor:not-allowed;background:transparent;color:var(--text3);opacity:0.4`;
-        const btnClick = inProfit
-          ? `onclick="openChainSwap('${tr.id}','${curAsset}','${o.coin}')"`
-          : `onclick="alert('You must be in profit before chaining. Wait until this trade reaches at least +1%. Chaining at a loss locks in that loss permanently.')"`;
-        return `
-          <div style="background:var(--bg3);border:1px solid ${border};border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;opacity:${inProfit?1:0.7}">
-            <div>
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-                <span style="font-size:14px;font-weight:700;color:${col}">${o.coin}</span>
-                ${badge ? `<span style="font-size:9px;font-family:monospace;padding:1px 5px;border-radius:4px;background:${inProfit?'rgba(0,192,118,0.12)':'rgba(255,255,255,0.04)'};color:${inProfit?'#00c076':'var(--text3)'};border:1px solid ${inProfit?'rgba(0,192,118,0.3)':'var(--border)'}">${badge}</span>` : ''}
-                ${feeTag}
-              </div>
-              <div style="font-size:10px;font-family:monospace;color:var(--text3)">Ω ${o.omega}${zStr}</div>
-            </div>
-            <button ${btnClick}
-              style="font-family:monospace;font-size:10px;padding:5px 10px;border-radius:6px;white-space:nowrap;${btnStyle}">
-              ${o.isBase ? `→ ${o.coin}` : `Chain → ${o.coin}`}
-            </button>
-          </div>`;
-      }).join('');
-
-      // Header message depends on profit state
-      const headerMsg = chainBeatBase
-          ? `<div style="font-size:11px;color:#00c076;background:rgba(0,192,118,0.07);border:1px solid rgba(0,192,118,0.25);border-radius:6px;padding:7px 10px;margin-bottom:10px">
-              💡 <b>${bestChain.coin}</b> has a stronger signal than returning to ${tr.assetA} (Ω ${bestChain.omega} vs Ω ${baseOpp ? baseOpp.omega : '?'}). Chain directly and save 1% fee.
-             </div>`
-          : `<div style="font-size:11px;color:var(--text3);margin-bottom:10px">No chain opportunity clearly beats returning to ${tr.assetA} right now — returning to base is fine.</div>`;
-
-      chainHtml = `
-        <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:.75rem">
-          <div style="background:var(--bg3);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:11px;font-weight:700;color:var(--text2)">🔀 Next Move from ${curAsset}</div>
-            <div style="font-size:10px;color:#00c076;font-family:monospace">✅ +${profit.toFixed(1)}% profit — ready to chain</div>
-          </div>
-          <div style="padding:12px 16px">
-            ${headerMsg}
-            <div style="display:flex;flex-direction:column;gap:7px">${oppCards}</div>
-          </div>
-        </div>`;
-    }
-
-    sigEl.innerHTML = spikeBannerHtml + exitBannerHtml + (monitorHtml || monitorFallback) + chainHtml;
+    sigEl.innerHTML = spikeBannerHtml + exitBannerHtml + (monitorHtml || monitorFallback);
     return;
   }
 
   // Holding base — check only assetB (two-coin tracker, no 3rd coins)
-  if (isMicroOuter) {
-    // Micro scalp — holding base means no active trade yet. Show MSS-based entry signal.
-    sigEl.innerHTML=`<div style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.25);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-      <div style="font-size:10px;font-family:monospace;color:#a855f7;margin-bottom:4px">🔬 MICRO SCALP SIGNAL — ${tr.assetA} → ${tr.assetB}</div>
-      <div style="font-size:12px;color:var(--text2)">⏳ Fetching live MSS...</div>
-    </div>`;
-    // Compute MSS live for assetA→assetB
-    try {
-      const _aKlines = await fetch(`https://api.binance.com/api/v3/klines?symbol=${tr.assetA}USDT&interval=1d&limit=35`).then(r=>r.json());
-      const _bKlines = await fetch(`https://api.binance.com/api/v3/klines?symbol=${tr.assetB}USDT&interval=1d&limit=35`).then(r=>r.json());
-      if(!sigEl.isConnected) return;
-      const _aC = Array.isArray(_aKlines) ? _aKlines.map(k=>+k[4]) : null;
-      const _bC = Array.isArray(_bKlines) ? _bKlines.map(k=>+k[4]) : null;
-      const _mssRes = (_aC && _bC) ? computeMSS(_aC.map((v,i)=>_bC[i]?v/_bC[i]:null).filter(Boolean)) : null;
-      if (_mssRes) {
-        const _mc = _mssRes.mss >= 55 ? '#00c076' : _mssRes.mss >= 35 ? '#f5a623' : '#a855f7';
-        const _mv = _mssRes.mss >= 55 ? '🔬 MICRO NOW — record your swap' : _mssRes.mss >= 35 ? '👁 WATCH — signal building' : '⏳ Waiting for entry conditions';
-        sigEl.innerHTML=`<div style="background:rgba(168,85,247,0.08);border:2px solid rgba(168,85,247,0.35);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-          <div style="font-size:10px;font-family:monospace;color:#a855f7;font-weight:700;margin-bottom:6px">🔬 MICRO SCALP SIGNAL — holding ${tr.assetA}</div>
-          <div style="font-size:15px;font-weight:700;color:${_mc};margin-bottom:4px">${_mv}</div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:8px">MSS ${_mssRes.mss}/100 · OU half-life ${_mssRes.ouHL}d · Est. gain +${_mssRes.expGain.toFixed(1)}% · Max hold 5 days</div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-family:monospace;font-size:22px;font-weight:700;color:#a855f7">${_mssRes.mss}<span style="font-size:12px;opacity:.6">/100 MSS</span></span>
-            <button onclick="document.getElementById('stSwapForm').style.display='block';setSwapType('micro')" style="font-family:monospace;font-size:10px;padding:4px 12px;border-radius:var(--rs);border:1px solid #a855f7;cursor:pointer;background:transparent;color:#a855f7">+ Record swap →</button>
-          </div>
-        </div>`;
-      } else {
-        sigEl.innerHTML=`<div style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-          <div style="font-size:10px;font-family:monospace;color:#a855f7;font-weight:700;margin-bottom:4px">🔬 MICRO SCALP TRACKER — ${tr.assetA} → ${tr.assetB}</div>
-          <div style="font-size:12px;color:var(--text2)">Record your first swap to start tracking. Use the "+ Add swap" button above.</div>
-        </div>`;
-      }
-    } catch(_e) {
-      if(!sigEl.isConnected) return;
-      sigEl.innerHTML=`<div style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-        <div style="font-size:10px;font-family:monospace;color:#a855f7;font-weight:700;margin-bottom:4px">🔬 MICRO SCALP TRACKER — ${tr.assetA} → ${tr.assetB}</div>
-        <div style="font-size:12px;color:var(--text2)">Record your first swap above to begin monitoring.</div>
-      </div>`;
-    }
-    return;
-  }
-
   sigEl.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
     <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:4px">SWAP SIGNAL — ${tr.assetA} → ${tr.assetB}</div>
     <div style="font-size:12px;color:var(--text2)">⏳ Fetching live score...</div>
@@ -7128,7 +6351,7 @@ function renderSwapTable(tr){
         </div>
       </td>
       <td>${growthHtml}</td>
-      <td style="font-family:monospace;font-weight:700;color:${scCol}">${sw.score||'—'}${sw.tradeType==='micro'?'<br><span style="font-size:8px;font-family:monospace;background:rgba(168,85,247,0.15);color:#a855f7;border-radius:4px;padding:1px 4px">🔬</span>':sw.tradeType==='scalp'?'<br><span style="font-size:8px;font-family:monospace;background:rgba(245,166,35,0.12);color:#f5a623;border-radius:4px;padding:1px 4px">⚡</span>':''}</td>
+      <td style="font-family:monospace;font-weight:700;color:${scCol}">${sw.score||'—'}</td>
       <td style="color:var(--text2);font-size:11px;max-width:120px">${sw.notes||''}</td>
       <td style="white-space:nowrap">
         <button class="st-edit-btn" data-idx="${i}">&#9998;</button>
@@ -7186,92 +6409,19 @@ function renderSwapTable(tr){
   });
 }
 
-/* ── Chain swap: pre-fills form to go fromAsset → chainTarget directly ── */
-function openChainSwap(trackerId, fromAsset, toAsset) {
-  const trackers = loadTrackers();
-  const tr = trackers.find(t => t.id === trackerId);
-  if (!tr) return;
-
-  // Safety check: never allow chain if not in profit — would lock in the loss
-  // currentGrowth is passed via the panel button; double-check via last known growth
-  // (buttons themselves are disabled in the UI, but guard here too)
-  const _swaps = tr.swaps || [];
-  const _lastEntry = [..._swaps].reverse().find(s => s.toAsset === fromAsset);
-  if (!_lastEntry) {
-    alert('Cannot find entry swap. Please record the swap manually.');
-    return;
-  }
-
-  // Get current held amount (last swap's toAmt)
-  const swaps = tr.swaps || [];
-  const lastSwap = [...swaps].reverse().find(s => s.toAsset === fromAsset);
-  const fromAmt = lastSwap ? lastSwap.toAmt : '';
-
-  // Open the swap form
-  document.getElementById('stSwapForm').style.display = 'block';
-  document.getElementById('stSwapFormTitle').textContent =
-    toAsset === tr.assetA
-      ? `Record exit: ${fromAsset} → ${toAsset}`
-      : `Record chain swap: ${fromAsset} → ${toAsset} (saves 1 fee)`;
-
-  document.getElementById('sf-date').value = new Date().toISOString().slice(0, 10);
-  document.getElementById('sf-from-amt').value = fromAmt || '';
-  document.getElementById('sf-to-amt').value = '';
-  document.getElementById('sf-score').value = '';
-  document.getElementById('sf-entry-z').value = '';
-  document.getElementById('sf-notes').value = toAsset !== tr.assetA ? `chain from ${fromAsset}` : '';
-  setSwapType('scalp');
-
-  // FROM: locked to current holding
-  populateAssetSelect('sf-from-asset', [fromAsset], fromAsset);
-  document.getElementById('sf-from-asset').disabled = true;
-
-  // TO: if returning to base, lock it; if chaining, unlock to show all options with toAsset selected
-  if (toAsset === tr.assetA) {
-    populateAssetSelect('sf-to-asset', [tr.assetA], tr.assetA);
-    document.getElementById('sf-to-asset').disabled = true;
-  } else {
-    // Chain exit — allow any coin except fromAsset
-    const toOptions = COINS_LIST.filter(c => c !== fromAsset);
-    populateAssetSelect('sf-to-asset', toOptions, toAsset);
-    document.getElementById('sf-to-asset').disabled = false;
-    // Show a chain note banner
-    _showChainNote(toAsset, tr.assetA);
-  }
-
-  const saveBtn = document.getElementById('stSaveSwapBtn');
-  saveBtn.textContent = toAsset === tr.assetA ? 'Save exit' : `Save chain → ${toAsset}`;
-  delete saveBtn.dataset.editIdx;
-  document.getElementById('stSwapForm').scrollIntoView({ behavior: 'smooth' });
-}
-
-function _showChainNote(toAsset, baseAsset) {
-  // Add/update a small info banner inside the swap form about chain exits
-  let note = document.getElementById('sf-chain-note');
-  if (!note) {
-    note = document.createElement('div');
-    note.id = 'sf-chain-note';
-    const form = document.getElementById('stSwapForm');
-    const firstGroup = form.querySelector('.st-form-group');
-    if (firstGroup) form.insertBefore(note, firstGroup);
-  }
-  note.style.cssText = 'display:block;background:rgba(0,192,118,0.08);border:1px solid rgba(0,192,118,0.3);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:#00c076;line-height:1.5';
-  note.innerHTML = `🔀 <b>Chain swap</b> — you are going directly to <b>${toAsset}</b> instead of returning to ${baseAsset} first. This saves 1% fee. The app will track your position correctly. When you eventually return to ${baseAsset}, record that swap to close the chain.`;
-}
-
 /* ── Trade type toggle ── */
 function setSwapType(type){
   document.getElementById('sf-trade-type').value=type;
   const swingBtn=document.getElementById('sf-type-swing');
   const scalpBtn=document.getElementById('sf-type-scalp');
-  const microBtn=document.getElementById('sf-type-micro');
-  const off={borderColor:'var(--border)',background:'transparent',color:'var(--text3)'};
-  if(swingBtn) Object.assign(swingBtn.style,off);
-  if(scalpBtn) Object.assign(scalpBtn.style,off);
-  if(microBtn) Object.assign(microBtn.style,off);
-  if(type==='swing'&&swingBtn){swingBtn.style.borderColor='rgba(59,143,255,0.5)';swingBtn.style.background='rgba(59,143,255,0.12)';swingBtn.style.color='#3b8fff';}
-  else if(type==='scalp'&&scalpBtn){scalpBtn.style.borderColor='rgba(245,166,35,0.6)';scalpBtn.style.background='rgba(245,166,35,0.10)';scalpBtn.style.color='#f5a623';}
-  else if(type==='micro'&&microBtn){microBtn.style.borderColor='rgba(168,85,247,0.6)';microBtn.style.background='rgba(168,85,247,0.10)';microBtn.style.color='#a855f7';}
+  if(!swingBtn||!scalpBtn) return;
+  if(type==='swing'){
+    swingBtn.style.borderColor='rgba(59,143,255,0.5)'; swingBtn.style.background='rgba(59,143,255,0.12)'; swingBtn.style.color='#3b8fff';
+    scalpBtn.style.borderColor='var(--border)'; scalpBtn.style.background='transparent'; scalpBtn.style.color='var(--text3)';
+  } else {
+    scalpBtn.style.borderColor='rgba(245,166,35,0.6)'; scalpBtn.style.background='rgba(245,166,35,0.10)'; scalpBtn.style.color='#f5a623';
+    swingBtn.style.borderColor='var(--border)'; swingBtn.style.background='transparent'; swingBtn.style.color='var(--text3)';
+  }
 }
 
 /* ── Swap form ── */
@@ -7288,9 +6438,6 @@ function resetSwapForm(tr){
   document.getElementById('sf-score').value='';
   document.getElementById('sf-entry-z').value='';
   document.getElementById('sf-notes').value='';
-  // Hide chain note when opening normally
-  const _cn = document.getElementById('sf-chain-note');
-  if (_cn) _cn.style.display = 'none';
   document.getElementById('stSwapFormTitle').textContent='Record a swap';
   const saveBtn=document.getElementById('stSaveSwapBtn');
   saveBtn.textContent='Save swap';
