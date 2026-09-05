@@ -361,6 +361,25 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .bsn-clear-btn:hover{color:var(--text)}
 .bsn-scan-btn.secondary{background:transparent;border:1px solid var(--border2);color:var(--text2)}
 .bsn-scan-btn.secondary:hover{border-color:var(--blue);color:var(--blue);opacity:1}
+
+/* ── Signal Lab ── */
+.lab-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;margin-top:1rem}
+.lab-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.lab-title{font-size:13px;font-weight:700;color:var(--text)}
+.lab-sub{font-size:11px;font-weight:400;color:var(--text3)}
+.lab-chevron{font-size:14px;color:var(--text3);transition:transform .15s}
+.lab-chevron.open{transform:rotate(90deg)}
+.lab-body{margin-top:.8rem}
+.lab-desc{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:.8rem;max-width:640px}
+.lab-results{margin-top:1rem}
+.lab-sec-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 .5rem}
+.lab-sec-title:first-child{margin-top:0}
+.lab-table{width:100%;border-collapse:collapse;font-family:monospace;font-size:11px}
+.lab-table th{text-align:left;color:var(--text3);font-weight:700;padding:4px 8px;border-bottom:1px solid var(--border2);white-space:nowrap}
+.lab-table td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap}
+.lab-table tr.hi td{color:var(--green);font-weight:700}
+.lab-note{font-size:10px;color:var(--text3);line-height:1.6;margin-top:.5rem}
+.lab-progress{font-size:12px;color:var(--text2);font-family:monospace;text-align:center;padding:1rem}
 .bsn-selected-count{font-size:11px;color:var(--text2);font-family:monospace}
 .bsn-results{margin-top:.5rem}
 .bsn-result-item{background:var(--bg3);border:2px solid var(--border);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;gap:14px;flex-wrap:wrap;transition:border-color .2s;cursor:pointer}
@@ -833,6 +852,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
 
   <div id="mainContent"><div class="loading"><div class="sp-anim"></div>Connecting to Binance...</div></div>
+
+  <!-- Signal Lab — validates every idea against real history before it touches your live score -->
+  <div class="lab-card">
+    <div class="lab-header" id="labHeader">
+      <div class="lab-title">🧪 Signal Lab <span class="lab-sub">— test signals against real history before trusting them</span></div>
+      <span class="lab-chevron" id="labChevron">▸</span>
+    </div>
+    <div class="lab-body" id="labBody" hidden>
+      <p class="lab-desc">Pulls ~2.5 years of daily data for all coins and replays every past day: if the current QSS gates had fired, did the ratio actually revert profitably afterward? Runs entirely in your browser — nothing leaves your machine. This is how we find out whether an idea (or a threshold) really helps, instead of guessing.</p>
+      <button class="bsn-scan-btn" id="labRunBtn">▶ Run analysis</button>
+      <div class="lab-results" id="labResults"></div>
+    </div>
+  </div>
 </div>
 
 <!-- Alerts tab -->
@@ -3108,6 +3140,7 @@ window.addEventListener('resize',()=>Object.values(CI).forEach(ch=>{try{ch.resiz
 buildGrids();
 initSearchFilters();
 initBestSwapNow();
+initSignalLab();
 loadAndRender();
 initTabs();
 initTrackerForm();
@@ -5398,6 +5431,253 @@ function initBestSwapNow(){
 
   renderBsnCoins();
   updateBsnState();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SIGNAL LAB
+   Replays ~2 years of real Binance history day-by-day, running the
+   EXACT same computeQSS() the live app uses, then checks what
+   actually happened next. This exists because of a hard lesson:
+   OMEGA (Kalman/RMT/entropy/Hurst) sounded more sophisticated than
+   QSS and performed worse in practice. Sounding right and being
+   right are different things — the only way to tell them apart is
+   to check against real outcomes. This also resurrects two OMEGA
+   ingredients that were deleted along with the rest of it (the
+   Hurst exponent estimator, still sitting unused in this file) and
+   tests them on equal footing against QSS's own gates, instead of
+   assuming either "QSS good, OMEGA bad" or the reverse.
+   Runs entirely client-side — nothing leaves the browser.
+══════════════════════════════════════════════════════════════ */
+const LAB_LOOKBACK_DAYS = 730;   // ~2 years of daily candles
+const LAB_HORIZON_DAYS  = 21;    // how far forward we check for a profitable reversion
+const LAB_HIT_PCT       = 2.5;   // ratio must fall at least this % to count as a real round-trip win (covers ~1% fee each way + margin)
+const LAB_STRIDE        = 2;     // sample every Nth day (keeps this runnable in-browser)
+const LAB_SLOW_EVERY    = 10;    // correlation & Hurst move slowly — only refresh every N sampled days
+
+function initSignalLab(){
+  const header=document.getElementById('labHeader');
+  const body=document.getElementById('labBody');
+  const chevron=document.getElementById('labChevron');
+  const runBtn=document.getElementById('labRunBtn');
+  if(!header) return;
+  header.onclick=()=>{
+    const isOpen=!body.hidden;
+    body.hidden=isOpen;
+    chevron.classList.toggle('open',!isOpen);
+  };
+  runBtn.onclick=runSignalLab;
+}
+
+async function _labFetchCloses(sym){
+  const r=await fetch(`${BINANCE}/klines?symbol=${sym}USDT&interval=1d&limit=${LAB_LOOKBACK_DAYS}`);
+  if(!r.ok) throw new Error(sym+' '+r.status);
+  const kl=await r.json();
+  return kl.map(k=>+k[4]);
+}
+
+/* Did the ratio fall back at least LAB_HIT_PCT% within LAB_HORIZON_DAYS after day t? */
+function _labOutcome(ratio, t){
+  const entry=ratio[t];
+  if(!entry) return {hit:false, days:null};
+  const end=Math.min(ratio.length-1, t+LAB_HORIZON_DAYS);
+  for(let k=t+1;k<=end;k++){
+    if((entry-ratio[k])/entry*100 >= LAB_HIT_PCT) return {hit:true, days:k-t};
+  }
+  return {hit:false, days:null};
+}
+
+/* Split rows into quartiles by .val, report hit-rate per quartile */
+function _labQuartiles(rows){
+  const valid=rows.filter(r=>r.val!=null && isFinite(r.val));
+  if(valid.length<20) return null;
+  const sorted=[...valid].sort((a,b)=>a.val-b.val);
+  const q=Math.floor(sorted.length/4);
+  const cuts=[sorted.slice(0,q), sorted.slice(q,2*q), sorted.slice(2*q,3*q), sorted.slice(3*q)];
+  return cuts.map(b=>{
+    const n=b.length, hits=b.filter(r=>r.hit).length;
+    return { n, hitRate: n?hits/n*100:0, lo:b[0]?.val, hi:b[b.length-1]?.val };
+  });
+}
+
+function _labRow(n,hitRate,avgDays,extra){
+  return `<tr${hitRate>=55?' class="hi"':''}><td>${extra}</td><td>${n}</td><td>${hitRate.toFixed(0)}%</td><td>${avgDays==null?'—':avgDays.toFixed(1)+'d'}</td></tr>`;
+}
+
+async function runSignalLab(){
+  const runBtn=document.getElementById('labRunBtn');
+  const results=document.getElementById('labResults');
+  runBtn.disabled=true; runBtn.textContent='⏳ Fetching history...';
+  results.innerHTML=`<div class="lab-progress"><div class="sp-anim" style="margin:0 auto 10px"></div>Fetching ~${LAB_LOOKBACK_DAYS} days of history for ${COINS.length} coins...</div>`;
+
+  const rawClosesBySym={};
+  try{
+    const arr=await Promise.all(COINS.map(c=>_labFetchCloses(c.sym).catch(()=>null)));
+    COINS.forEach((c,i)=>{ if(arr[i] && arr[i].length>150) rawClosesBySym[c.sym]=arr[i]; });
+  }catch(e){}
+  const okSyms=Object.keys(rawClosesBySym);
+  if(okSyms.length<4){
+    results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1rem;text-align:center">Could not fetch enough history. Check your connection.</div>`;
+    runBtn.disabled=false; runBtn.textContent='▶ Run analysis'; return;
+  }
+
+  // Align every coin to the same trailing window so day-index t means the
+  // same calendar day across every symbol (needed so cross-sectional ranking
+  // and triangular checks can compare different pairs on "the same day").
+  const n=Math.min(...okSyms.map(s=>rawClosesBySym[s].length));
+  const closes={}; okSyms.forEach(s=>closes[s]=rawClosesBySym[s].slice(-n));
+
+  // 30-day trailing return per symbol per day, for cross-sectional ranking
+  const ret30={}; okSyms.forEach(s=>{
+    ret30[s]=new Array(n).fill(null);
+    for(let t=30;t<n;t++) ret30[s][t]=closes[s][t]/closes[s][t-30]-1;
+  });
+
+  // Build ratio series for every ordered pair
+  const pairKeys=[]; const ratioBySym={};
+  okSyms.forEach(a=>okSyms.forEach(b=>{
+    if(a===b) return;
+    const key=a+'_'+b;
+    ratioBySym[key]=Array.from({length:n},(_,i)=>closes[a][i]/closes[b][i]);
+    pairKeys.push(key);
+  }));
+
+  const sampledTs=[];
+  for(let t=100;t<n-LAB_HORIZON_DAYS-1;t+=LAB_STRIDE) sampledTs.push(t);
+
+  runBtn.textContent='⏳ 0%';
+  const baseline=[];               // flat rows: {isGo, meetsZGate, oscillationOk, z30, hurst, hit, days}
+  const isGoArr={}, hitArr={};      // [pairKey][m] lookups, reused by triangular + cross-sectional passes
+  let done=0;
+  for(const key of pairKeys){
+    const [a,b]=key.split('_');
+    const ratio=ratioBySym[key];
+    const caArr=closes[a], cbArr=closes[b];
+    isGoArr[key]=new Array(sampledTs.length);
+    hitArr[key]=new Array(sampledTs.length);
+    let corr=0, hurst=0.5;
+    for(let m=0;m<sampledTs.length;m++){
+      const t=sampledTs[m];
+      if(m%LAB_SLOW_EVERY===0){
+        corr=calcCorrelation(caArr.slice(0,t+1), cbArr.slice(0,t+1));
+        hurst=hurstRS(ratio.slice(Math.max(0,t-89), t+1));
+      }
+      const q=computeQSS(ratio.slice(0,t+1), corr);
+      const outcome=_labOutcome(ratio, t);
+      isGoArr[key][m]=!!(q&&q.isGo);
+      hitArr[key][m]=outcome.hit;
+      if(q) baseline.push({
+        isGo:q.isGo, meetsZGate:q.meetsZGate, oscillationOk:q.oscillationOk,
+        z30:q.z30, hurst, hit:outcome.hit, days:outcome.days
+      });
+    }
+    done++;
+    runBtn.textContent=`⏳ ${Math.round(done/pairKeys.length*100)}%`;
+    if(done%6===0) await new Promise(r=>setTimeout(r,0)); // keep the tab responsive
+  }
+
+  // ── Triangular pass — reuses isGoArr, no recomputation ──
+  let triBonus=0, directMisses=0;
+  for(let m=0;m<sampledTs.length;m++){
+    for(const key of pairKeys){
+      if(isGoArr[key][m]) continue;
+      directMisses++;
+      const [a,b]=key.split('_');
+      for(const c of okSyms){
+        if(c===a||c===b) continue;
+        if(isGoArr[a+'_'+c]?.[m] && isGoArr[c+'_'+b]?.[m]){ triBonus++; break; }
+      }
+    }
+  }
+
+  // ── Cross-sectional pass — rank all coins by 30d return, test top-vs-bottom ──
+  const crossRows=[];
+  for(let m=0;m<sampledTs.length;m++){
+    const t=sampledTs[m];
+    const ranked=okSyms.filter(s=>ret30[s][t]!=null).sort((x,y)=>ret30[y][t]-ret30[x][t]);
+    if(ranked.length<4) continue;
+    const top=ranked[0], bottom=ranked[ranked.length-1];
+    const key=top+'_'+bottom;
+    if(hitArr[key]) crossRows.push({hit:hitArr[key][m]});
+  }
+
+  renderSignalLab({baseline, triBonus, directMisses, crossRows, pairCount:pairKeys.length, dayCount:n, sampledCount:sampledTs.length});
+  runBtn.disabled=false; runBtn.textContent='▶ Run analysis';
+}
+
+function renderSignalLab(d){
+  const results=document.getElementById('labResults');
+  const {baseline, triBonus, directMisses, crossRows, pairCount, dayCount} = d;
+  if(!baseline.length){
+    results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1rem;text-align:center">Not enough data to analyze.</div>`;
+    return;
+  }
+
+  const goRows=baseline.filter(r=>r.isGo);
+  const notGoRows=baseline.filter(r=>!r.isGo);
+  const goHitRate=goRows.length?goRows.filter(r=>r.hit).length/goRows.length*100:0;
+  const notGoHitRate=notGoRows.length?notGoRows.filter(r=>r.hit).length/notGoRows.length*100:0;
+  const goAvgDays=goRows.filter(r=>r.hit).length?goRows.filter(r=>r.hit).reduce((s,r)=>s+r.days,0)/goRows.filter(r=>r.hit).length:null;
+
+  const z30Q=_labQuartiles(baseline.map(r=>({val:r.z30, hit:r.hit})));
+  const hurstQ=_labQuartiles(baseline.map(r=>({val:r.hurst, hit:r.hit})));
+
+  const oscOk=baseline.filter(r=>r.oscillationOk);
+  const oscBad=baseline.filter(r=>!r.oscillationOk);
+  const oscOkRate=oscOk.length?oscOk.filter(r=>r.hit).length/oscOk.length*100:0;
+  const oscBadRate=oscBad.length?oscBad.filter(r=>r.hit).length/oscBad.length*100:0;
+
+  const lowHurst=baseline.filter(r=>r.hurst<0.45);
+  const highHurst=baseline.filter(r=>r.hurst>=0.45);
+  const lowHurstRate=lowHurst.length?lowHurst.filter(r=>r.hit).length/lowHurst.length*100:0;
+  const highHurstRate=highHurst.length?highHurst.filter(r=>r.hit).length/highHurst.length*100:0;
+
+  const crossHitRate=crossRows.length?crossRows.filter(r=>r.hit).length/crossRows.length*100:0;
+
+  let html='';
+  html+=`<div class="lab-note">Replayed ${pairCount} pairs over ~${dayCount} days (sampled every ${LAB_STRIDE}${LAB_STRIDE===1?'day':'days'}). "Hit" = ratio reverted ≥${LAB_HIT_PCT}% within ${LAB_HORIZON_DAYS} days of the signal — a real, fee-covering round trip, not just "the score was high."</div>`;
+
+  html+=`<div class="lab-sec-title">Does the current live gate (isGo) actually work?</div>
+  <table class="lab-table"><tr><th>Signal</th><th>N</th><th>Hit rate</th><th>Avg days to hit</th></tr>
+    ${_labRow(goRows.length, goHitRate, goAvgDays, 'isGo = true (SCALP NOW today)')}
+    ${_labRow(notGoRows.length, notGoHitRate, null, 'isGo = false (everything else)')}
+  </table>`;
+
+  if(z30Q){
+    html+=`<div class="lab-sec-title">Z-depth quartiles — does a deeper Z genuinely predict a better outcome?</div>
+    <table class="lab-table"><tr><th>Z30 range</th><th>N</th><th>Hit rate</th></tr>
+      ${z30Q.map(b=>_labRow(b.n,b.hitRate,null,`${b.lo.toFixed(2)}σ – ${b.hi.toFixed(2)}σ`)).join('')}
+    </table>`;
+  }
+
+  if(hurstQ){
+    html+=`<div class="lab-sec-title">Hurst exponent quartiles — an OMEGA ingredient, tested on its own merits</div>
+    <table class="lab-table"><tr><th>Hurst range</th><th>N</th><th>Hit rate</th></tr>
+      ${hurstQ.map(b=>_labRow(b.n,b.hitRate,null,`H ${b.lo.toFixed(2)} – ${b.hi.toFixed(2)}`)).join('')}
+    </table>
+    <div class="lab-note">H &lt; 0.5 = anti-persistent (genuinely mean-reverting). H &gt; 0.5 = trending/persistent. If the low-H quartile's hit rate is clearly higher, Hurst is real signal that OMEGA had access to but drowned in Kalman/RMT/phase-gate complexity — worth adding back on its own.</div>`;
+  }
+
+  html+=`<div class="lab-sec-title">Current oscillation gate vs. Hurst as a mean-reversion filter</div>
+  <table class="lab-table"><tr><th>Gate</th><th>N</th><th>Hit rate</th></tr>
+    ${_labRow(oscOk.length,oscOkRate,null,'oscillationOk = true (current gate)')}
+    ${_labRow(oscBad.length,oscBadRate,null,'oscillationOk = false (current gate)')}
+    ${_labRow(lowHurst.length,lowHurstRate,null,'Hurst &lt; 0.45 (candidate replacement)')}
+    ${_labRow(highHurst.length,highHurstRate,null,'Hurst ≥ 0.45 (candidate replacement)')}
+  </table>
+  <div class="lab-note">If Hurst separates hit rate more cleanly than the mean-crossing count, it's the better statistical gate and a strong candidate to swap in.</div>`;
+
+  html+=`<div class="lab-sec-title">Cross-sectional ranking — best-vs-worst coin by 30d return, market-wide</div>
+  <table class="lab-table"><tr><th>Signal</th><th>N</th><th>Hit rate</th></tr>
+    ${_labRow(crossRows.length,crossHitRate,null,'Top performer → bottom performer, ranked daily')}
+  </table>
+  <div class="lab-note">Compare this hit rate to isGo's above. If it's close or better, ranking the whole market at once is a legitimate way to surface more opportunities (this is what the "Scan entire market" button already does structurally) — if it's much worse, extreme cross-sectional movers aren't reliable on their own and shouldn't replace pair-specific gates.</div>`;
+
+  const opportunityLift = directMisses>0 ? (triBonus/directMisses*100) : 0;
+  html+=`<div class="lab-sec-title">Triangular (2-hop) opportunities</div>
+  <div class="lab-note" style="font-size:11px;color:var(--text2)">On days when a direct pair had no valid isGo signal, a 2-hop path (A→C→B, both legs passing the same gates) was available <strong style="color:var(--text)">${triBonus.toLocaleString()}</strong> times out of ${directMisses.toLocaleString()} direct misses (+${opportunityLift.toFixed(1)}% more opportunities than direct pairs alone) — without lowering the bar for what counts as trustworthy on either leg.</div>`;
+
+  results.innerHTML=html;
+  try{localStorage.setItem('labHTML',html);}catch(e){}
 }
 
 
