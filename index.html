@@ -359,6 +359,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .bsn-scan-btn:disabled{opacity:.4;cursor:wait}
 .bsn-clear-btn{font-family:monospace;font-size:11px;padding:6px 12px;border-radius:var(--rs);border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text3)}
 .bsn-clear-btn:hover{color:var(--text)}
+.bsn-scan-btn.secondary{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.bsn-scan-btn.secondary:hover{border-color:var(--blue);color:var(--blue);opacity:1}
 .bsn-selected-count{font-size:11px;color:var(--text2);font-family:monospace}
 .bsn-results{margin-top:.5rem}
 .bsn-result-item{background:var(--bg3);border:2px solid var(--border);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;gap:14px;flex-wrap:wrap;transition:border-color .2s;cursor:pointer}
@@ -822,7 +824,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
     <div class="bsn-coin-grid" id="bsnCoinGrid"></div>
     <div class="bsn-actions">
-      <button class="bsn-scan-btn" id="bsnScanBtn" disabled>🚀 Scan best swaps</button>
+      <button class="bsn-scan-btn" id="bsnScanBtn" disabled>🚀 Scan my holdings</button>
+      <button class="bsn-scan-btn secondary" id="bsnScanAllBtn">🌐 Scan entire market</button>
       <button class="bsn-clear-btn" id="bsnClearBtn">✕ Clear</button>
       <span class="bsn-selected-count" id="bsnCount">Select coins you currently hold</span>
     </div>
@@ -5040,10 +5043,24 @@ function switchAnalyzerPair(assetA,assetB){
 function initBestSwapNow(){
   const grid=document.getElementById('bsnCoinGrid');
   const scanBtn=document.getElementById('bsnScanBtn');
+  const scanAllBtn=document.getElementById('bsnScanAllBtn');
   const clearBtn=document.getElementById('bsnClearBtn');
   const countEl=document.getElementById('bsnCount');
   const searchEl=document.getElementById('bsnSearch');
   if(!grid) return;
+
+  // Shared by both scan modes (holdings-scoped and market-wide).
+  // Trustworthy "go" signals (isGo) always rank above a raw high score that
+  // failed the Z-depth or oscillation gate, even if the numbers look similar.
+  const rank=r=>(r.qss?.isGo?1000:0)+r.score;
+  const gateNote=r=>{
+    if(!r.qss || r.score<45) return '';
+    if(r.qss.isGo) return '';
+    const reasons=[];
+    if(!r.qss.meetsZGate) reasons.push(`Z ${r.qss.z30.toFixed(2)}σ`);
+    if(!r.qss.oscillationOk) reasons.push('trending, not oscillating');
+    return reasons.length?`<div style="font-size:9px;font-family:monospace;color:#f5a623;margin-top:2px">⚠️ downgraded — ${reasons.join(' · ')}</div>`:'';
+  };
 
   let selected=new Set();
   let activeCat='All';
@@ -5154,9 +5171,7 @@ function initBestSwapNow(){
       scanBtn.textContent=`⏳ ${Math.round(done/tasks.length*100)}%`;
     }
 
-    // Sort by QSS. Trustworthy "go" signals (isGo) always rank above a raw high score that
-    // failed the Z-depth or oscillation gate, even if the numbers look similar.
-    const rank=r=>(r.qss?.isGo?1000:0)+r.score;
+    // Sort by QSS (isGo always ranks above a raw high score that failed a gate).
     scored.sort((a,b)=> rank(b) - rank(a));
 
     // Group by FROM coin — best swap for each held coin
@@ -5171,22 +5186,13 @@ function initBestSwapNow(){
 
     if(!topOverall){
       results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1rem;text-align:center">Could not fetch data. Check your connection.</div>`;
-      scanBtn.disabled=false; scanBtn.textContent='🚀 Scan best swaps'; return;
+      scanBtn.disabled=false; scanBtn.textContent='🚀 Scan my holdings'; return;
     }
 
     // Render results
     const scanTime=new Date().toLocaleTimeString();
     const scannedCoins=[...selected].join(', ');
     results.innerHTML=`<div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:.8rem;text-align:right">Scanned ${scored.length} pairs for <strong style="color:var(--text2)">${scannedCoins}</strong> · <span style="color:var(--amber)">⏱ ${scanTime}</span> — results expire in 5 min</div>`;
-
-    const gateNote=r=>{
-      if(!r.qss || r.score<45) return '';
-      if(r.qss.isGo) return '';
-      const reasons=[];
-      if(!r.qss.meetsZGate) reasons.push(`Z ${r.qss.z30.toFixed(2)}σ`);
-      if(!r.qss.oscillationOk) reasons.push('trending, not oscillating');
-      return reasons.length?`<div style="font-size:9px;font-family:monospace;color:#f5a623;margin-top:2px">⚠️ downgraded — ${reasons.join(' · ')}</div>`:'';
-    };
 
     // ── Best overall banner ──
     const topOm = topOverall.score || 0;
@@ -5281,7 +5287,113 @@ function initBestSwapNow(){
 
     try{localStorage.setItem('bsnHTML',document.getElementById('bsnResults').innerHTML);}catch(e){}
     scanBtn.disabled=false;
-    scanBtn.textContent='🚀 Scan best swaps';
+    scanBtn.textContent='🚀 Scan my holdings';
+  };
+
+  // ── Scan entire market — every coin vs every other coin, no holdings needed.
+  // This is the market-wide sweep that used to live in the standalone Quick
+  // Scalps tab: it doesn't care what you hold, it just finds the best QSS
+  // setup anywhere in the 13-coin universe right now. More pairs scanned
+  // means more chances to find a real, gate-passing opportunity — without
+  // loosening the isGo bar itself.
+  scanAllBtn.onclick=async()=>{
+    Object.keys(_scoreCache).forEach(k=>{delete _scoreCache[k]; delete _scoreCacheTime[k];});
+    scanAllBtn.disabled=true; scanBtn.disabled=true;
+    scanAllBtn.textContent='⏳ Scanning...';
+    const results=document.getElementById('bsnResults');
+    const tasks=[];
+    COINS.forEach(f=>COINS.forEach(t=>{ if(t.sym!==f.sym) tasks.push({from:f.sym,to:t.sym,fromName:f.name,toName:t.name}); }));
+    results.innerHTML=`
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:1.2rem;text-align:center">
+        <div class="sp-anim" style="margin:0 auto 10px"></div>
+        <div style="font-size:13px;color:var(--text2);font-family:monospace">Scanning ${tasks.length} pairs across all ${COINS.length} coins...</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:5px">Fetching live Binance data · Est. ${Math.ceil(tasks.length/10)*2}s</div>
+      </div>`;
+
+    const BATCH=10;
+    const scored=[];
+    for(let i=0;i<tasks.length;i+=BATCH){
+      const batch=tasks.slice(i,i+BATCH);
+      const batchRes=await Promise.all(batch.map(t=>getScoreForPair(t.from,t.to).catch(()=>null)));
+      batchRes.forEach((r,j)=>{ if(r&&r.score>=0) scored.push({...batch[j],...r}); });
+      const done=Math.min(i+BATCH,tasks.length);
+      scanAllBtn.textContent=`⏳ ${Math.round(done/tasks.length*100)}%`;
+    }
+    scored.sort((a,b)=>rank(b)-rank(a));
+    const top=scored[0];
+
+    if(!top){
+      results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1rem;text-align:center">Could not fetch data. Check your connection.</div>`;
+      scanAllBtn.disabled=false; scanAllBtn.textContent='🌐 Scan entire market'; scanBtn.disabled=selected.size<1; return;
+    }
+
+    const scanTime=new Date().toLocaleTimeString();
+    results.innerHTML=`<div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:.8rem;text-align:right">Scanned ${scored.length} pairs across the entire ${COINS.length}-coin market · <span style="color:var(--amber)">⏱ ${scanTime}</span> — results expire in 5 min</div>`;
+
+    const topOm=top.score||0, topGo=top.qss?.isGo;
+    const bestCol=topGo?'#00c076':topOm>=45?'#f5a623':'#ef4444';
+    const bestBg=topGo?'rgba(0,192,118,0.09)':'rgba(245,166,35,0.07)';
+    const bestVerdict=topGo?'✅ SCALP NOW':topOm>=45?'⏳ WATCH':'🔴 HOLD';
+    const banner=document.createElement('div');
+    banner.style.cssText=`background:${bestBg};border:2px solid ${bestCol};border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.8rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap`;
+    banner.innerHTML=`
+      <span style="font-size:28px">🏆</span>
+      <div style="flex:1;min-width:160px">
+        <div style="font-size:11px;font-family:monospace;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Best QSS setup — entire market</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text)">${top.from} → ${top.to}</div>
+        <div style="font-size:11px;color:var(--text2)">${top.fromName} → ${top.toName}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px">Z: <strong style="color:${bestCol}">${top.qss?.z30?.toFixed(2)||'—'}σ</strong> · exp. gain +${top.qss?.expGain?.toFixed(1)||'0'}% · ~${top.qss?.holdDays||'—'}d</div>
+        ${gateNote(top)}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="font-family:monospace;font-weight:700;font-size:30px;color:${bestCol};line-height:1">${topOm}</div>
+          <div style="font-size:9px;color:var(--text3);font-family:monospace;letter-spacing:.5px">QSS</div>
+        </div>
+        <span style="font-size:11px;font-family:monospace;font-weight:700;padding:4px 12px;border-radius:12px;background:${topGo?'rgba(0,192,118,0.15)':'rgba(245,166,35,0.12)'};color:${bestCol}">${bestVerdict}</span>
+        <button class="bsn-analyze-btn" onclick="switchAnalyzerPair('${top.from}','${top.to}')">Analyze in detail →</button>
+      </div>
+    `;
+    results.appendChild(banner);
+
+    const heading=document.createElement('div');
+    heading.style.cssText='font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;margin-top:.3rem';
+    heading.textContent='Top opportunities right now, market-wide';
+    results.appendChild(heading);
+
+    scored.slice(0,10).forEach(item=>{
+      const iOm=item.score||0, iGo=item.qss?.isGo;
+      const col=iGo?'#00c076':iOm>=45?'#f5a623':'#ef4444';
+      const verdict=iGo?'✅ SCALP NOW':iOm>=45?'⏳ WATCH':'❌ HOLD';
+      const verdictBg=iGo?'rgba(0,192,118,0.12)':iOm>=45?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
+      const card=document.createElement('div');
+      card.className='bsn-result-item';
+      card.style.cssText=`border-color:${iGo?'rgba(0,192,118,0.3)':'var(--border)'};margin-bottom:.5rem`;
+      card.innerHTML=`
+        <div style="display:flex;align-items:flex-start;gap:12px;width:100%;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px">
+            <div style="font-size:18px;font-weight:700;color:var(--text)">${item.from} → ${item.to}</div>
+            <div style="font-size:11px;color:var(--text3)">${item.fromName} → ${item.toName}</div>
+            ${gateNote(item)}
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="text-align:center">
+              <div style="font-family:monospace;font-weight:700;font-size:24px;color:${col};line-height:1">${iOm}</div>
+              <div style="font-size:9px;color:var(--text3);font-family:monospace">QSS</div>
+            </div>
+            <span style="font-size:10px;font-family:monospace;font-weight:700;padding:3px 10px;border-radius:10px;background:${verdictBg};color:${col}">${verdict}</span>
+            <button class="bsn-analyze-btn" onclick="switchAnalyzerPair('${item.from}','${item.to}')">Analyze →</button>
+          </div>
+        </div>
+        ${item.plain_explanation?`<div style="font-size:11px;color:var(--text2);line-height:1.6;margin-top:6px;width:100%">${item.plain_explanation}</div>`:''}
+      `;
+      results.appendChild(card);
+    });
+
+    try{localStorage.setItem('bsnHTML',document.getElementById('bsnResults').innerHTML);}catch(e){}
+    scanAllBtn.disabled=false;
+    scanAllBtn.textContent='🌐 Scan entire market';
+    scanBtn.disabled=selected.size<1;
   };
 
   renderBsnCoins();
