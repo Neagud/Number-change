@@ -776,212 +776,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <div class="tab-bar">
   <button class="tab-btn active" data-tab="analyzer">📊 Analyzer</button>
-  <button class="tab-btn" data-tab="scalps">⚡ Quick Scalps</button>
   <button class="tab-btn" data-tab="tracker">📈 Swap Tracker</button>
   <button class="tab-btn" data-tab="alerts">🔔 Alerts <span id="alertBadge" style="display:none;background:#ef4444;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:3px;font-family:monospace">0</span></button>
-  <button class="tab-btn" data-tab="guide">📖 How To Use</button>
 </div>
 
-<!-- Quick Scalps tab -->
-<div class="tab-pane" id="tab-scalps">
-  <div style="max-width:860px;margin:0 auto;padding:.6rem 0">
-
-    <!-- Header -->
-    <div style="margin-bottom:10px">
-      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px">⚡ Quick Scalps</div>
-      <div style="font-size:11px;color:var(--text3)">
-        Short-term mean-reversion · Z &gt; 1.2 · Hold 1–7 days · Target 1.5–4% · 30-day window
-      </div>
-    </div>
-
-    <!-- Controls -->
-    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px">
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <label style="font-size:10px;color:var(--text3);font-family:monospace">HOLDING COIN</label>
-        <select id="scalpHoldingCoin" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
-          <option value="ALL" selected>⚡ ALL PAIRS</option>
-          <option value="ETH">ETH</option>
-          <option value="SOL">SOL</option>
-          <option value="ADA">ADA</option>
-          <option value="XRP">XRP</option>
-          <option value="XLM">XLM</option>
-          <option value="ALGO">ALGO</option>
-          <option value="HBAR">HBAR</option>
-          <option value="DOT">DOT</option>
-          <option value="AVAX">AVAX</option>
-          <option value="ATOM">ATOM</option>
-        </select>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <label style="font-size:10px;color:var(--text3);font-family:monospace">MIN GAIN TARGET</label>
-        <select id="scalpMinGain" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
-          <option value="1.0">1.0%</option>
-          <option value="1.5" selected>1.5%</option>
-          <option value="2.0">2.0%</option>
-          <option value="2.5">2.5%</option>
-          <option value="3.0">3.0%</option>
-        </select>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <label style="font-size:10px;color:var(--text3);font-family:monospace">EXCHANGE FEE (round trip)</label>
-        <select id="scalpFee" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-family:monospace;font-size:12px;cursor:pointer">
-          <option value="0.1">0.1% (CEX standard)</option>
-          <option value="0.2" selected>0.2% (round trip)</option>
-          <option value="0.5">0.5% (high fee)</option>
-        </select>
-      </div>
-      <button id="scalpScanBtn" onclick="runScalpScan()" style="margin-left:auto;background:linear-gradient(135deg,#f5a623,#e8940f);border:none;border-radius:8px;padding:9px 20px;color:#000;font-weight:700;font-family:monospace;font-size:12px;cursor:pointer;white-space:nowrap">
-        ⚡ Scan Quick Scalps
-      </button>
-    </div>
-
-    <!-- Fee warning -->
-    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:11px;color:var(--text3)">
-      ⚠️ <strong style="color:#f5a623">Fee reminder:</strong> Quick scalps are only profitable if gain &gt; 3× round-trip fee. At 0.2% fee, minimum real gain = 0.6%. App only shows trades above your minimum gain target.
-    </div>
-
-    <!-- Results -->
-    <div id="scalpResults">
-      <div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">
-        Press <strong>⚡ Scan Quick Scalps</strong> to find short-term opportunities
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- Guide tab -->
-<div class="tab-pane" id="tab-guide">
-  <div style="max-width:720px;margin:0 auto;padding:1rem 0">
-
-    <div style="text-align:center;margin-bottom:2rem">
-      <div style="font-size:32px;margin-bottom:8px">📖</div>
-      <div style="font-size:22px;font-weight:700;color:var(--text)">How To Use SwapAnalyzer</div>
-      <div style="font-size:13px;color:var(--text3);margin-top:4px">Simple rules. Follow them every time.</div>
-    </div>
-
-    <!-- What is this -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:1.25rem;margin-bottom:1rem">
-      <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:8px;font-family:monospace">💡 WHAT IS THIS APP?</div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.8">
-        This app helps you swap between two cryptocurrencies at the <strong style="color:var(--text)">best possible moment</strong> — when one coin is temporarily stronger than the other. You don't buy or sell for cash. You swap <strong style="color:var(--text)">coin A → coin B</strong>, wait a few days, then swap <strong style="color:var(--text)">coin B → coin A</strong> and end up with more of coin A than you started with.
-      </div>
-    </div>
-
-    <!-- The 5 rules -->
-    <div style="font-size:11px;font-family:monospace;color:var(--text3);font-weight:700;letter-spacing:1px;margin:1.5rem 0 .75rem">THE 5 GOLDEN RULES</div>
-
-    <!-- Rule 1 -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--rs);padding:1.25rem;margin-bottom:.75rem;display:flex;gap:16px;align-items:flex-start">
-      <div style="font-size:28px;line-height:1">1️⃣</div>
-      <div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Only swap when score is 70 or above</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.7">The score is the single most important number. If it's below 70 — do nothing. Wait. Check again tomorrow. <strong style="color:var(--green)">Green = act. Everything else = wait.</strong></div>
-      </div>
-    </div>
-
-    <!-- Rule 2 -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--rs);padding:1.25rem;margin-bottom:.75rem;display:flex;gap:16px;align-items:flex-start">
-      <div style="font-size:28px;line-height:1">2️⃣</div>
-      <div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Never close a swap at a loss</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.7">If your position is currently red — <strong style="color:var(--text)">hold it</strong>. The ratio will almost always recover. You only swap back when the score reaches 70+ again. Selling at a loss locks in the loss permanently. Patience recovers it.</div>
-      </div>
-    </div>
-
-    <!-- Rule 3 -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--rs);padding:1.25rem;margin-bottom:.75rem;display:flex;gap:16px;align-items:flex-start">
-      <div style="font-size:28px;line-height:1">3️⃣</div>
-      <div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Never hold the same coin in two trackers at once</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.7">If you swap XLM→DOT and ALGO→DOT at the same time, you are holding DOT twice. If DOT drops — everything drops together. Always spread into <strong style="color:var(--text)">different coins</strong> across your trackers.</div>
-      </div>
-    </div>
-
-    <!-- Rule 4 -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--rs);padding:1.25rem;margin-bottom:.75rem;display:flex;gap:16px;align-items:flex-start">
-      <div style="font-size:28px;line-height:1">4️⃣</div>
-      <div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Check the app once per day — not more</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.7">Watching it every hour causes bad decisions. The score updates every 5 minutes but meaningful moves take <strong style="color:var(--text)">days, not hours</strong>. Open it in the morning, check the score, act if score ≥ 70, close it. Done.</div>
-      </div>
-    </div>
-
-    <!-- Rule 5 -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--rs);padding:1.25rem;margin-bottom:1.5rem;display:flex;gap:16px;align-items:flex-start">
-      <div style="font-size:28px;line-height:1">5️⃣</div>
-      <div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Reinvest at least 50% of every profit</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.7">Each time you close a successful swap, put at least half the profit back into your base stack. The bigger your stack, the bigger the next profit — even at the same percentage. <strong style="color:var(--text)">Compounding is the strategy.</strong></div>
-      </div>
-    </div>
-
-    <!-- Step by step -->
-    <div style="font-size:11px;font-family:monospace;color:var(--text3);font-weight:700;letter-spacing:1px;margin:1.5rem 0 .75rem">STEP BY STEP — HOW TO MAKE A SWAP</div>
-
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:1.25rem;margin-bottom:1.5rem">
-      ${['Go to the <strong>Analyzer tab</strong>. Set FROM = the coin you currently hold. Set TO = the coin you want to swap into.',
-        'Look at the <strong>score number</strong>. If it\'s below 70 — stop here. Come back tomorrow.',
-        'If score is 70 or above — check the <strong>Master Action box</strong>. It will say SWAP NOW or PERFECT CONDITIONS.',
-        'Make the swap on your exchange. Then <strong>record it in Swap Tracker</strong> — click New Tracker, enter your coins and starting amount.',
-        'Wait. Check back daily. When the score on the <strong>reverse pair</strong> (coin B → coin A) reaches 70 — swap back.',
-        'Your tracker will show the profit. Record the closing swap. Enjoy the result. Repeat.']
-        .map((s,i)=>`<div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;${i>0?'border-top:1px solid var(--border)':''}">
-          <div style="min-width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">${i+1}</div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.7">${s}</div>
-        </div>`).join('')}
-    </div>
-
-    <!-- What the score means -->
-    <div style="font-size:11px;font-family:monospace;color:var(--text3);font-weight:700;letter-spacing:1px;margin:1.5rem 0 .75rem">WHAT THE SCORE MEANS</div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-bottom:1.5rem">
-      <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:var(--rs);padding:1rem;text-align:center">
-        <div style="font-size:28px;font-weight:700;color:#ef4444;margin-bottom:4px">0–30</div>
-        <div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:6px">DO NOT SWAP</div>
-        <div style="font-size:11px;color:var(--text3);line-height:1.6">The coin you hold is weak right now. Wait for it to recover before swapping back.</div>
-      </div>
-      <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.3);border-radius:var(--rs);padding:1rem;text-align:center">
-        <div style="font-size:28px;font-weight:700;color:#f5a623;margin-bottom:4px">31–69</div>
-        <div style="font-size:12px;font-weight:700;color:#f5a623;margin-bottom:6px">WATCH</div>
-        <div style="font-size:11px;color:var(--text3);line-height:1.6">Signal is building but not ready. Check back tomorrow. Do not act yet.</div>
-      </div>
-      <div style="background:rgba(0,192,118,0.08);border:1px solid rgba(0,192,118,0.3);border-radius:var(--rs);padding:1rem;text-align:center">
-        <div style="font-size:28px;font-weight:700;color:#00c076;margin-bottom:4px">70–100</div>
-        <div style="font-size:12px;font-weight:700;color:#00c076;margin-bottom:6px">SWAP NOW</div>
-        <div style="font-size:11px;color:var(--text3);line-height:1.6">Strong signal confirmed. Good time to make the swap. Act with confidence.</div>
-      </div>
-    </div>
-
-    <!-- Common mistakes -->
-    <div style="font-size:11px;font-family:monospace;color:var(--text3);font-weight:700;letter-spacing:1px;margin:1.5rem 0 .75rem">❌ COMMON MISTAKES TO AVOID</div>
-
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:1.25rem;margin-bottom:2rem">
-      ${[
-        ['Swapping when score is below 70', 'The score exists for a reason. If you ignore it you are gambling, not trading.'],
-        ['Closing a position because it\'s red', 'Red means wait. The ratio will recover. Closing at a loss is the only way to guarantee a loss.'],
-        ['Holding the same coin in multiple trackers', 'If that coin drops, everything drops. Diversify across different coins.'],
-        ['Swapping into a coin with low correlation', 'The app penalizes low correlation automatically in the score. Listen to it.'],
-        ['Checking the app every hour', 'Nothing meaningful happens in one hour. Daily checks are enough. Obsessing causes panic decisions.'],
-      ].map(([title, desc])=>`
-        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)">
-          <span style="color:#ef4444;font-size:14px;flex-shrink:0">✗</span>
-          <div>
-            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px">${title}</div>
-            <div style="font-size:11px;color:var(--text3);line-height:1.6">${desc}</div>
-          </div>
-        </div>`).join('')}
-      <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0">
-        <span style="color:#ef4444;font-size:14px;flex-shrink:0">✗</span>
-        <div>
-          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px">Expecting every swap to be perfect</div>
-          <div style="font-size:11px;color:var(--text3);line-height:1.6">Some swaps will go temporarily red. That is normal. The strategy wins over many cycles, not every single one.</div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
 <div class="tab-pane active" id="tab-analyzer">
   <div class="coin-selector">
     <!-- FROM row -->
@@ -1288,22 +1086,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
           <input type="number" id="sf-to-amt" placeholder="e.g. 1.86" step="any" min="0">
         </div>
         <div class="st-form-group">
-          <label>AI Score (0-100)</label>
+          <label>QSS Score (0-100)</label>
           <input type="number" id="sf-score" placeholder="e.g. 78" min="0" max="100">
         </div>
       </div>
-      <!-- Trade type selector -->
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button type="button" id="sf-type-swing" onclick="setSwapType('swing')"
-          style="flex:1;padding:8px;border-radius:8px;border:2px solid rgba(59,143,255,0.5);background:rgba(59,143,255,0.12);color:#3b8fff;font-family:monospace;font-size:11px;font-weight:700;cursor:pointer">
-          📊 SWING TRADE<br><span style="font-weight:400;font-size:10px;opacity:.8">OMEGA signal · weeks · 5–20%</span>
-        </button>
-        <button type="button" id="sf-type-scalp" onclick="setSwapType('scalp')"
-          style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--text3);font-family:monospace;font-size:11px;font-weight:700;cursor:pointer">
-          ⚡ QUICK SCALP<br><span style="font-weight:400;font-size:10px;opacity:.8">QSS signal · days · 1–5%</span>
-        </button>
-      </div>
-      <input type="hidden" id="sf-trade-type" value="swing">
+      <input type="hidden" id="sf-trade-type" value="scalp">
       <input type="hidden" id="sf-entry-z" value="">
       <div class="st-form-group" style="margin-bottom:12px">
         <label>Notes (optional)</label>
@@ -1361,7 +1148,7 @@ let fromSym=_p.fromSym||'BTC',toSym=_p.toSym||'ETH',activeTF=_p.activeTF||90,cha
 let _activeTab=_p.activeTab||'analyzer';
 let activeTrackerId=_p.activeTrackerId||null;
 let priceCache={},lastFetch=0,liveTimer=null,scoreTimer=null;
-let currentStats=null, _currentRatioS=[], _lastRmtQ=50, _lastHurst=0.5, _lastPairCorr=0.65;
+let currentStats=null, _currentRatioS=[];
 const CI={}; /* chart instances */
 
 const BINANCE='https://api.binance.com/api/v3';
@@ -1995,9 +1782,9 @@ function renderMain(series){
       </div>
       <div class="sp-labels" id="spLabels">
         <span style="color:#ef4444">0</span>
-        <span>20 · hold</span>
-        <span>40 · caution</span>
-        <span>60 · swap zone</span>
+        <span>25 · hold</span>
+        <span>45 · caution</span>
+        <span>65 · scalp zone</span>
         <span style="color:#00c076">100</span>
       </div>
 
@@ -2049,41 +1836,6 @@ function renderMain(series){
         <span style="font-weight:400;font-size:10px;color:var(--text3)">corr + score</span>
       </div>
       <div class="bp-grid" id="bpGrid"><div class="bp-loading">Scanning correlations...</div></div>
-    </div>
-
-    <!-- ══ DETAILED ANALYSIS TOGGLE ══ -->
-    <div id="detailToggleRow" style="display:none;margin:8px 0 2px 0">
-      <button id="detailToggleBtn" onclick="toggleDetailedAnalysis()" style="
-        background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);
-        border-radius:8px;padding:7px 16px;color:var(--text3);font-size:12px;
-        cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:8px;
-        transition:background 0.2s;
-      ">
-        <span id="detailToggleArrow" style="font-size:10px;transition:transform 0.2s">▶</span>
-        <span>🔬 Show detailed analysis</span>
-        <span style="margin-left:auto;opacity:0.5;font-size:11px">Quantum · Entry Timing</span>
-      </button>
-    </div>
-
-    <!-- ══ QUANTUM ANALYSIS ══ -->
-    <div id="detailedAnalysisWrap" style="display:none">
-      <div class="qa-panel" id="quantumPanel" style="display:none">
-        <div class="qa-header">
-          <span class="qa-title-txt">⚛ Quantum Analysis</span>
-          <span class="qa-title-badge">RMT · KALMAN · ENTROPY</span>
-          <button class="qa-refresh-btn" onclick="triggerQuantumRefresh()">↻ Refresh</button>
-        </div>
-        <div id="qaContent"><div class="qa-loading">Computing quantum layers...</div></div>
-      </div>
-
-      <!-- ══ ENTRY TIMING ══ -->
-      <div class="et-panel" id="entryPanel" style="display:none">
-        <div class="et-header">
-          <span class="et-title-txt">🎯 Entry Timing Optimizer</span>
-          <span class="et-title-badge">VELOCITY · HURST · OU FORCE</span>
-        </div>
-        <div id="etContent"><div class="qa-loading">Analyzing entry timing...</div></div>
-      </div>
     </div>
 
     <div class="metrics" id="metricsRow"></div>
@@ -2222,9 +1974,8 @@ function renderSigs(s){
   `;
 }
 
-/* mathScore removed — OMEGA is the only score system */
+/* Legacy stub kept for scanBestPartners (correlation-ranked list, doesn't display this value) */
 function mathScore(s){
-  // Legacy stub — returns neutral 50. All scoring is now done by computeOmegaScore().
   return 50;
 }
 /* ── Score cache: key = pair+timeframe, TTL = 5 min, stored in localStorage ── */
@@ -2481,8 +2232,8 @@ function renderRiskDashboard(opts){
   if(!ma) return;
   ma.style.display='block';
 
-  const isScoreSwap=score>=70;
-  const isScoreHold=score<=30;
+  const isScoreSwap=score>=65;
+  const isScoreHold=score<45;
   const {passes,total,riskLevel,failed,swapSize}=analysis;
 
   let maClass, maIcon, maTitle, maInstruction, maReason;
@@ -2516,12 +2267,12 @@ function renderRiskDashboard(opts){
     } else if(isScoreHold){
       maClass='stop'; maIcon='🔴';
       maTitle='DO NOT SWAP';
-      maInstruction=`Filters OK (${passes}/${total}) but score is only <strong>${score}/100</strong>. Wait for score ≥ 70.`;
+      maInstruction=`Filters OK (${passes}/${total}) but score is only <strong>${score}/100</strong>. Wait for score ≥ 65.`;
       maReason='';
     } else {
       maClass='wait'; maIcon='🟡';
       maTitle='ALMOST — WATCH CLOSELY';
-      maInstruction=`Filters good (${passes}/${total}) but score <strong>${score}/100</strong> — needs 70. Set an alert.`;
+      maInstruction=`Filters good (${passes}/${total}) but score <strong>${score}/100</strong> — needs 65. Set an alert.`;
       maReason='';
     }
 
@@ -2539,7 +2290,7 @@ function renderRiskDashboard(opts){
     } else {
       maClass='wait'; maIcon='🟡';
       maTitle='FILTERS READY — SCORE NOT YET';
-      maInstruction=`All filters green but score <strong>${score}/100</strong>. Set alert for ≥ 70 and act fast when it fires.`;
+      maInstruction=`All filters green but score <strong>${score}/100</strong>. Set alert for ≥ 65 and act fast when it fires.`;
       maReason='';
     }
   }
@@ -2771,7 +2522,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v12'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v13'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2782,13 +2533,13 @@ function _loadScore(){
 function _saveScore(r){ try{ localStorage.setItem(_scoreKey(), JSON.stringify({...r, _ts:Date.now()})); }catch(e){} }
 function _clearScore(){ try{ localStorage.removeItem(_scoreKey()); }catch(e){} }
 
-/* When analyzer scores a pair, also update the getScoreForPair cache so tracker cards sync instantly */
-function _syncScoreCache(a, b, score){
+/* When analyzer scores a pair, also update the getScoreForPair cache so tracker cards
+   and the opportunity banner sync instantly — including the full QSS detail (isGo, gates). */
+function _syncScoreCache(a, b, score, qss){
   const key=a+'_'+b;
   if(typeof _scoreCache!=='undefined'){
-    // Store omega field too so tracker cards reading res.omega get the right value
     const existing=_scoreCache[key]||{};
-    _scoreCache[key]={...existing, score, omega: score};
+    _scoreCache[key]={...existing, score, qss:qss||existing.qss};
     _scoreCacheTime[key]=Date.now();
   }
 }
@@ -2866,7 +2617,6 @@ async function runAIScore(s, forceRefresh){
       const fc=fromKlines90.map(k=>+k[4]);
       const tc=toKlines90.map(k=>+k[4]);
       corr90=calcCorrelation(fc,tc);
-      _lastPairCorr = corr90; // store globally for OMEGA MQ blending
     }
   }catch(e){}
 
@@ -2883,8 +2633,6 @@ async function runAIScore(s, forceRefresh){
 
   /* BTC dominance trend */
   const btcDom=(fromSym!=='BTC'&&toSym!=='BTC')?await getBTCDominanceTrend().catch(()=>null):null;
-
-  const apiKey=_getApiKey();
 
   const buildPlainExplanation=(score,s)=>{
     const t=s.trend7;
@@ -2913,15 +2661,20 @@ async function runAIScore(s, forceRefresh){
   // Divergence warning: ratio extreme for too long without reverting
   const divergenceWarn=Math.abs(z)>2&&freshS.streak&&Math.abs(freshS.streak)>=7&&Math.sign(freshS.streak)===Math.sign(z);
 
-  // mathResult: score=50 placeholder — OMEGA (computed async) will replace the displayed number
+  /* ── QSS — the one score in the app, computed synchronously (no async pipeline) ── */
+  const ratioClosesForQSS = ratioSeriesForATR.length > 15 ? ratioSeriesForATR.map(r=>r.c) : (_currentRatioS||[]).map(r=>r.c);
+  const q = computeQSS(ratioClosesForQSS, corr90);
+  const score = q ? q.qss : 0;
+
+  const verdictWord = q&&q.isGo ? 'SCALP NOW' : score>=45 ? 'WATCH' : 'HOLD';
   const mathResult={
-    score: 50,
-    simple_verdict: Math.abs(z) < 1
-      ? `Ratio near 90-day mean — no statistical edge yet`
-      : z > 0
-        ? `${fromSym} is above its mean vs ${toSym} — computing Ω...`
-        : `${fromSym} is below its mean vs ${toSym} — computing Ω...`,
-    plain_explanation: buildPlainExplanation(50, freshS),
+    score,
+    qss:q,
+    corr:corr90,
+    simple_verdict: !q ? 'Not enough data yet for this pair.'
+      : q.isGo ? `${fromSym} is overextended vs ${toSym} — ${verdictWord}.`
+      : z30Msg(q),
+    plain_explanation: buildPlainExplanation(score, freshS),
     market_situation:`${fromSym}/${toSym} ratio: ${freshS.cur>=1?freshS.cur.toFixed(4):freshS.cur.toFixed(7)} · Z-score ${z>=0?'+':''}${z.toFixed(2)} · ${freshS.trend7>=0?'▲ +':'▼ '}${freshS.trend7.toFixed(2)}% this week`,
     prediction: '',
     _stats:{cur:freshS.cur,trend7:freshS.trend7,trend1:freshS.trend1||0,zScore:z,expectedRevertGain:expGain,swingPct,mean90:freshS.mean90||0},
@@ -2930,99 +2683,81 @@ async function runAIScore(s, forceRefresh){
   };
 
   renderScore(mathResult);
-  _syncScoreCache(fromSym, toSym, 50);
+  _syncScoreCache(fromSym, toSym, score, q);
+  _saveScore(mathResult);
   scanBestPartners(fromSym);
 
-  /* Quantum analysis — async, does not block score render */
-  if (!_qaRunning) {
-    _qaRunning = true;
-    runQuantumAnalysis(ratioSeriesForATR.length > 15 ? ratioSeriesForATR : _currentRatioS)
-      .finally(() => { _qaRunning = false; });
-  }
-
   renderRiskDashboard({
-    score:50, corr90, atrPct,
+    score, corr90, atrPct,
     bollWidth:freshS.bollWidth||5,
     confirmed, btcDom,
     stats:freshS, fromSym, toSym
   });
 
-  /* Try AI upgrade if key is set */
-  if(apiKey){
-    try{
-      const prompt=`You are a crypto swap advisor. Goal: help user accumulate more crypto by timing ratio swaps.
-Pair: ${fromSym}/${toSym} (never mention USD)
-Ratio: ${freshS.cur>=1?freshS.cur.toFixed(5):freshS.cur.toFixed(8)} | 1d: ${freshS.trend1>=0?'+':''}${freshS.trend1.toFixed(2)}% | 7d: ${freshS.trend7>=0?'+':''}${freshS.trend7.toFixed(2)}%
-RSI: ${freshS.rsi.toFixed(0)} | MACD: ${freshS.macdHist>0?'positive':'negative'} | Bollinger: ${freshS.bollPos.toFixed(0)}%
-EMA trend: ${freshS.ema12>freshS.ema26?'bullish':'bearish'} | 90d correlation: ${corr90.toFixed(2)}
-Volume spike: ${freshS.volSpike?freshS.volSpike.toFixed(1)+'x avg':'unknown'} | Streak: ${freshS.streak>=0?'+':''}${freshS.streak||0} days
-ATR volatility: ${atrPct.toFixed(1)}% | Candle confirmed: ${confirmed===true?'yes':confirmed===false?'no':'pending'}
-BTC dominance rising: ${btcDom?btcDom.rising:'unknown'}
-IMPORTANT: High RSI (>70) + high Bollinger (>80) + positive 1d spike = FROM coin at peak = SWAP NOW signal, not a warning.
-
-SCORING (70-100=SWAP NOW, 31-69=WATCH, 0-30=DO NOT SWAP):
-High score = ${fromSym} gaining vs ${toSym} = good time to swap ${fromSym}→${toSym}
-Low score = ${fromSym} weakening vs ${toSym} = bad time to swap
-
-Respond ONLY with valid JSON, no markdown:
-{"score":INTEGER,"verdict":"SWAP NOW or WATCH or DO NOT SWAP","simple_verdict":"one clear sentence about ${fromSym} vs ${toSym}","plain_explanation":"2-3 plain sentences, no jargon","market_situation":"1 sentence summary","prediction":"1 sentence or empty"}`;
-
-      const res=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true',
-          'x-api-key':apiKey
-        },
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:prompt}]})
-      });
-      const d=await res.json();
-      if(d.error) throw new Error(d.error.message);
-      const raw=(d.content?.map(b=>b.text||'').join('')||'').trim().replace(/```json|```/g,'').trim();
-      const aiResult=JSON.parse(raw);
-      if(typeof aiResult.score!=='number') throw new Error('bad score');
-      aiResult._stats={cur:freshS.cur,trend7:freshS.trend7,trend1:freshS.trend1||0,
-        zScore:freshS.zScore||0,expectedRevertGain:freshS.expectedRevertGain||0,
-        swingPct:freshS.swingPct||0,mean90:freshS.mean90||0};
-      aiResult._risk={corr90,atrPct,bollWidth:freshS.bollWidth,confirmed};
-      _saveScore(aiResult);
-      renderScore(aiResult);
-      renderRiskDashboard({
-        score:aiResult.score, corr90, atrPct,
-        bollWidth:freshS.bollWidth||5,
-        confirmed, btcDom,
-        stats:freshS, fromSym, toSym
-      });
-    }catch(e){
-      console.warn('AI score failed:',e.message);
-      _saveScore(mathResult);
-    }
-  } else {
-    _saveScore(mathResult);
-  }
-
   if(btn)btn.disabled=false;
+}
+
+function z30Msg(q){
+  if(!q.meetsZGate) return `QSS ${q.qss} but Z is only ${q.z30.toFixed(2)}σ — not a deep enough anomaly yet.`;
+  if(!q.oscillationOk) return `QSS ${q.qss} but this pair has been trending, not oscillating — weaker edge.`;
+  return q.qss>=45 ? `QSS ${q.qss} — building, not ready yet.` : `QSS ${q.qss} — no edge right now.`;
 }
 
 /* ── Score history: store last 48 scores per pair ── */
 function renderScore(j){
   const p=document.getElementById('scorePanel');if(!p)return;
   const sc=Math.min(100,Math.max(0,j.score));
-  const isG=sc>=70,isR=sc<=30,cls=isG?'green':isR?'red':'orange';
+  const q=j.qss||null;
+  // A trustworthy "go" needs the score AND a real Z-depth anomaly AND genuine oscillation history
+  const isG=q?q.isGo:sc>=65, isR=!isG&&sc<45, cls=isG?'green':isR?'red':'orange';
   p.className=`sp-box ${cls}`;
-  // Show swap signal score temporarily — applyUnifiedVerdict will replace with OMEGA
   p.querySelector('.sp-num').textContent=sc;
-  // Label it clearly so user knows this is the signal score, not OMEGA
+
+  // Caution tag — shown only when the raw QSS looks like a go but a safety gate failed
   let trsTagInit = p.querySelector('.sp-trs-tag');
   if (!trsTagInit) {
     trsTagInit = document.createElement('div');
     trsTagInit.className = 'sp-trs-tag';
-    trsTagInit.style.cssText = 'font-size:11px;font-family:monospace;color:var(--text3);margin-top:4px';
+    trsTagInit.style.cssText = 'font-size:11px;font-family:monospace;color:var(--amber);margin-top:4px';
     const vtxt = p.querySelector('.sp-verdict-text');
     if (vtxt) vtxt.appendChild(trsTagInit);
   }
-  trsTagInit.innerHTML = '<span style="font-family:monospace;opacity:.6">Signal score (computing Ω...)</span>';
+  if (q && sc>=65 && !q.isGo) {
+    const reasons=[];
+    if(!q.meetsZGate) reasons.push(`Z only ${q.z30.toFixed(2)}σ — below the 1.0σ minimum for a real anomaly`);
+    if(!q.oscillationOk) reasons.push(q.oscillationNote);
+    trsTagInit.style.display='block';
+    trsTagInit.innerHTML=`⚠️ QSS ${sc} looks good, but downgraded to WATCH — ${reasons.join(' · ')}`;
+  } else {
+    trsTagInit.style.display='none';
+    trsTagInit.innerHTML='';
+  }
+
+  /* QSS breakdown bars — same 5-force layout used in the scanner cards */
+  let qssSec=p.querySelector('.qss-section');
+  if(q){
+    if(!qssSec){
+      qssSec=document.createElement('div');
+      qssSec.className='qss-section';
+      qssSec.style.cssText='margin:10px 0;display:flex;flex-direction:column;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px';
+      const explainEl=p.querySelector('.sp-explain');
+      if(explainEl) p.insertBefore(qssSec,explainEl); else p.appendChild(qssSec);
+    }
+    const bars=[
+      {lbl:'Z30',val:q.se_q,raw:q.z30.toFixed(2)+'σ'},
+      {lbl:'Boll',val:q.bp,raw:q.bollPos.toFixed(0)+'%'},
+      {lbl:'RSI',val:q.re,raw:q.rsi.toFixed(0)},
+      {lbl:'OU',val:q.qf,raw:q.ouFPct20.toFixed(1)+'%/d'},
+      {lbl:'Corr',val:q.corrQ,raw:(j.corr||0).toFixed(2)},
+    ].map(b=>`<div style="display:flex;align-items:center;gap:6px;font-size:10px">
+        <span style="width:28px;color:var(--text3);font-family:monospace">${b.lbl}</span>
+        <div style="flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden"><div style="height:100%;width:${b.val}%;background:${b.val>=60?'#00c076':b.val>=30?'#f5a623':'#ef4444'}"></div></div>
+        <span style="width:44px;text-align:right;color:var(--text3);font-family:monospace">${b.raw}</span>
+      </div>`).join('');
+    qssSec.innerHTML=`<div style="font-size:9px;font-family:monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">QSS breakdown · exp. gain +${q.expGain.toFixed(1)}% · ~${q.holdDays}d hold</div>${bars}`;
+  } else if(qssSec){
+    qssSec.remove();
+  }
 
   /* Verdict */
   const verdictEmoji=isG?'✅':isR?'❌':'⏳';
@@ -3069,16 +2804,14 @@ function renderScore(j){
 
     const zCol2=z2>2?'#00c076':z2>1?'#f5a623':z2<-2?'#ef4444':z2<-1?'#f5a623':'var(--text3)';
     const zBar=Math.min(100,Math.max(0,(z2+3)/6*100)); // map -3..+3 to 0..100%
-    const _isTrending = _lastHurst > 0.80;
-    const _hurstWarn = _isTrending ? ` ⚠️ Hurst ${_lastHurst.toFixed(2)}: pair is trending` : '';
-    const zLabel=(z2>2.5?'Extreme deviation' + (_isTrending ? '' : ' — very high reversion probability'):
-      z2>2?'Overbought' + (_isTrending ? '' : ' — high reversion probability'):
+    const zLabel=(z2>2.5?'Extreme deviation — very high reversion probability':
+      z2>2?'Overbought — high reversion probability':
       z2>1.5?'Above mean — good exit zone':
       z2>1?'Slightly above mean':
       z2>-1?'Neutral zone — near mean':
       z2>-1.5?'Slightly below mean':
       z2>-2?'Below mean — poor exit':
-      z2>-2.5?'Oversold — avoid selling':'Extremely oversold') + _hurstWarn;
+      z2>-2.5?'Oversold — avoid selling':'Extremely oversold');
 
     const egCol=eg>10?'#00c076':eg>3?'#f5a623':eg<-3?'#ef4444':'var(--text3)';
     const egStr=eg>=0?'+'+eg.toFixed(1)+'%':eg.toFixed(1)+'%';
@@ -3316,1122 +3049,6 @@ function ouHalfLifeET(closes) {
   return Math.max(1, Math.round(Math.log(2) / theta));
 }
 
-/* Full entry timing analysis — returns phase, scores, and all metrics */
-function analyzeEntryTiming(rCloses) {
-  const n = rCloses.length;
-  if (n < 10) return null;
-
-  /* Smooth with EMA(3) before derivatives to reduce daily noise */
-  const sm = ema(rCloses, 3);
-
-  /* Build velocity and acceleration arrays for last ~12 days */
-  const lb = Math.min(14, n - 2);
-  const vels = [], accs = [];
-  for (let i = n - lb; i < n; i++) vels.push(sm[i] - sm[i - 1]);
-  for (let i = 1; i < vels.length; i++) accs.push(vels[i] - vels[i - 1]);
-
-  const curVel = vels[vels.length - 1];
-  const curAcc = accs[accs.length - 1];
-
-  /* Z-score context */
-  const w90    = rCloses.slice(-Math.min(90, n));
-  const mean90 = w90.reduce((a, b) => a + b, 0) / w90.length;
-  const std90  = Math.sqrt(w90.reduce((a, b) => a + (b - mean90) ** 2, 0) / w90.length) || 0.0001;
-  const curZ   = (rCloses[n - 1] - mean90) / std90;
-  const absZ   = Math.abs(curZ);
-  const dir    = curZ >= 0 ? 1 : -1; // +1=ratio high, -1=ratio low
-
-  /* Velocity projected onto signal direction:
-     positive = still moving AWAY from mean (bad — let it peak first)
-     negative = moving BACK toward mean (good — reversal underway) */
-  const velDir = curVel * dir;
-  const accDir = curAcc * dir;
-
-  /* Phase detection */
-  let phase, phaseLabel, phaseSub, phaseColor, phaseEmoji, baseScore;
-  if (absZ < 1.0) {
-    phase = 0; phaseColor = 'blue'; phaseEmoji = '⏳';
-    phaseLabel = 'No signal zone';
-    phaseSub   = 'Ratio is near its 90-day mean. No edge to trade yet. Wait for Z > 1.5.';
-    baseScore  = 0;
-  } else if (absZ < 1.5) {
-    phase = 1; phaseColor = 'blue'; phaseEmoji = '📡';
-    phaseLabel = 'Early divergence — watch only';
-    phaseSub   = `Z=${curZ.toFixed(2)}σ — building. Not enough deviation yet. Monitor.`;
-    baseScore  = 15;
-  } else if (velDir > 0 && accDir > 0) {
-    phase = 2; phaseColor = 'amber'; phaseEmoji = '⏳';
-    phaseLabel = 'Still accelerating — do NOT enter yet';
-    phaseSub   = 'Ratio is still moving strongly away from mean and speeding up. Entering now means catching a falling knife. Wait for deceleration.';
-    baseScore  = 20;
-  } else if (velDir > 0 && accDir <= 0) {
-    phase = 3; phaseColor = 'green'; phaseEmoji = '🎯';
-    phaseLabel = 'DECELERATION DETECTED — OPTIMAL ENTRY';
-    phaseSub   = 'Ratio is still moving away from mean but SLOWING DOWN. This is the peak forming. Highest probability entry — before the reversal starts.';
-    baseScore  = 88;
-  } else if (velDir >= 0 && Math.abs(curVel) < std90 * 0.008) {
-    phase = 4; phaseColor = 'green'; phaseEmoji = '✅';
-    phaseLabel = 'AT PEAK / TROUGH — Good entry';
-    phaseSub   = 'Velocity is near zero — ratio has stalled at its extreme. Very good entry, peak is now.';
-    baseScore  = 78;
-  } else if (velDir < 0) {
-    phase = 5; phaseColor = 'amber'; phaseEmoji = '⚠️';
-    phaseLabel = 'Reversal already started — late entry';
-    phaseSub   = 'Ratio has already turned. You missed the optimal entry. Still valid but expected gain is reduced proportionally to how far it has already retraced.';
-    baseScore  = 45;
-  } else {
-    phase = 1; phaseColor = 'blue'; phaseEmoji = '📡'; phaseLabel = 'Building'; phaseSub = ''; baseScore = 15;
-  }
-
-  /* How many days ago was the ideal entry? Scan back through accelerations */
-  let daysLate = 0;
-  if (phase >= 4) {
-    for (let i = accs.length - 2; i >= 0; i--) {
-      const vd = vels[i + 1] * dir;
-      const ad = accs[i] * dir;
-      if (vd > 0 && ad <= 0) daysLate++;
-      else break;
-    }
-  }
-
-  /* Multi-scale Hurst — Haar Wavelet method */
-  const msHurst    = multiscaleHurst(rCloses.slice(-64));
-  const hurst60    = hurstRS(rCloses.slice(-60));
-  const hurst30    = rCloses.length >= 30 ? hurstRS(rCloses.slice(-30)) : hurst60;
-
-  // PRIMARY Hurst for OMEGA = R/S analysis (reliable, enough data points).
-  // Wavelet multi-scale = DISPLAY ONLY + exhaustion bonus signal.
-  // Wavelet at long scales has too few coefficients (3-4 points) to be statistically reliable
-  // as a primary input — it would give wild swings like 0.05 or 0.99 randomly.
-  const hurst         = Math.max(hurst60, hurst30); // R/S — stable, drives all OMEGA math
-  const hurst3        = hurst30;
-  const shortH        = msHurst ? msHurst.shortH      : hurst30;
-  const structuralH   = msHurst ? msHurst.globalH     : hurst60; // use global OLS fit, not last scale
-  const hTrend        = msHurst ? msHurst.hTrend       : 0;
-  const hurstRegimeWarn = hurst30 > hurst60 + 0.12;
-
-  const hurstColor = hurst < 0.44 ? 'green' : hurst < 0.54 ? 'amber' : 'red';
-  const hurstLabel = hurst < 0.44 ? 'Anti-persistent — strong mean reversion tendency'
-    : hurst < 0.54 ? 'Near random walk — moderate mean reversion'
-    : 'Persistent — trending regime, reversion less reliable';
-
-  /* OU restoring force */
-  const halfLife  = ouHalfLifeET(rCloses);
-  const theta     = halfLife < 990 ? Math.log(2) / halfLife : 0;
-  const ouForce   = theta * (mean90 - rCloses[n - 1]);           // units per day
-  const ouForcePct = std90 > 0 ? (ouForce / std90) * 100 : 0;  // as % of 1 std deviation
-  const ouAbs     = Math.abs(ouForcePct);
-  const ouColor   = ouAbs > 15 ? 'green' : ouAbs > 7 ? 'amber' : 'red';
-  const ouLabel   = ouAbs > 15 ? 'Strong spring — fast reversion expected'
-    : ouAbs > 7 ? 'Moderate pull toward mean'
-    : 'Weak pull — slow or uncertain reversion';
-
-  /* Expected days remaining to mean reversion (half-life adjusted for how far we are) */
-  const daysToMeanEst = halfLife < 990 ? Math.max(1, Math.round(halfLife * 0.7)) : null;
-
-  /* Gain already lost due to late entry */
-  const gainLost = phase === 5 && std90 > 0
-    ? Math.max(0, (Math.abs(curVel) / std90 * halfLife * 0.5 * 100)).toFixed(1)
-    : null;
-
-  /* Composite Entry Score */
-  const hurstBonus = hurst < 0.5 ? Math.round((0.5 - hurst) * 60) : 0;
-  const ouBonus    = Math.min(25, Math.round(ouAbs * 0.8));
-  const zBonus     = absZ > 1.5 ? Math.min(20, Math.round((absZ - 1.5) * 10)) : 0;
-  const entryScore = Math.min(100, baseScore + hurstBonus + ouBonus + zBonus);
-
-  /* Timeline position (0=no signal, 25=building, 50=peak forming, 75=at peak, 100=reversing) */
-  const tlPos = [0, 20, 40, 65, 82, 100][Math.min(5, phase)];
-
-  /* ── Kalman Z-score (dynamic equilibrium — more accurate than static 90d mean) ──
-     Replaces static Z in OMEGA's Signal Edge force.
-     Falls back to static absZ if Kalman produces invalid result (very short series). */
-  let kalmanAbsZ = absZ, kalmanZ = curZ;
-  try {
-    const kf = kalmanFilter1D(rCloses);
-    if (isFinite(kf.kZ)) { kalmanZ = kf.kZ; kalmanAbsZ = Math.abs(kf.kZ); }
-  } catch(e) {}
-
-  /* ── Sample Entropy (confidence modifier — low = predictable = reliable signal) ── */
-  let sampEnt = 1.0; // neutral default
-  try {
-    const se = sampleEntropy(rCloses.slice(-Math.min(60, rCloses.length)), 2, 0.2);
-    if (isFinite(se) && se >= 0) sampEnt = se;
-  } catch(e) {}
-
-  return {
-    phase, phaseLabel, phaseSub, phaseColor, phaseEmoji,
-    curVel, curAcc, velDir, accDir,
-    hurst, hurst60, hurst30: hurst3, hurstRegimeWarn, hurstColor, hurstLabel,
-    msHurst, shortH, structuralH, hTrend,
-    ouForce, ouForcePct, ouColor, ouLabel,
-    halfLife, daysToMeanEst, daysLate, gainLost,
-    entryScore, tlPos, absZ, curZ, mean90, std90,
-    kalmanZ, kalmanAbsZ, sampEnt
-  };
-}
-
-function renderEntryPanel(t) {
-  const panel   = document.getElementById('entryPanel');
-  const content = document.getElementById('etContent');
-  if (!panel || !content || !t) return;
-  panel.style.display = 'block';
-
-  /* Velocity display */
-  const velPct   = t.std90 > 0 ? (t.curVel / t.std90 * 100) : 0;
-  const velStr   = (velPct >= 0 ? '+' : '') + velPct.toFixed(1) + '%σ/day';
-  const velColor = Math.abs(t.velDir) < 0.001 ? 'blue' : t.velDir > 0 ? 'amber' : 'green';
-
-  /* Acceleration display */
-  const accPct   = t.std90 > 0 ? (t.curAcc / t.std90 * 100) : 0;
-  const accStr   = (accPct >= 0 ? '+' : '') + accPct.toFixed(1) + '%σ/day²';
-  const accColor = t.accDir < 0 && t.phase >= 2 ? 'green' : t.accDir > 0 ? 'red' : 'blue';
-
-  /* OU force display */
-  const ouStr  = (t.ouForcePct >= 0 ? '+' : '') + t.ouForcePct.toFixed(1) + '%σ/day';
-
-  /* Entry score color */
-  const esColor = t.entryScore >= 70 ? '#00c076' : t.entryScore >= 40 ? '#f5a623' : '#ef4444';
-
-  /* Late-entry notice */
-  const lateNote = t.daysLate > 0
-    ? `<div style="background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.3);border-radius:7px;padding:7px 10px;font-size:11px;color:#f5a623;margin-bottom:.65rem">
-        ⏱ Optimal entry was <strong>${t.daysLate} day${t.daysLate > 1 ? 's' : ''} ago</strong> when deceleration first appeared. Current entry still valid — ratio has not yet fully reverted.
-       </div>` : '';
-
-  const gainLostNote = t.gainLost
-    ? `<div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:7px;padding:7px 10px;font-size:11px;color:#ef4444;margin-bottom:.65rem">
-        ⚠️ Estimated <strong>~${t.gainLost}%</strong> of expected gain already realised by the market before your entry.
-       </div>` : '';
-
-  /* Half-life note */
-  const hlNote = t.daysToMeanEst
-    ? `Expected reversion to mean: <strong>~${t.daysToMeanEst} days</strong> · Half-life: ${t.halfLife < 990 ? t.halfLife + 'd' : '—'}`
-    : '';
-
-  content.innerHTML = `
-    <div class="et-phase et-${t.phaseColor}">
-      <div class="et-phase-top">
-        <span class="et-phase-emoji">${t.phaseEmoji}</span>
-        <div>
-          <div class="et-phase-label">${t.phaseLabel}</div>
-          <div class="et-phase-sub">${t.phaseSub}</div>
-        </div>
-      </div>
-    </div>
-
-    ${lateNote}${gainLostNote}
-
-    <div class="et-timeline">
-      <div class="et-tl-label">Momentum phase timeline</div>
-      <div class="et-tl-track">
-        <div class="et-tl-fill" style="width:${t.tlPos}%;background:linear-gradient(90deg,#3b8fff,#f5a623,#00c076,#f5a623)"></div>
-        <div class="et-tl-dot" style="left:${t.tlPos}%;background:${t.phaseColor === 'green' ? '#00c076' : t.phaseColor === 'amber' ? '#f5a623' : '#3b8fff'}"></div>
-      </div>
-      <div class="et-tl-phases">
-        <span>No signal</span><span>Building</span><span style="color:#00c076;font-weight:700">⭐ Decelerating</span><span>At peak</span><span>Reversing</span>
-      </div>
-    </div>
-
-    <div class="et-grid">
-      <div class="et-card">
-        <div class="et-card-lbl">Velocity</div>
-        <div class="et-card-val ${velColor}">${velStr}</div>
-        <div class="et-card-sub">${t.velDir > 0.001 ? 'Moving away from mean' : t.velDir < -0.001 ? 'Moving toward mean ✓' : 'Stalled'}</div>
-      </div>
-      <div class="et-card">
-        <div class="et-card-lbl">Acceleration</div>
-        <div class="et-card-val ${accColor}">${accStr}</div>
-        <div class="et-card-sub">${t.accDir < 0 && t.phase >= 2 ? 'Decelerating ✓ — peak forming' : t.accDir > 0 ? 'Accelerating — wait' : 'Neutral'}</div>
-      </div>
-      <div class="et-card">
-        <div class="et-card-lbl">OU Restoring Force</div>
-        <div class="et-card-val ${t.ouColor}">${ouStr}</div>
-        <div class="et-card-sub">${t.ouLabel}</div>
-      </div>
-      <div class="et-card" style="grid-column:1/-1">
-        <div class="et-card-lbl">Market Memory — Multi-Scale Hurst (Wavelet)</div>
-        ${(() => {
-          const ms = t.msHurst;
-          const scaleNames = ['2–4d','4–8d','8–16d','16–32d','32d+'];
-          const hColor = h => h < 0.50 ? '#00c076' : h < 0.65 ? '#a3e635' : h < 0.80 ? '#f5a623' : '#ef4444';
-          const hLabel = h => h < 0.50 ? 'REVERTING' : h < 0.65 ? 'NEUTRAL' : h < 0.80 ? 'TRENDING' : 'STRONG TREND';
-
-          // Determine overall interpretation
-          let interpretation = '', intColor = 'var(--text3)';
-          if (ms && ms.scaleH.length >= 2) {
-            const trend = ms.hTrend;
-            const sh = ms.shortH, lh = ms.structuralH;
-            if (sh > 0.75 && lh < 0.65) {
-              interpretation = '⬇ H drops across scales — short-term trend exhausting, reversal building';
-              intColor = '#f5a623';
-            } else if (sh > 0.75 && lh > 0.75) {
-              interpretation = '↔ H high at all scales — structural trend, wait for Hurst to fall';
-              intColor = '#ef4444';
-            } else if (sh < 0.55 && lh < 0.55) {
-              interpretation = '✅ H low at all scales — strong mean-reversion regime';
-              intColor = '#00c076';
-            } else if (sh < lh - 0.10) {
-              interpretation = '⬆ H rises with scale — short-term calm, longer-term drift';
-              intColor = '#f5a623';
-            } else {
-              interpretation = `Structural H ${lh.toFixed(2)} · Short H ${sh.toFixed(2)}`;
-              intColor = 'var(--text2)';
-            }
-          }
-
-          if (!ms || ms.scaleH.length < 2) {
-            return `<div class="et-card-val ${t.hurstColor}">${t.hurst.toFixed(3)}</div>
-                    <div class="et-card-sub">${t.hurstLabel}</div>`;
-          }
-
-          return `
-            <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
-              ${ms.scaleH.map((sh, i) => `
-                <div style="display:flex;align-items:center;gap:8px;font-size:11px">
-                  <span style="width:42px;color:var(--text3);font-family:monospace">${scaleNames[i]||''}</span>
-                  <div style="flex:1;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
-                    <div style="width:${Math.round(sh.h*100)}%;height:100%;background:${hColor(sh.h)};border-radius:3px;transition:width 0.4s"></div>
-                  </div>
-                  <span style="width:34px;font-family:monospace;color:${hColor(sh.h)};font-weight:600">${sh.h.toFixed(2)}</span>
-                  <span style="width:82px;color:${hColor(sh.h)};font-size:10px">${hLabel(sh.h)}</span>
-                </div>`).join('')}
-              <div style="margin-top:4px;font-size:11px;color:${intColor};font-style:italic">${interpretation}</div>
-            </div>`;
-        })()}
-      </div>
-      <div class="et-card">
-        <div class="et-card-lbl">Half-Life</div>
-        <div class="et-card-val blue">${t.halfLife < 990 ? t.halfLife + 'd' : '—'}</div>
-        <div class="et-card-sub">${hlNote || 'Not enough data for estimate'}</div>
-      </div>
-      <div class="et-card">
-        <div class="et-card-lbl">Z-Score</div>
-        <div class="et-card-val ${t.absZ > 2 ? 'green' : t.absZ > 1.5 ? 'amber' : 'blue'}">${(t.curZ >= 0 ? '+' : '') + t.curZ.toFixed(2)}σ</div>
-        <div class="et-card-sub">${t.absZ > 2.5 ? 'Extreme deviation' : t.absZ > 1.5 ? 'Significant deviation' : 'Building'}</div>
-      </div>
-    </div>
-
-    <div class="et-score-row">
-      <div class="et-entry-score" style="color:${esColor}">${t.entryScore}</div>
-      <div class="et-score-body">
-        <div class="et-score-title" style="color:${esColor}">Entry Timing Score /100</div>
-        <div class="et-score-sub">
-          ${t.entryScore >= 75 ? '🎯 Near-optimal entry window. Enter now.' :
-            t.entryScore >= 55 ? '✅ Good entry. Conditions are supportive.' :
-            t.entryScore >= 35 ? '⏳ Decent entry. Some timing risk remains.' :
-            t.entryScore >= 15 ? '⚠️ Early or late. Wait or accept reduced gain.' :
-            '🔴 No entry signal yet.'}
-          <span style="opacity:.6;font-size:10px"> Phase bonus ${['0','15','20','88','78','45'][Math.min(5,t.phase)]} + Hurst ${Math.max(0,Math.round((0.5-t.hurst)*60))} + OU ${Math.min(25,Math.round(Math.abs(t.ouForcePct)*0.8))} + Z ${Math.min(20,Math.round(Math.max(0,t.absZ-1.5)*10))}</span>
-        </div>
-      </div>
-    </div>`;
-}
-
-/* ══════════════════════════════════════════════════════════
-   QUANTUM ANALYSIS ENGINE
-   Layer 1 — Random Matrix Theory  (nuclear / quantum physics)
-   Layer 2 — Kalman Filter         (aerospace engineering)
-   Layer 3 — Sample Entropy        (nonlinear dynamics / chaos theory)
-══════════════════════════════════════════════════════════ */
-
-/* Jacobi eigenvalue algorithm for real symmetric matrices.
-   Returns eigenvalues sorted descending. Runs in O(n³ × iter). */
-function jacobiEigenvalues(mat) {
-  const n = mat.length;
-  // deep copy so we don't mutate the original
-  const A = mat.map(r => r.slice());
-  const maxIter = 100 * n * n;
-  for (let iter = 0; iter < maxIter; iter++) {
-    // find largest off-diagonal element
-    let maxOff = 0, p = 0, q = 1;
-    for (let i = 0; i < n - 1; i++) {
-      for (let j = i + 1; j < n; j++) {
-        const v = Math.abs(A[i][j]);
-        if (v > maxOff) { maxOff = v; p = i; q = j; }
-      }
-    }
-    if (maxOff < 1e-12) break;
-    // compute Givens rotation angle
-    const theta = (A[q][q] - A[p][p]) / (2 * A[p][q]);
-    const sign  = theta >= 0 ? 1 : -1;
-    const t     = sign / (Math.abs(theta) + Math.sqrt(1 + theta * theta));
-    const c     = 1 / Math.sqrt(1 + t * t);
-    const s     = t * c;
-    const Apq   = A[p][q];
-    A[p][p] -= t * Apq;
-    A[q][q] += t * Apq;
-    A[p][q] = A[q][p] = 0;
-    for (let r = 0; r < n; r++) {
-      if (r === p || r === q) continue;
-      const Apr = A[p][r], Aqr = A[q][r];
-      A[p][r] = A[r][p] = c * Apr - s * Aqr;
-      A[q][r] = A[r][q] = c * Aqr + s * Apr;
-    }
-  }
-  return A.map((row, i) => row[i]).sort((a, b) => b - a);
-}
-
-/* Build N×N correlation matrix from array of price-close arrays.
-   Uses calcCorrelation() (daily-return Pearson) for each pair. */
-function buildCorrMatrix(priceArrays) {
-  const N = priceArrays.length;
-  const C = Array.from({ length: N }, () => new Array(N).fill(0));
-  for (let i = 0; i < N; i++) {
-    C[i][i] = 1;
-    for (let j = i + 1; j < N; j++) {
-      const corr = calcCorrelation(priceArrays[i], priceArrays[j]);
-      C[i][j] = corr;
-      C[j][i] = corr;
-    }
-  }
-  return C;
-}
-
-/* 1-D Kalman filter — tracks the slowly-drifting "true equilibrium"
-   of a price series. Returns dynamic mean μ, uncertainty P, and
-   a Kalman Z-score that is more statistically honest than a static
-   rolling-mean Z because it accounts for estimation uncertainty. */
-function kalmanFilter1D(closes) {
-  const n = closes.length;
-  if (n < 5) return { mu: closes[n - 1] || 0, P: 1, kZ: 0, R: 1 };
-
-  // Estimate observation noise R from variance of first-differences
-  let sumSq = 0, sumD = 0;
-  for (let i = 1; i < n; i++) sumD += (closes[i] - closes[i - 1]);
-  const meanD = sumD / (n - 1);
-  for (let i = 1; i < n; i++) sumSq += (closes[i] - closes[i - 1] - meanD) ** 2;
-  const R = Math.max(1e-12, sumSq / (n - 1));
-  // Process noise Q — equilibrium drifts slowly: Q = R × 0.01
-  const Q = R * 0.01;
-
-  let mu = closes[0], P = R;
-  for (let t = 0; t < n; t++) {
-    const Pp = P + Q;                      // predicted covariance
-    const K  = Pp / (Pp + R);             // Kalman gain
-    mu = mu + K * (closes[t] - mu);       // state update
-    P  = (1 - K) * Pp;                    // covariance update
-  }
-
-  // Kalman Z: standardised deviation accounting for estimation uncertainty
-  const kZ = (closes[n - 1] - mu) / Math.sqrt(Math.max(1e-12, P + R));
-  return { mu, P, kZ, R };
-}
-
-/* Sample entropy — measures regularity/predictability of a time series.
-   Low value = series is regular and cyclic → mean reversion is reliable.
-   High value = series is chaotic → even a perfect Z-score may fail.
-   Based on Richman & Moorman (2000), standard choice: m=2, r=0.2×σ. */
-function sampleEntropy(data, m, rFactor) {
-  if (m === undefined) m = 2;
-  if (rFactor === undefined) rFactor = 0.2;
-  const n = data.length;
-  if (n < 10) return 1.0;
-  const mean = data.reduce((a, b) => a + b, 0) / n;
-  const variance = data.reduce((a, b) => a + (b - mean) ** 2, 0) / n;
-  const std = Math.sqrt(variance) || 1e-9;
-  const r = rFactor * std;
-  let Bm = 0, Am = 0;
-  const N = n - m;
-  for (let i = 0; i < N; i++) {
-    for (let j = i + 1; j < N; j++) {
-      // test template match of length m
-      let matchM = true;
-      for (let k = 0; k < m; k++) {
-        if (Math.abs(data[i + k] - data[j + k]) > r) { matchM = false; break; }
-      }
-      if (matchM) {
-        Bm++;
-        // extend by one — test length m+1
-        if (i + m < n && j + m < n && Math.abs(data[i + m] - data[j + m]) <= r) Am++;
-      }
-    }
-  }
-  if (Bm === 0 || Am === 0) return 2.0;   // maximum entropy sentinel
-  return -Math.log(Am / Bm);
-}
-
-/* Cache for all-coin closes (RMT layer needs them all) */
-let _qaAllClosesCache = null, _qaAllCacheTm = 0;
-const _QA_ALL_TTL = 15 * 60 * 1000; // 15-minute cache
-
-async function _fetchAllCoinCloses90() {
-  const now = Date.now();
-  if (_qaAllClosesCache && now - _qaAllCacheTm < _QA_ALL_TTL) return _qaAllClosesCache;
-  const results = await Promise.all(
-    COINS.map(c =>
-      fetch(`${BINANCE}/klines?symbol=${c.sym}USDT&interval=1d&limit=91`)
-        .then(r => r.ok ? r.json() : [])
-        .then(k => ({ sym: c.sym, closes: k.map(x => +x[4]) }))
-        .catch(() => ({ sym: c.sym, closes: [] }))
-    )
-  );
-  const valid = results.filter(r => r.closes.length >= 20);
-  _qaAllClosesCache = valid;
-  _qaAllCacheTm = now;
-  return valid;
-}
-
-/* ── Main quantum analysis orchestrator ── */
-let _qaRunning = false;
-
-async function runQuantumAnalysis(ratioSeries) {
-  const panel   = document.getElementById('quantumPanel');
-  const content = document.getElementById('qaContent');
-  if (!panel || !content) return;
-
-  // Reset toggle to collapsed state for new analysis
-  const _toggleRow = document.getElementById('detailToggleRow');
-  const _detailWrap = document.getElementById('detailedAnalysisWrap');
-  const _toggleArrow = document.getElementById('detailToggleArrow');
-  const _toggleBtn = document.getElementById('detailToggleBtn');
-  if (_toggleRow) _toggleRow.style.display = 'none';
-  if (_detailWrap) _detailWrap.style.display = 'none';
-  if (_toggleArrow) _toggleArrow.style.transform = '';
-  if (_toggleBtn) { const s = _toggleBtn.querySelector('span:nth-child(2)'); if(s) s.textContent = '🔬 Show detailed analysis'; }
-
-  if (ratioSeries.length < 15) {
-    panel.style.display = 'block';
-    content.innerHTML = '<div class="qa-loading">Not enough ratio data for quantum analysis.</div>';
-    return;
-  }
-
-  panel.style.display = 'block';
-  content.innerHTML = '<div class="qa-loading">⚛ Running quantum analysis — Kalman · Entropy · RMT...</div>';
-
-  const rCloses = ratioSeries.map(r => r.c);
-
-  /* Layer 2: Kalman (instant — uses existing data) */
-  const kalman = kalmanFilter1D(rCloses);
-
-  /* Layer 3: Sample Entropy (instant — uses existing data, limited to 60 pts) */
-  const entropyData = rCloses.slice(-60);
-  const sampEnt = sampleEntropy(entropyData, 2, 0.2);
-
-  /* Layer 1: RMT (async — fetches all 10 coins) */
-  let rmt = null;
-  try {
-    const allCoins = await _fetchAllCoinCloses90();
-    if (allCoins.length >= 4) {
-      const priceArrays = allCoins.map(c => c.closes);
-      const C = buildCorrMatrix(priceArrays);
-      const eigs = jacobiEigenvalues(C);
-      const N = priceArrays.length;
-      const T = Math.min(...priceArrays.map(p => p.length)) - 1;
-      if (T > 0) {
-        const lambdaMax = (1 + Math.sqrt(N / T)) ** 2;
-        const lambda1   = eigs[0];
-        const syncIndex = lambda1 / lambdaMax;
-        // Count eigenvalues above threshold (excluding lambda1)
-        const sectorCount = eigs.slice(1).filter(e => e > lambdaMax).length;
-        let marketMode, marketColor;
-        if      (syncIndex < 2)  { marketMode = 'DECORRELATED';   marketColor = 'green'; }
-        else if (syncIndex < 3.5){ marketMode = 'MODERATE SYNC';  marketColor = 'amber'; }
-        else                     { marketMode = 'HIGH SYNC';       marketColor = 'red'; }
-        rmt = { syncIndex, lambdaMax, lambda1, sectorCount, marketMode, marketColor, N, T };
-      }
-    }
-  } catch (e) {
-    console.warn('RMT analysis error:', e);
-  }
-
-  const qScore = _renderQuantumPanel(kalman, sampEnt, rmt, rCloses);
-
-  /* Entry Timing — runs on same data, no extra fetches needed */
-  const entryTiming = analyzeEntryTiming(rCloses);
-  if (entryTiming && isFinite(entryTiming.hurst)) _lastHurst = entryTiming.hurst;
-  renderEntryPanel(entryTiming);
-
-  /* Unified verdict — synthesises all three systems into ONE final answer */
-  applyUnifiedVerdict(entryTiming);
-
-  /* Show the "detailed analysis" toggle now that panels are populated */
-  const toggleRow = document.getElementById('detailToggleRow');
-  if (toggleRow) toggleRow.style.display = 'block';
-}
-
-function _renderQuantumPanel(kalman, sampEnt, rmt, rCloses) {
-  const content = document.getElementById('qaContent');
-  if (!content) return;
-
-  /* Kalman card */
-  const kZ      = isFinite(kalman.kZ) ? kalman.kZ : 0;
-  const kZAbs   = Math.abs(kZ);
-  const kZColor = kZAbs > 2.5 ? 'green' : kZAbs > 1.5 ? 'amber' : 'blue';
-  const kZLabel = kZAbs > 2.5 ? 'Strong signal'
-    : kZAbs > 1.5 ? 'Moderate signal'
-    : kZAbs > 0.8 ? 'Weak signal'
-    : 'Near equilibrium';
-  const kZStr   = (kZ >= 0 ? '+' : '') + kZ.toFixed(2) + 'σ';
-  const dynMean = isFinite(kalman.mu) ? kalman.mu : 0;
-  const dynMeanFmt = dynMean >= 1 ? dynMean.toFixed(4) : dynMean.toFixed(7);
-
-  /* Entropy card */
-  const entClean  = isFinite(sampEnt) ? sampEnt : 2.0;
-  const entColor  = entClean < 0.6 ? 'green' : entClean < 1.1 ? 'amber' : 'red';
-  const entLabel  = entClean < 0.6 ? 'Regular — reversion reliable'
-    : entClean < 1.1 ? 'Normal variability'
-    : entClean < 1.6 ? 'Irregular — caution'
-    : 'Chaotic — lower confidence';
-  const entStr    = entClean.toFixed(2);
-
-  /* RMT card */
-  const rmtColor  = rmt ? rmt.marketColor : 'amber';
-  const syncStr   = rmt ? rmt.syncIndex.toFixed(2) + '×' : '—';
-  const syncLabel = rmt ? rmt.marketMode : 'Awaiting data';
-  const sectorStr = rmt ? rmt.sectorCount + ' diverging sector' + (rmt.sectorCount !== 1 ? 's' : '') : '—';
-
-  /* Composite Quantum Score:
-     Signal strength × market quality × predictability quality */
-  const rmtQ  = rmt
-    ? Math.max(0, Math.min(100, Math.round(100 * Math.max(0, 4.5 - rmt.syncIndex) / 4.5)))
-    : 50; // unknown → neutral 50
-  _lastRmtQ = rmtQ;
-  const entQ  = Math.max(0, Math.min(100, Math.round((2.0 - entClean) / 2.0 * 100)));
-  const sigQ  = Math.min(100, Math.round(kZAbs / 3 * 100));
-  // Weighted average: signal 40% + market quality 35% + predictability 25%
-  // Worst component also acts as a soft penalty (pulls score toward it)
-  const worst = Math.min(sigQ, rmtQ, entQ);
-  const wavg  = Math.round(sigQ * 0.40 + rmtQ * 0.35 + entQ * 0.25);
-  const qScore = Math.round(wavg * 0.75 + worst * 0.25); // worst drags score down
-  const qColor = qScore >= 60 ? '#00c076' : qScore >= 30 ? '#f5a623' : '#ef4444';
-  const qLabel = qScore >= 70 ? 'Exceptional — all three layers aligned. Act with confidence.'
-    : qScore >= 50 ? 'Good — conditions support the signal.'
-    : qScore >= 30 ? 'Moderate — standard caution applies.'
-    : qScore >= 15 ? 'Low — environment or predictability flags raised.'
-    : 'Poor — do not rely on signal alone.';
-
-  /* Dynamic mean vs static 90-day mean */
-  const n90     = Math.min(90, rCloses.length);
-  const staticM = rCloses.slice(-n90).reduce((a, b) => a + b, 0) / n90;
-  const mDiff   = staticM > 0 ? ((dynMean - staticM) / staticM * 100) : 0;
-  const staticFmt = staticM >= 1 ? staticM.toFixed(4) : staticM.toFixed(7);
-  const mDiffStr  = (mDiff >= 0 ? '+' : '') + mDiff.toFixed(2) + '%';
-
-  /* Kalman Z vs static Z */
-  const staticZ  = staticM > 0 ? (rCloses[rCloses.length - 1] - staticM) / (Math.sqrt(rCloses.slice(-n90).reduce((a,b)=>a+(b-staticM)**2,0)/n90)||0.0001) : 0;
-  const staticZStr = (staticZ >= 0 ? '+' : '') + staticZ.toFixed(2) + 'σ';
-
-  content.innerHTML = `
-    <div class="qa-grid">
-      <div class="qa-card qa-${rmtColor}">
-        <div class="qa-card-lbl">RMT Sync Index</div>
-        <div class="qa-card-val">${syncStr}</div>
-        <div class="qa-card-sub">${syncLabel}<br>${sectorStr}</div>
-      </div>
-      <div class="qa-card qa-${kZColor}">
-        <div class="qa-card-lbl">Kalman Z-Score</div>
-        <div class="qa-card-val">${kZStr}</div>
-        <div class="qa-card-sub">${kZLabel}<br>Dynamic μ: ${dynMeanFmt}</div>
-      </div>
-      <div class="qa-card qa-${entColor}">
-        <div class="qa-card-lbl">Sample Entropy</div>
-        <div class="qa-card-val">${entStr}</div>
-        <div class="qa-card-sub">${entLabel}</div>
-      </div>
-    </div>
-    <div class="qa-status">
-      <div class="qa-row">
-        <div class="qa-dot ${rmt ? rmt.marketColor : 'amber'}"></div>
-        <span class="qa-row-lbl">Market synchronisation (RMT)</span>
-        <span class="qa-row-val">${rmt ? rmt.marketMode + ' &nbsp;λ₁=' + rmt.lambda1.toFixed(2) + '  λ_max=' + rmt.lambdaMax.toFixed(2) : 'Computing...'}</span>
-      </div>
-      <div class="qa-row">
-        <div class="qa-dot ${Math.abs(mDiff) > 5 ? 'amber' : 'green'}"></div>
-        <span class="qa-row-lbl">Dynamic equilibrium drift (Kalman)</span>
-        <span class="qa-row-val">Kalman ${dynMeanFmt} vs Static ${staticFmt} (${mDiffStr}) &nbsp;|&nbsp; Kalman Z ${kZStr} vs Static ${staticZStr}</span>
-      </div>
-      <div class="qa-row">
-        <div class="qa-dot ${entColor}"></div>
-        <span class="qa-row-lbl">Predictability regime (Entropy)</span>
-        <span class="qa-row-val">SampEn ${entStr} — ${entClean < 0.6 ? 'HIGH' : entClean < 1.1 ? 'NORMAL' : 'LOW'} predictability</span>
-      </div>
-    </div>
-    <div class="qa-composite">
-      <div class="qa-q-score" style="color:${qColor}">${qScore}</div>
-      <div class="qa-q-body">
-        <div class="qa-q-title" style="color:${qColor}">Quantum Quality Score /100</div>
-        <div class="qa-q-sub">${qLabel}<br>
-          <span style="opacity:.65;font-size:10px">Signal ${sigQ}% × Market quality ${rmtQ}% × Predictability ${entQ}%</span>
-        </div>
-      </div>
-    </div>`;
-  return qScore;
-}
-
-/* Called by the refresh button in the panel */
-function toggleDetailedAnalysis() {
-  const wrap = document.getElementById('detailedAnalysisWrap');
-  const arrow = document.getElementById('detailToggleArrow');
-  const btn = document.getElementById('detailToggleBtn');
-  if (!wrap) return;
-  const isOpen = wrap.style.display !== 'none';
-  wrap.style.display = isOpen ? 'none' : 'block';
-  arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
-  btn.querySelector('span:nth-child(2)').textContent = isOpen ? '🔬 Show detailed analysis' : '🔬 Hide detailed analysis';
-}
-
-function triggerQuantumRefresh() {
-  if (_qaRunning) return;
-  _qaAllClosesCache = null; // force full refetch
-  _qaRunning = true;
-  runQuantumAnalysis(_currentRatioS).finally(() => { _qaRunning = false; });
-}
-
-/* ═══════════════════════════════════════════════════════════
-   OMEGA SCORE — physics-inspired unified readiness number
-   Four scored forces + two gates + one modifier. Range 0–100.
-
-   SE   = Signal Edge       — how far the ratio is from equilibrium (Z-score)
-   MRQ  = Mean-Reversion Quality — Hurst < 0.5 = spring-like, < 0.80 = acceptable
-   EPM  = Entry Phase Multiplier — hard phase gate; 0 = no signal, 1.0 = perfect decel
-   OURF = Ornstein-Uhlenbeck Restoring Force — "spring tension" pulling back to mean
-   MQ   = Market Quality  — RMT: low sync = market is NOT herding, your edge is real
-
-   inner = SE×0.35 + MRQ×0.25 + OURF×0.20 + MQ×0.20
-   OMEGA = round(EPM × inner)
-
-   OMEGA-SCAN variant (for Best Swap scanner):
-   — SE starts at Z=0 (no dead zone) so all pairs get differentiated
-   — EPM never zeros out: phase-0=0.20, phase-1=0.40, phase-2=0.62, phase-3=1.0, 4=0.90, 5=0.70
-   — This ensures ranking is always meaningful across 50-100 pairs
-═══════════════════════════════════════════════════════════ */
-function computeOmegaScan(et, rmtQ, pairCorr) {
-  // IDENTICAL formula to computeOmegaScore so scanner and analyzer always show the same number.
-  // pairCorr is passed explicitly so each scanned pair uses its own correlation (not the global).
-  if (!et) return 0;
-  const { omega } = computeOmegaScore(et, rmtQ, pairCorr);
-  return omega;
-}
-function computeOmegaScore(et, rmtQ, pairCorrOverride) {
-  if (!et) return { omega: 0, se: 0, mrq: 0, epm: 0, ourf: 0, mq: rmtQ };
-
-  const hurst      = et.hurst      || 0.5;
-  const phase      = et.phase      || 0;
-  const ouForcePct = et.ouForcePct !== undefined ? et.ouForcePct : 0;
-
-  // SE — Signal Edge: DIRECTIONAL — only rewards positive Z (selling the overvalued asset).
-  // If the pair ratio is below its mean (Z negative), you'd be selling the cheap asset → no edge.
-  // Uses signed Kalman Z when available (more accurate dynamic equilibrium), falls back to static Z.
-  const signedZ = (et.kalmanZ !== undefined && isFinite(et.kalmanZ) && et.kalmanAbsZ > 0)
-    ? et.kalmanZ
-    : (et.curZ !== undefined ? et.curZ : 0);
-  const zForSE = signedZ; // keep signed — only positive Z earns Signal Edge
-  const se = Math.max(0, Math.min(100, Math.round((zForSE - 1.0) / 2.5 * 100)));
-
-  // MRQ — Mean-Reversion Quality (Hurst ≤ 0.25 = perfect, 0.80 = zero, > 0.80 = strongly trending)
-  // Zero point raised from 0.72 → 0.80 so H=0.73 still earns some credit (~13pts)
-  const mrq = Math.max(0, Math.min(100, Math.round((0.80 - hurst) / 0.55 * 100)));
-
-  // EPM — Entry Phase Multiplier (physics gate — can't have a high score in wrong phase)
-  const epmTable = [0, 0.30, 0.52, 1.0, 0.93, 0.72];
-  const epm = epmTable[Math.min(phase, 5)];
-
-  // OURF — OU Restoring Force: DIRECTIONAL (fix 1).
-  // Negative ouForcePct = force pulling ratio DOWN toward mean = good when Z>0 (ratio above mean).
-  // Positive ouForcePct = force pushing ratio FURTHER away = no credit.
-  // We negate so that a strong downward pull (negative %) becomes a positive score.
-  const ourf = Math.max(0, Math.min(100, Math.round(-ouForcePct * 1.8)));
-
-  // MQ — Market Quality: blend of RMT (global) + pairwise correlation (specific) (fix 2).
-  // High pairwise correlation = coins normally move together = reversion is statistically supported.
-  // Low correlation = coins are independent = divergence may just be permanent drift.
-  // pairCorrScore: corr≥0.85→100, corr≥0.70→75, corr≥0.55→50, corr≥0.40→25, <0.40→0
-  // Use explicit override (scanner passes per-pair corr) or fall back to global (main analyzer sets it)
-  const pairCorr = (typeof pairCorrOverride === 'number' && isFinite(pairCorrOverride))
-    ? pairCorrOverride
-    : (typeof _lastPairCorr === 'number' && isFinite(_lastPairCorr)) ? _lastPairCorr : 0.65;
-  const pairCorrScore = Math.max(0, Math.min(100, Math.round((pairCorr - 0.40) / 0.50 * 100)));
-  const mq = Math.round(rmtQ * 0.55 + pairCorrScore * 0.45);
-
-  const inner = se * 0.35 + mrq * 0.25 + ourf * 0.20 + mq * 0.20;
-
-  // ── HURST GATE (HM) — second hard gate after EPM ──────────────────────────
-  // Mean-reversion is the FOUNDATION of pairs trading.
-  // Without it, Signal Edge + OU Force are meaningless — the pair may never return.
-  // HM penalises trending pairs before the final score is calculated.
-  //
-  // Calibrated so score ranges are meaningful and differentiated:
-  //   H < 0.50  → HM 1.00  — perfect reverter, no penalty, can reach OMEGA 80+
-  //   H 0.50–0.65 → HM 1.00→0.80 — mild drift, small penalty, can still reach swap zone
-  //   H 0.65–0.80 → HM 0.80→0.60 — trending tendency, capped at caution zone (~50 max)
-  //   H > 0.80  → HM 0.60→0.50 — strong trend, premise weakened, watch zone only (~30-40)
-  //   Floor 0.50 — never fully crushes score; ensures differentiation between bad pairs
-  //
-  // Verified targets:
-  //   H=0.35 → HM=1.00 → OMEGA up to ~80 (SWAP NOW) ✓
-  //   H=0.50 → HM=1.00 → OMEGA up to ~70 (SWAP NOW) ✓
-  //   H=0.65 → HM=0.80 → OMEGA max ~54 (CAUTION) ✓
-  //   H=0.80 → HM=0.60 → OMEGA max ~42 (WATCH) ✓
-  //   H=0.89 → HM=0.56 → OMEGA max ~30 (WATCH) ✓ — never reaches swap zone
-  //   H=1.00 → HM=0.50 → OMEGA max ~37 (WATCH) ✓ — floor, not zero
-  let hm;
-  if      (hurst < 0.50) hm = 1.00;
-  else if (hurst < 0.65) hm = 1.00 - ((hurst - 0.50) / 0.15) * 0.20;  // 1.00 → 0.80
-  else if (hurst < 0.80) hm = 0.80 - ((hurst - 0.65) / 0.15) * 0.20;  // 0.80 → 0.60
-  else                   hm = 0.60 - ((hurst - 0.80) / 0.20) * 0.10;  // 0.60 → 0.50 at H=1.0
-  hm = Math.max(0.50, Math.min(1.00, hm));
-
-  // Multi-scale bonus: if short-term H is HIGH but structural H is LOW,
-  // the trend is a short-term phenomenon only — it is likely exhausting.
-  // In this case, soften the HM penalty by up to +0.10 (max bonus).
-  // hTrend < 0 means H drops from short scale to long scale = trend exhausting.
-  const hTrend = (et.hTrend !== undefined && isFinite(et.hTrend)) ? et.hTrend : 0;
-  if (hTrend < -0.10) {
-    // Trend exhaustion bonus — scales linearly: -0.10 → +0.03, -0.30+ → +0.10
-    const exhaustionBonus = Math.min(0.10, Math.abs(hTrend + 0.10) / 0.20 * 0.10);
-    hm = Math.min(1.00, hm + exhaustionBonus);
-  }
-
-  // Entropy multiplier — confidence modifier based on how predictable the ratio series is.
-  // Low entropy (< 0.6) = highly regular = full score.
-  // High entropy (> 1.8) = chaotic = up to 25% discount (max penalty, never crushes score).
-  // Range: 0.75 → 1.00 (soft modifier, not a hard gate).
-  const entropy = (et.sampEnt !== undefined && isFinite(et.sampEnt)) ? et.sampEnt : 1.0;
-  const entropyMult = Math.max(0.75, Math.min(1.0, 1.2 - entropy * 0.33));
-
-  const omega = Math.round(epm * hm * inner * entropyMult);
-
-  return { omega, se, mrq, epm, hm, ourf, mq, pairCorrScore, entropy, entropyMult, zForSE };
-}
-
-/* ═══════════════════════════════════════════════════════════
-   UNIFIED VERDICT ENGINE
-   Takes swap score + quantum + entry timing → ONE final answer
-   This is the only thing the user needs to read
-═══════════════════════════════════════════════════════════ */
-function applyUnifiedVerdict(et) {
-  if (!et) return;
-  const phase  = et.phase;
-  const hurst  = et.hurst;
-  const absZ   = et.absZ;
-
-  /* ── OMEGA SCORE — the ONE number that means everything ── */
-  const om = computeOmegaScore(et, _lastRmtQ);
-  const omega = om.omega;
-
-  /* ── Hurst warning (pair may not be a good mean-reversion pair) ── */
-  const hurstWarn = hurst > 0.80
-    ? `<br><span style="color:#f5a623">⚠️ Hurst ${hurst.toFixed(2)} — this pair is currently trending, not oscillating. Consider XRP/XLM or XRP/ADA for more reliable mean reversion.</span>`
-    : '';
-
-  /* ── Determine verdict — driven entirely by OMEGA + phase ──
-     OMEGA already encodes everything: signal strength, pair quality, timing, spring force.
-     If OMEGA is low, the verdict is low — regardless of any individual metric being high. */
-  let title, instruction, boxClass, icon;
-
-  /* Build quality warnings for low forces */
-  const weakForces = [];
-  if (om.mrq < 20)  weakForces.push(`pair is trending (Hurst ${hurst.toFixed(2)}) — not reliably mean-reverting`);
-  if (om.ourf < 15) weakForces.push(`weak spring force — slow or uncertain reversion`);
-  if (om.mq < 25)   weakForces.push(`high market synchronisation — your edge may be reduced`);
-  const weakNote = weakForces.length
-    ? `<br><span style="color:#f5a623;font-size:12px">⚠️ Low score reason: ${weakForces.join(' · ')}</span>`
-    : '';
-
-  /* Phase 2 always overrides regardless of OMEGA — entering while ratio accelerates is wrong */
-  if (phase === 2) {
-    title = omega >= 35 ? 'STRONG SIGNAL — WAIT 1–2 DAYS' : 'SIGNAL BUILDING — WAIT';
-    instruction = `Ω ${omega} — Z-score is ${absZ.toFixed(2)}σ but the ratio is still accelerating away from the mean. Phase Gate is at ${Math.round(om.epm*100)}% — entering now means a worse price than tomorrow. <strong>Check again tomorrow.</strong> When deceleration appears, Ω will rise significantly.${weakNote}`;
-    boxClass = 'wait'; icon = '🟡';
-
-  /* OMEGA ≥ 60 — all forces aligned, high confidence */
-  } else if (omega >= 60) {
-    if (phase === 3)      { title = 'SWAP NOW — OPTIMAL ENTRY 🎯'; }
-    else if (phase === 4) { title = 'SWAP NOW — AT PEAK'; }
-    else if (phase === 5) { title = 'SWAP — LATE BUT STRONG'; }
-    else                  { title = 'SWAP NOW — HIGH CONFIDENCE'; }
-    instruction = `Ω ${omega} — All five forces aligned. Z=${absZ.toFixed(2)}σ, entry phase confirmed, mean-reversion quality good. <strong>High confidence trade.</strong>${weakNote}`;
-    boxClass = 'go'; icon = '🟢';
-
-  /* OMEGA 40–59 — decent signal, proceed carefully */
-  } else if (omega >= 40) {
-    if (phase === 3 || phase === 4) {
-      title = 'SWAP — PROCEED WITH CAUTION';
-      instruction = `Ω ${omega} — Timing is right (${et.phaseLabel}) but one or more forces are weak. This is a lower-confidence trade. Reduce position size or wait for Ω to reach 60+.${weakNote}`;
-      boxClass = 'go'; icon = '🟢';
-    } else if (phase === 5) {
-      title = 'LATE ENTRY — LOW CONFIDENCE';
-      instruction = `Ω ${omega} — Reversal already started and quality is moderate. Expected gain is reduced. Only enter if you're comfortable with the risk.${weakNote}`;
-      boxClass = 'wait'; icon = '🟡';
-    } else {
-      title = 'WATCH — APPROACHING SIGNAL';
-      instruction = `Ω ${omega} — Signal is building but not ready. Wait for deceleration (Phase 3) and Ω above 60 before acting.${weakNote}`;
-      boxClass = 'wait'; icon = '🟡';
-    }
-
-  /* OMEGA 20–39 — weak, monitoring only */
-  } else if (omega >= 20) {
-    title = 'WATCH — WEAK SIGNAL';
-    instruction = `Ω ${omega} — Signal exists but quality is too low to act. ${weakForces.length ? 'Weaknesses: ' + weakForces.join(', ') + '.' : ''} Check daily — wait for Ω 60+ before entering.`;
-    boxClass = 'wait'; icon = '🟡';
-
-  /* OMEGA < 20 — no meaningful edge */
-  } else {
-    title = 'HOLD — NO EDGE';
-    instruction = `Ω ${omega} — No meaningful opportunity. The ratio is near its mean or the pair lacks the required quality for a reliable trade. Stay in your current position.${weakNote}`;
-    boxClass = 'stop'; icon = '🔴';
-  }
-
-  /* ── Update Score Panel — OMEGA replaces the big number ── */
-  const sp = document.getElementById('scorePanel');
-  if (sp) {
-    // Recolor the panel border/bg
-    sp.className = `sp-box ${boxClass === 'go' ? 'green' : boxClass === 'wait' ? 'orange' : 'red'}`;
-
-    // Replace the big number with OMEGA
-    const numEl = sp.querySelector('.sp-num');
-    if (numEl) numEl.textContent = omega;
-
-    // Update the progress track to reflect OMEGA
-    const fillEl = sp.querySelector('.sp-fill');
-    const needleEl = sp.querySelector('.sp-needle');
-    if (fillEl) {
-      const omColor = omega >= 60 ? '#00c076' : omega >= 40 ? '#f5a623' : omega >= 20 ? '#f5a623' : '#ef4444';
-      fillEl.style.width = omega + '%';
-      fillEl.style.background = omColor;
-    }
-    if (needleEl) needleEl.style.left = omega + '%';
-
-    // Update verdict line
-    const vEl = sp.querySelector('.sp-verdict');
-    if (vEl) {
-      const em = boxClass === 'go' ? '✅' : boxClass === 'wait' ? '🟡' : '❌';
-      vEl.textContent = `${em} ${title}`;
-    }
-
-    // Update .sp-sub with OMEGA-accurate description + keep ratio/7d info
-    const subEl = sp.querySelector('.sp-sub');
-    if (subEl) {
-      // Build accurate OMEGA-driven subtitle
-      const omSubText = omega >= 60
-        ? `All forces aligned — high confidence entry`
-        : omega >= 40
-          ? `Signal exists — proceed with caution, reduce size`
-          : omega >= 20
-            ? `Weak signal — watch only, do not swap yet`
-            : `No edge — hold your current position`;
-      // Preserve the ratio/7d info span that renderScore injected
-      const existingSpan = subEl.querySelector('span');
-      subEl.innerHTML = omSubText + (existingSpan ? existingSpan.outerHTML : '');
-    }
-
-    // OMEGA breakdown bars (5 forces)
-    let omegaSec = sp.querySelector('.omega-section');
-    if (!omegaSec) {
-      omegaSec = document.createElement('div');
-      omegaSec.className = 'omega-section';
-      // Insert before the explain div
-      const explainEl = sp.querySelector('.sp-explain');
-      if (explainEl) sp.insertBefore(omegaSec, explainEl);
-      else sp.appendChild(omegaSec);
-    }
-    const epmPct = Math.round(om.epm * 100);
-    const entMultPct = Math.round((om.entropyMult || 1) * 100);
-    const kZStr = om.zForSE ? (om.zForSE >= 0 ? '+' : '') + om.zForSE.toFixed(2) + 'σ' : '';
-    // Hurst sub-label: use multi-scale data if available
-    const ms = et.msHurst;
-    let hurstSub;
-    if (ms && ms.scaleH && ms.scaleH.length >= 2) {
-      const sh = ms.shortH.toFixed(2);
-      const lh = ms.structuralH.toFixed(2);
-      const trend = ms.hTrend;
-      const trendIcon = trend < -0.10 ? '⬇' : trend > 0.10 ? '⬆' : '↔';
-      hurstSub = `Hurst ${et.hurst.toFixed(2)} · ${trendIcon} short ${sh} → structural ${lh}`;
-    } else {
-      const h60 = et.hurst60 !== undefined ? et.hurst60 : et.hurst;
-      const h30 = et.hurst30 !== undefined ? et.hurst30 : et.hurst;
-      hurstSub = et.hurstRegimeWarn
-        ? `Hurst 60d:${h60.toFixed(2)} / 30d:${h30.toFixed(2)} ⚠️ trending recently`
-        : `Hurst ${et.hurst.toFixed(2)}`;
-    }
-    // MQ sub-label: show both components
-    const corrPct = typeof _lastPairCorr === 'number' ? (_lastPairCorr * 100).toFixed(0) + '% corr' : '';
-    const mqSub = corrPct ? `RMT + ${corrPct}` : 'RMT sync';
-    // OURF sub-label: show direction context
-    const ourfPct = (et.ouForcePct||0).toFixed(1);
-    const ourfSub = et.ouForcePct < 0 ? `${ourfPct}%σ/day ← pulling to mean` : `+${ourfPct}%σ/day ← pushing away`;
-    const forces = [
-      { icon: '📏', lbl: 'Signal Edge',     val: om.se,   sub: kZStr ? `Kalman ${kZStr}` : '',  color: om.se   >= 60 ? '#00c076' : om.se   >= 30 ? '#f5a623' : '#ef4444' },
-      { icon: '🌀', lbl: 'Mean-Reversion',  val: om.mrq,  sub: hurstSub,                         color: om.mrq  >= 60 ? '#00c076' : om.mrq  >= 30 ? '#f5a623' : '#ef4444' },
-      { icon: '🌊', lbl: 'OU Spring Force', val: om.ourf, sub: ourfSub,                           color: om.ourf >= 60 ? '#00c076' : om.ourf >= 30 ? '#f5a623' : '#ef4444' },
-      { icon: '⚛',  lbl: 'Market Quality',  val: om.mq,   sub: mqSub,                             color: om.mq   >= 60 ? '#00c076' : om.mq   >= 30 ? '#f5a623' : '#ef4444' },
-    ];
-    omegaSec.innerHTML = `
-      <div class="omega-title">Ω OMEGA SCORE — Full Breakdown</div>
-      ${forces.map(f => `
-        <div class="omega-row">
-          <span class="omega-icon">${f.icon}</span>
-          <span class="omega-lbl">${f.lbl}</span>
-          <div class="omega-track"><div class="omega-fill" style="width:${f.val}%;background:${f.color}"></div></div>
-          <span class="omega-val" style="color:${f.color}">${f.val}</span>
-          ${f.sub ? `<span class="omega-epm">${f.sub}</span>` : ''}
-        </div>`).join('')}
-      <div class="omega-row" style="margin-top:6px;border-top:1px solid var(--border);padding-top:6px">
-        <span class="omega-icon">🚦</span>
-        <span class="omega-lbl">Phase Gate (EPM)</span>
-        <div class="omega-track"><div class="omega-fill" style="width:${epmPct}%;background:${epmPct>=80?'#00c076':epmPct>=50?'#f5a623':'#ef4444'}"></div></div>
-        <span class="omega-val" style="color:${epmPct>=80?'#00c076':epmPct>=50?'#f5a623':'#ef4444'}">${epmPct}%</span>
-        <span class="omega-epm">${et.phaseLabel}</span>
-      </div>
-      <div class="omega-row" style="margin-top:4px">
-        ${(() => {
-          const hmPct = Math.round((om.hm||1) * 100);
-          const hmCol = hmPct >= 90 ? '#00c076' : hmPct >= 60 ? '#f5a623' : '#ef4444';
-          const hmLbl = hmPct >= 90 ? 'Strong mean-reverter'
-            : hmPct >= 70 ? 'Mild trending — reduced confidence'
-            : hmPct >= 45 ? 'Trending — premise weakened'
-            : 'Strong trend — reversion not supported';
-          return `<span class="omega-icon">🧲</span>
-          <span class="omega-lbl">Reversion Gate (HM)</span>
-          <div class="omega-track"><div class="omega-fill" style="width:${hmPct}%;background:${hmCol}"></div></div>
-          <span class="omega-val" style="color:${hmCol}">${hmPct}%</span>
-          <span class="omega-epm">Hurst ${et.hurst.toFixed(2)} · ${hmLbl}${et.hTrend < -0.10 ? ' · ⬇ trend exhausting' : ''}</span>`;
-        })()}
-      </div>
-      <div class="omega-row" style="margin-top:4px">
-        <span class="omega-icon">🎲</span>
-        <span class="omega-lbl">Predictability</span>
-        <div class="omega-track"><div class="omega-fill" style="width:${entMultPct}%;background:${entMultPct>=95?'#00c076':entMultPct>=85?'#f5a623':'#ef4444'}"></div></div>
-        <span class="omega-val" style="color:${entMultPct>=95?'#00c076':entMultPct>=85?'#f5a623':'#ef4444'}">${entMultPct}%</span>
-        <span class="omega-epm">entropy ${(om.entropy||1).toFixed(2)} · confidence modifier</span>
-      </div>
-      <div style="margin-top:8px;padding:6px 8px;background:rgba(255,255,255,.04);border-radius:5px;font-size:10px;font-family:monospace;color:var(--text3);line-height:1.7">
-        <span style="color:var(--text2)">How OMEGA is calculated:</span><br>
-        Inner = SE×35% + MRQ×25% + OU×20% + MktQ×20%<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${om.se}×.35 + ${om.mrq}×.25 + ${om.ourf}×.20 + ${om.mq}×.20
-        = <strong style="color:var(--text)">${Math.round(om.se*.35+om.mrq*.25+om.ourf*.20+om.mq*.20)}</strong><br>
-        OMEGA = Phase(${epmPct}%) × HM(${Math.round((om.hm||1)*100)}%) × Inner × Entropy(${entMultPct}%)<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${(om.epm||0).toFixed(2)} × ${(om.hm||1).toFixed(2)} × ${Math.round(om.se*.35+om.mrq*.25+om.ourf*.20+om.mq*.20)} × ${(om.entropyMult||1).toFixed(2)}
-        = <strong style="color:${omega>=60?'#00c076':omega>=40?'#f5a623':'#ef4444'};font-size:12px">Ω ${omega}</strong>
-      </div>`;
-
-    // Small OMEGA label tag under the number
-    let trsTag = sp.querySelector('.sp-trs-tag');
-    if (!trsTag) {
-      trsTag = document.createElement('div');
-      trsTag.className = 'sp-trs-tag';
-      trsTag.style.cssText = 'font-size:11px;font-family:monospace;color:var(--text3);margin-top:4px';
-      const vtxt = sp.querySelector('.sp-verdict-text');
-      if (vtxt) vtxt.appendChild(trsTag);
-    }
-    const omLabel = omega >= 60 ? 'All forces aligned — high confidence'
-      : omega >= 40 ? 'Signal exists — proceed with caution'
-      : omega >= 20 ? 'Weak signal — watch only'
-      : 'No edge — hold position';
-    trsTag.innerHTML = `<span style="font-family:monospace;letter-spacing:.3px">Ω OMEGA SCORE &nbsp;·&nbsp; ${omLabel}</span>`;
-
-    // Fix Z-score panel label — update now that we have the definitive current Hurst
-    const zLabelEl = sp.querySelector('.sp-zscore-panel [style*="font-size:10px"]');
-    if (zLabelEl) {
-      const isTrending = hurst > 0.80;
-      const hurstNote = isTrending ? ` ⚠️ Hurst ${hurst.toFixed(2)}: pair is trending` : '';
-      const currentZLabel = zLabelEl.textContent || '';
-      // Replace any existing hurst warning then re-apply correctly
-      const baseLabel = currentZLabel.replace(/ ⚠️ Hurst.*$/,'');
-      zLabelEl.textContent = baseLabel.replace(' — very high reversion probability', isTrending ? '' : ' — very high reversion probability')
-                                       .replace(' — high reversion probability', isTrending ? '' : ' — high reversion probability') + hurstNote;
-    }
-  }
-
-  /* ── Update Master Action Box ── */
-  const ma = document.getElementById('masterAction');
-  if (!ma) return;
-  ma.style.display = 'block';
-  ma.className = `master-action ${boxClass}`;
-
-  const maIconEl  = document.getElementById('maIcon');
-  const maTitleEl = document.getElementById('maTitle');
-  const maInstrEl = document.getElementById('maInstruction');
-  const maScoreEl = document.getElementById('maScoreBadge');
-  const maReasonEl= document.getElementById('maReason');
-
-  if (maIconEl)  maIconEl.textContent  = icon;
-  if (maTitleEl) maTitleEl.textContent = title;
-  if (maInstrEl) maInstrEl.innerHTML   = instruction + hurstWarn;
-  if (maScoreEl) maScoreEl.textContent = `Ω ${omega}/100`;
-  if (maReasonEl) {
-    const omDetails = `SE ${om.se} · MRQ ${om.mrq} · OU ${om.ourf} · MktQ ${om.mq} · Phase×${Math.round(om.epm*100)}%`;
-    maReasonEl.innerHTML = `<span style="opacity:.65;font-size:11px">${omDetails} · ${et.phaseLabel}</span>`;
-    maReasonEl.style.display = 'block';
-  }
-
-  /* Update checklist to show unified breakdown */
-  const cl = document.getElementById('maChecklist');
-  if (cl) {
-    const checks = [
-      { ok: om.se   >= 50,  label: `Signal Edge ${om.se}/100 (Z=${absZ.toFixed(2)}σ)` },
-      { ok: om.mrq  >= 40,  label: `Mean-Reversion Quality ${om.mrq}/100 (Hurst ${hurst.toFixed(2)})` },
-      { ok: om.epm  >= 0.7, label: `Phase Gate ${Math.round(om.epm*100)}% — ${et.phaseLabel}` },
-      { ok: om.ourf >= 40,  label: `OU Spring Force ${om.ourf}/100` },
-      { ok: om.mq   >= 40,  label: `Market Quality ${om.mq}/100 (RMT)` },
-    ];
-    cl.innerHTML = checks.map(c =>
-      `<span class="ma-check ${c.ok ? 'safe' : 'fail'}">${c.ok ? '✓' : '✗'} ${c.label}</span>`
-    ).join('');
-  }
-
-  /* ── TRADE PLAN — shown only when OMEGA ≥ 60 (swap now zone) ── */
-  const tpEl = document.getElementById('maTradePlan');
-  if (tpEl) {
-    if (omega >= 60) {
-      // Pull data from entry timing + currentStats
-      const st = currentStats;
-      const halfLife   = et.halfLife < 990 ? et.halfLife : null;
-      const expGain    = st ? (st.expectedRevertGain || 0) : 0;
-      const mean90     = st ? (st.mean90 || 0) : 0;
-      const curRatio   = st ? (st.cur || 0) : 0;
-      const swingPct   = st ? (st.swingPct || 0) : 0;
-
-      // Days estimate: OU half-life × 0.7 = median time to mean (from daysToMeanEst formula)
-      // Range: faster end = halfLife×0.4, slower end = halfLife×1.5
-      const daysMin  = halfLife ? Math.max(1, Math.round(halfLife * 0.4)) : null;
-      const daysMid  = halfLife ? Math.max(2, Math.round(halfLife * 0.7)) : null;
-      const daysMax  = halfLife ? Math.max(3, Math.round(halfLife * 1.5)) : null;
-      const daysStr  = daysMid
-        ? `${daysMin}–${daysMax} days <span style="opacity:.55">(median ~${daysMid}d)</span>`
-        : 'Unknown — no OU data';
-
-      // Profit estimate: conservative = 60% reversion, target = full mean, optimistic = slight overshoot
-      const profConservative = Math.abs(expGain * 0.6).toFixed(1);
-      const profTarget       = Math.abs(expGain).toFixed(1);
-      const profOptimistic   = Math.abs(expGain * 1.25).toFixed(1);
-
-      // Mean target format
-      const meanFmt = mean90 > 1 ? mean90.toFixed(4) : mean90.toFixed(7);
-      const curFmt  = curRatio > 1 ? curRatio.toFixed(4) : curRatio.toFixed(7);
-
-      // Exit signal description
-      const exitSignal = `when Z-score returns below 0.5 OR ratio reaches ${meanFmt}`;
-
-      tpEl.style.display = 'block';
-      tpEl.innerHTML = `
-        <div style="margin-top:12px;border:1px solid rgba(0,192,118,0.25);border-radius:8px;overflow:hidden">
-          <div style="background:rgba(0,192,118,0.08);padding:8px 12px;font-size:10px;font-family:monospace;color:#00c076;font-weight:700;letter-spacing:.5px">
-            📋 TRADE PLAN
-          </div>
-          <div style="padding:12px;display:flex;gap:12px;align-items:stretch">
-            <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:6px;padding:10px 12px;text-align:center">
-              <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:4px">⏱ SWAP BACK IN</div>
-              <div style="font-size:26px;font-weight:700;color:var(--text)">${daysMid ? daysMid : '—'}<span style="font-size:13px;font-weight:400;color:var(--text3)"> days</span></div>
-              <div style="font-size:10px;color:var(--text3);margin-top:2px">target: ${meanFmt}</div>
-            </div>
-            <div style="flex:1;background:rgba(0,192,118,0.06);border-radius:6px;padding:10px 12px;text-align:center;border:1px solid rgba(0,192,118,0.2)">
-              <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:4px">💰 EXPECTED GAIN</div>
-              <div style="font-size:26px;font-weight:700;color:#00c076">+${profTarget}<span style="font-size:13px">%</span></div>
-              <div style="font-size:10px;color:var(--text3);margin-top:2px">more ${fromSym} after swap back</div>
-            </div>
-          </div>
-          <div style="padding:0 12px 10px;font-size:10px;color:var(--text3)">
-            📤 Swap back when Z-score drops below 0.5 or ratio reaches ${meanFmt}
-          </div>
-        </div>`;
-    } else {
-      tpEl.style.display = 'none';
-      tpEl.innerHTML = '';
-    }
-  }
-}
 
 /* ═══════════════════════
    LIVE UPDATER
@@ -4526,7 +3143,6 @@ function initTabs(){
       document.getElementById('tab-'+tab).classList.add('active');
       if(tab==='tracker'){ Object.keys(_scoreCache).forEach(k=>{delete _scoreCache[k]; delete _scoreCacheTime[k];}); initTrackerUI(); startTrackerLiveRefresh(); }
       if(tab==='alerts'&&!window._alertsInited){ initAlerts(); window._alertsInited=true; }
-      if(tab==='scalps') initScalpTab();
     });
   });
 }
@@ -4632,202 +3248,41 @@ function computeQSS(closes, corr) {
     : z30 > 2.0 ? 4 : z30 > 1.5 ? 5 : z30 > 1.0 ? 6 : 7;
   const meanFmt  = mean30 > 1 ? mean30.toFixed(4) : mean30.toFixed(7);
 
+  /* ── Z-depth gate — require a REAL statistical anomaly, not just component overlap ──
+     A high QSS can happen even when z30 barely clears 0.8, because RSI/Bollinger/OU can
+     line up on their own. That's a shallow, low-conviction "anomaly" — the mean-reversion
+     edge behind it is thin. Require z30 ≥ 1.0 before a pair is allowed to show as a
+     genuine go/SCALP NOW signal (still shown otherwise, just downgraded to watch-only). */
+  const meetsZGate = z30 >= 1.0;
+
+  /* ── Oscillation check — is this pair actually mean-reverting, or just trending? ──
+     Reuses the same idea as the post-entry health check (mean-crossing count), but applied
+     BEFORE entry: a pair that hasn't crossed its own 45-day mean at least twice recently has
+     been drifting in one direction, not oscillating. QSS's 30-day reversion assumption is
+     much weaker on a pair like that — this is exactly the "shifted structurally lower /
+     no recovery attempt" failure pattern, caught in advance instead of after the fact. */
+  let oscillationOk = true, oscillationNote = '';
+  if (n >= 45) {
+    const w45 = closes.slice(-45);
+    const mean45 = w45.reduce((a,b)=>a+b,0)/45;
+    let crossings45 = 0;
+    for (let i=1;i<w45.length;i++){
+      if ((w45[i-1]-mean45)*(w45[i]-mean45) < 0) crossings45++;
+    }
+    oscillationOk = crossings45 >= 2;
+    if (!oscillationOk) oscillationNote = 'This pair has been trending, not oscillating, over the last 45 days — mean-reversion is less reliable here.';
+  }
+
   return {
     qss, se_q, bp, re, qf, corrQ, mt,
     z30, bollPos, rsi, ouFPct20,
-    expGain, holdDays, mean30, meanFmt, ouHL20
+    expGain, holdDays, mean30, meanFmt, ouHL20,
+    meetsZGate, oscillationOk, oscillationNote,
+    /* A trustworthy "go" needs the score AND a real anomaly AND genuine oscillation history */
+    isGo: qss >= 65 && meetsZGate && oscillationOk
   };
 }
 
-function initScalpTab() {
-  // Sync holding coin with main analyzer if possible
-  const sel = document.getElementById('scalpHoldingCoin');
-  if (sel && typeof fromSym !== 'undefined') {
-    if ([...sel.options].some(o=>o.value===fromSym)) sel.value = fromSym;
-  }
-}
-
-async function runScalpScan() {
-  const btn     = document.getElementById('scalpScanBtn');
-  const results = document.getElementById('scalpResults');
-  const holding = document.getElementById('scalpHoldingCoin')?.value || 'ALL';
-  const minGain = parseFloat(document.getElementById('scalpMinGain')?.value || '1.5');
-  const fee     = parseFloat(document.getElementById('scalpFee')?.value || '0.2');
-  const allMode = holding === 'ALL';
-
-  if (btn) { btn.disabled=true; btn.textContent='⏳ Scanning...'; }
-  results.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px;font-family:monospace">
-    ⚡ ${allMode ? 'Scanning all 45 pairs...' : 'Scanning pairs from ' + holding + '...'}<br>
-    <span style="opacity:.5;font-size:10px">${allMode ? 'Fetching all 10 coins at once — comparing every combination' : 'Fetching 30-day data for each pair'}</span>
-  </div>`;
-
-  const scanTime  = Date.now();
-  const scalpData = [];
-
-  if (allMode) {
-    // Fetch all coins in one parallel burst
-    const coinMap = {};
-    await Promise.all(COINS_LIST.filter(c => !SCALP_EXCLUDE.has(c)).map(async sym => {
-      try {
-        const d = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=35`).then(r=>r.json());
-        if (Array.isArray(d)) coinMap[sym] = d.map(k=>+k[4]);
-      } catch(e) {}
-    }));
-    const coins = Object.keys(coinMap);
-    for (let i = 0; i < coins.length; i++) {
-      for (let j = i+1; j < coins.length; j++) {
-        const a = coins[i], b = coins[j];
-        const fC = coinMap[a], tC = coinMap[b];
-        const n  = Math.min(fC.length, tC.length);
-        const corr = calcCorrelation(fC, tC);
-        // Score both directions
-        const ratioAB = Array.from({length:n},(_,k)=>fC[fC.length-n+k]/tC[tC.length-n+k]);
-        const ratioBA = Array.from({length:n},(_,k)=>tC[tC.length-n+k]/fC[fC.length-n+k]);
-        const qAB = computeQSS(ratioAB, corr);
-        const qBA = computeQSS(ratioBA, corr);
-        for (const [h, s, q] of [[a,b,qAB],[b,a,qBA]]) {
-          if (!q || q.z30 < 0.8) continue;
-          const netGain = q.expGain - fee;
-          if (netGain < minGain) continue;
-          scalpData.push({ holding: h, sym: s, corr, netGain, ...q });
-        }
-      }
-    }
-  } else {
-    // Single-coin mode: holding is fixed
-    const candidates = COINS_LIST.filter(c => c !== holding && !SCALP_EXCLUDE.has(c));
-    await Promise.all(candidates.map(async (sym) => {
-      try {
-        const [fk, tk] = await Promise.all([
-          fetch(`https://api.binance.com/api/v3/klines?symbol=${holding}USDT&interval=1d&limit=35`).then(r=>r.json()),
-          fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=35`).then(r=>r.json())
-        ]);
-        const fC = fk.map(k=>+k[4]);
-        const tC = tk.map(k=>+k[4]);
-        const n  = Math.min(fC.length, tC.length);
-        const ratioC = Array.from({length:n},(_,i)=>fC[fC.length-n+i]/tC[tC.length-n+i]);
-        const corr   = calcCorrelation(fC, tC);
-        const q      = computeQSS(ratioC, corr);
-        if (!q || q.z30 < 0.8) return;
-        const netGain = q.expGain - fee;
-        if (netGain < minGain) return;
-        scalpData.push({ holding, sym, corr, netGain, ...q });
-      } catch(e) {}
-    }));
-  }
-
-  scalpData.sort((a,b) => b.qss - a.qss);
-  if (btn) { btn.disabled=false; btn.textContent='⚡ Scan Quick Scalps'; }
-  renderScalpResults(holding, scalpData, minGain, fee, scanTime);
-}
-
-function renderScalpResults(holding, data, minGain, fee, scanTime) {
-  const results = document.getElementById('scalpResults');
-  if (!results) return;
-
-  const elapsed = Math.round((Date.now()-scanTime)/1000);
-
-  if (!data.length) {
-    results.innerHTML = `
-      <div style="text-align:center;padding:32px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
-        <div style="font-size:32px;margin-bottom:8px">🔍</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">No scalp opportunities right now</div>
-        <div style="font-size:12px;color:var(--text3)">
-          ${holding === 'ALL' ? 'No pairs qualify right now across all coins.' : 'No pair from ' + holding + ' qualifies right now.'}<br><br>
-          Requirements: Z30 &gt; 0.8 · net gain after fees ≥ ${minGain}%.<br>
-          Check again later or lower the minimum gain threshold.
-        </div>
-      </div>`;
-    return;
-  }
-
-  const cards = data.map(d => {
-    const isGo   = d.qss >= 65;
-    const isHot  = d.qss >= 45 && d.qss < 65;
-    const cls    = isGo ? 'qs-go' : isHot ? 'qs-hot' : 'qs-weak';
-    const col    = isGo ? '#00c076' : isHot ? '#f5a623' : 'var(--text3)';
-    const badge  = isGo ? `<span class="qs-badge" style="background:rgba(0,192,118,.15);color:#00c076">⚡ SCALP NOW</span>`
-                 : isHot ? `<span class="qs-badge" style="background:rgba(245,166,35,.15);color:#f5a623">👁 WATCH</span>`
-                 : `<span class="qs-badge" style="background:rgba(255,255,255,.06);color:var(--text3)">WEAK</span>`;
-
-    const holdStr  = `~${d.holdDays}d${d.ouHL20 > 20 ? '*' : ''}`;
-    const netStr   = (d.expGain - fee).toFixed(1);
-    const netCol   = parseFloat(netStr) > 0 ? '#00c076' : '#ef4444';
-
-    // Mini force bars
-    const bars = [
-      { lbl:'Z30',  val: d.se_q,  raw: d.z30.toFixed(2)+'σ' },
-      { lbl:'Boll', val: d.bp,    raw: d.bollPos.toFixed(0)+'%' },
-      { lbl:'RSI',  val: d.re,    raw: d.rsi.toFixed(0) },
-      { lbl:'OU',   val: d.qf,    raw: d.ouFPct20.toFixed(1)+'%/d' },
-      { lbl:'Corr', val: d.corrQ, raw: d.corr.toFixed(2) },
-    ].map(b => `
-      <div style="display:flex;align-items:center;gap:4px;font-size:9px">
-        <span style="width:22px;color:var(--text3);font-family:monospace">${b.lbl}</span>
-        <div class="qs-bar-track" style="flex:1"><div class="qs-bar-fill" style="width:${b.val}%;background:${b.val>=60?'#00c076':b.val>=30?'#f5a623':'#ef4444'}"></div></div>
-        <span style="width:34px;text-align:right;color:var(--text3);font-family:monospace">${b.raw}</span>
-      </div>`).join('');
-
-    return `
-      <div class="qs-card ${cls}">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div>
-            <div class="qs-pair" style="color:${col}">${d.holding || holding} → ${d.sym}</div>
-            <div style="margin-top:2px">${badge}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="qs-score" style="color:${col}">${d.qss}</div>
-            <div style="font-size:8px;color:var(--text3);font-family:monospace">QSS /100</div>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:6px;background:rgba(255,255,255,.03);border-radius:5px;padding:5px">
-          <div style="text-align:center">
-            <div style="font-size:8px;color:var(--text3);font-family:monospace">GAIN</div>
-            <div style="font-size:13px;font-weight:700;color:#00c076">+${d.expGain.toFixed(1)}%</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:8px;color:var(--text3);font-family:monospace">HOLD</div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)">${holdStr}</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:8px;color:var(--text3);font-family:monospace">NET</div>
-            <div style="font-size:13px;font-weight:700;color:${netCol}">+${netStr}%</div>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:5px">${bars}</div>
-        <div style="font-size:8px;font-family:monospace;color:var(--text3);background:rgba(255,255,255,.03);border-radius:4px;padding:4px 6px;margin-bottom:5px;line-height:1.6">
-          Inner = Z30×30%+Boll×25%+RSI×20%+OU×15%+Corr×10%<br>
-          &nbsp;= ${d.se_q}×.30+${d.bp}×.25+${d.re}×.20+${d.qf}×.15+${d.corrQ}×.10 = <strong style="color:var(--text)">${Math.round(d.se_q*.30+d.bp*.25+d.re*.20+d.qf*.15+d.corrQ*.10)}</strong>
-          &nbsp;·&nbsp;MT×${(d.mt*100).toFixed(0)}% = <strong style="color:${col}">QSS ${d.qss}</strong>
-        </div>
-        <div style="font-size:9px;color:var(--text3)">
-          → <strong style="color:var(--text2)">${d.meanFmt}</strong> · exit Z30&lt;0.3
-          ${d.ouHL20 > 20 ? ' · <span style="opacity:.55">*est. from Z30</span>' : ''}
-        </div>
-        <div style="margin-top:6px">
-          <button onclick="switchAnalyzerPair('${holding}','${d.sym}')" style="font-family:monospace;font-size:9px;padding:3px 10px;border-radius:5px;border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">
-            Full analysis →
-          </button>
-        </div>
-      </div>`;
-  }).join('');
-
-  const goCount = data.filter(d=>d.qss>=65).length;
-  const summary = goCount > 0
-    ? `<div style="background:rgba(0,192,118,.08);border:1px solid rgba(0,192,118,.3);border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:12px;color:#00c076;font-weight:700">
-        ⚡ ${goCount} scalp ${goCount===1?'opportunity':'opportunities'} found — QSS ≥ 65
-       </div>`
-    : `<div style="background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.2);border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:12px;color:#f5a623">
-        👁 No high-confidence scalps right now — showing best available signals
-       </div>`;
-
-  results.innerHTML = `
-    ${summary}
-    <div class="qs-grid">${cards}</div>
-    <div style="margin-top:10px;font-size:10px;color:var(--text3);text-align:right;font-family:monospace">
-      Scanned ${data.length} pairs from ${holding} · ${elapsed}s · Min gain ${minGain}% · Fee ${fee}%
-    </div>`;
-}
 
 /* ══════════════════════════════════════
    SWAP TRACKER — DATA MODEL
@@ -4836,8 +3291,6 @@ function renderScalpResults(holding, data, minGain, fee, scanTime) {
    Each swap: { date, fromAsset, fromAmt, toAsset, toAmt, score, notes }
 ══════════════════════════════════════ */
 const COINS_LIST=['BTC','ETH','SOL','ADA','XRP','XLM','ALGO','HBAR','QNT','LINK','DOT','AVAX','ATOM'];
-// Excluded from quick scalps: high on-chain fees wipe small gains
-const SCALP_EXCLUDE = new Set(['BTC','QNT','LINK']);
 
 /* Weak coins exclusion — bottom 4 by 7-day performance are hidden from recommendations.
    They still appear in the coin selector but won't show up in BSN scanner results.
@@ -4891,9 +3344,10 @@ function checkOpportunityBanner(){
   // Never show on the tracker list — only inside a specific open tracker
   if(!activeTrackerId){ banner.style.display='none'; return; }
 
-  const scoreEl=document.querySelector('.sp-num');
-  const score=scoreEl?parseInt(scoreEl.textContent)||0:0;
-  if(!currentStats||score===0){ banner.style.display='none'; return; }
+  const cached=_scoreCache[fromSym+'_'+toSym];
+  const score=cached?cached.score:0;
+  const isGo=cached?.qss?.isGo;
+  if(!currentStats||!cached){ banner.style.display='none'; return; }
 
   const trackers=loadTrackers();
   const tr=trackers.find(t=>t.id===activeTrackerId);
@@ -4905,19 +3359,19 @@ function checkOpportunityBanner(){
 
   if(curAsset!==tr.assetA){
     // Holding a non-base coin (e.g. UNI) — only show if UNI is gaining vs base (good to swap back)
-    if(fromSym===curAsset&&toSym===tr.assetA&&score>=70){
+    if(fromSym===curAsset&&toSym===tr.assetA&&isGo){
       banner.style.display='flex';
       document.getElementById('stOppSub').textContent=
-        'Score '+score+'/100 — '+curAsset+' gaining vs '+tr.assetA+'. Good time to swap '+curAsset+'→'+tr.assetA;
+        'QSS '+score+'/100 — '+curAsset+' gaining vs '+tr.assetA+'. Good time to swap '+curAsset+'→'+tr.assetA;
     } else {
       banner.style.display='none';
     }
   } else {
     // Holding base — show if a swap-out opportunity exists
-    if(fromSym===tr.assetA&&score>=70){
+    if(fromSym===tr.assetA&&isGo){
       banner.style.display='flex';
       document.getElementById('stOppSub').textContent=
-        'Score '+score+'/100 — '+fromSym+' gaining vs '+toSym+'. Good time to swap '+fromSym+'→'+toSym;
+        'QSS '+score+'/100 — '+fromSym+' gaining vs '+toSym+'. Good time to swap '+fromSym+'→'+toSym;
     } else {
       banner.style.display='none';
     }
@@ -5018,18 +3472,18 @@ function renderTrackerList(){
     // card will be appended after score fetch
 
     if(curAsset!==tr.assetA){
-      // Score curAsset/assetA — high OMEGA means curAsset is overvalued vs base = good time to swap back
+      // Score curAsset/assetA — high QSS means curAsset is overvalued vs base = good time to swap back
       getScoreForPair(curAsset, tr.assetA).then(res=>{
-        const sc=res?res.omega:0;
+        const sc=res?res.score:0, isGo=res?.qss?.isGo;
         const scoreEl=document.getElementById(scoreId);
         const cardEl=scoreEl?.closest('.st-tracker-card');
         if(!scoreEl||!cardEl) return;
-        const scCol=sc>=60?'#00c076':sc>=30?'#f5a623':'#ef4444';
-        const scBg=sc>=60?'rgba(0,192,118,0.12)':sc>=30?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
-        const scLabel=sc>=60?'↩ SWAP BACK':sc>=30?'⏳ WATCH':'⛔ HOLD';
-        scoreEl.innerHTML=`<span style="font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:${scBg};color:${scCol}">${scLabel} Ω${sc}/100</span>`;
-        cardEl.style.borderColor=sc>=60?'rgba(0,192,118,0.6)':sc>=30?'rgba(245,166,35,0.5)':'rgba(239,68,68,0.4)';
-        cardEl.style.background=sc>=60?'rgba(0,192,118,0.03)':'transparent';
+        const scCol=isGo?'#00c076':sc>=45?'#f5a623':'#ef4444';
+        const scBg=isGo?'rgba(0,192,118,0.12)':sc>=45?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
+        const scLabel=isGo?'↩ SWAP BACK':sc>=45?'⏳ WATCH':'⛔ HOLD';
+        scoreEl.innerHTML=`<span style="font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:${scBg};color:${scCol}">${scLabel} QSS ${sc}/100</span>`;
+        cardEl.style.borderColor=isGo?'rgba(0,192,118,0.6)':sc>=45?'rgba(245,166,35,0.5)':'rgba(239,68,68,0.4)';
+        cardEl.style.background=isGo?'rgba(0,192,118,0.03)':'transparent';
       }).catch(()=>{});
     } else {
       // ── Closed position (holding base): scan top 3 swap opportunities ──
@@ -5040,13 +3494,13 @@ function renderTrackerList(){
         const scoreEl2=document.getElementById(scoreId);
         const cardEl=scoreEl2?.closest('.st-tracker-card');
         if(!scoreEl2||!cardEl) return;
-        const sc=res?res.omega:0;
-        const scCol=sc>=60?'#00c076':sc>=30?'#f5a623':'#ef4444';
-        const scBg=sc>=60?'rgba(0,192,118,0.12)':sc>=30?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
-        const scLabel=sc>=60?'⚡ SWAP NOW':sc>=30?'⏳ WATCH':'⛔ HOLD';
-        scoreEl2.innerHTML=`<span onclick="switchAnalyzerPair('${tr.assetA}','${tr.assetB}')" style="cursor:pointer;font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:${scBg};color:${scCol}">${scLabel} Ω${sc}</span>`;
-        cardEl.style.borderColor=sc>=60?'rgba(0,192,118,0.5)':sc>=30?'rgba(245,166,35,0.4)':'var(--border)';
-        cardEl.style.background=sc>=60?'rgba(0,192,118,0.03)':'transparent';
+        const sc=res?res.score:0, isGo=res?.qss?.isGo;
+        const scCol=isGo?'#00c076':sc>=45?'#f5a623':'#ef4444';
+        const scBg=isGo?'rgba(0,192,118,0.12)':sc>=45?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
+        const scLabel=isGo?'⚡ SCALP NOW':sc>=45?'⏳ WATCH':'⛔ HOLD';
+        scoreEl2.innerHTML=`<span onclick="switchAnalyzerPair('${tr.assetA}','${tr.assetB}')" style="cursor:pointer;font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:${scBg};color:${scCol}">${scLabel} QSS ${sc}</span>`;
+        cardEl.style.borderColor=isGo?'rgba(0,192,118,0.5)':sc>=45?'rgba(245,166,35,0.4)':'var(--border)';
+        cardEl.style.background=isGo?'rgba(0,192,118,0.03)':'transparent';
       }).catch(()=>{});
     }
 
@@ -5148,19 +3602,18 @@ function bindTrackerListUI(){
         setTimeout(()=>{
           document.getElementById('sf-from-asset').value=fromSym;
           document.getElementById('sf-to-asset').value=toSym;
-          const scoreEl=document.querySelector('.sp-num');
-          if(scoreEl) document.getElementById('sf-score').value=scoreEl.textContent;
-          // Capture Z-score at entry moment from score cache
-          const _ezKey1=fromSym+'_'+toSym, _ezKey2=toSym+'_'+fromSym;
-          const _ezRes=(_scoreCache&&(_scoreCache[_ezKey1]||_scoreCache[_ezKey2]))||null;
-          if(_ezRes && typeof _ezRes.zScore==='number') {
-            document.getElementById('sf-entry-z').value=_ezRes.zScore.toFixed(4);
-          } else if(_ezRes && typeof _ezRes.omegaAbsZ==='number') {
-            document.getElementById('sf-entry-z').value=(-_ezRes.omegaAbsZ).toFixed(4); // negative = cheap
-          }
           document.getElementById('sf-date').value=new Date().toISOString().slice(0,10);
           document.getElementById('stSwapForm').style.display='block';
           document.getElementById('stSwapForm').scrollIntoView({behavior:'smooth'});
+          // Auto-capture the live QSS score + Z for this exact pair (fresh fetch —
+          // never trust a stale/possibly-mismatched cache entry for a real trade record).
+          getScoreForPair(fromSym,toSym).then(res=>{
+            if(!res) return;
+            const scoreEl=document.getElementById('sf-score');
+            const zEl=document.getElementById('sf-entry-z');
+            if(scoreEl) scoreEl.value=res.score;
+            if(zEl && res.qss) zEl.value=res.qss.z30.toFixed(4);
+          }).catch(()=>{});
         },100);
       } else {
         // Prefill new tracker form
@@ -5461,19 +3914,12 @@ async function getScoreForPair(a,b){
     const zScore=stats?stats.zScore||0:0;
     const expectedRevertGain=stats?stats.expectedRevertGain||0:0;
     const swingPct=stats?stats.swingPct||0:0;
-    /* ── OMEGA-SCAN: 4-of-5 forces, never zeros out, ranks all pairs meaningfully ── */
-    const rClosesForOmega = ratioSeries.map(r => r.c);
-    const etForOmega = analyzeEntryTiming(rClosesForOmega);
-    // Use _lastRmtQ — RMT is a global market metric (same 10 coins for every pair),
-    // so the value from the last analyzer run applies to all pairs in the batch scan.
-    // Falls back to 50 if quantum analysis has never run yet.
-    const omega = computeOmegaScan(etForOmega, _lastRmtQ, corr);
-    const omegaPhase = etForOmega ? etForOmega.phase : 0;
-    const omegaPhaseLabel = etForOmega ? etForOmega.phaseLabel : '';
-    const omegaAbsZ = etForOmega ? +(etForOmega.absZ || 0).toFixed(2) : 0;
+    /* ── QSS — the one score in the app, computed on the ratio's own closes ── */
+    const rCloses = ratioSeries.map(r => r.c);
+    const q = computeQSS(rCloses, corr);
+    const score = q ? q.qss : 0;
 
-    const result={omega, omegaPhase, omegaPhaseLabel, omegaAbsZ,
-      from:a,to:b,trend1,zScore,expectedRevertGain,swingPct,plain_explanation,corr};
+    const result={score, qss:q, from:a,to:b,trend1,zScore,expectedRevertGain,swingPct,plain_explanation,corr};
     _scoreCache[key]=result; _scoreCacheTime[key]=Date.now();
     return result;
   }catch(e){ return null; }
@@ -5495,12 +3941,12 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
 
   const entryDateMs = new Date(lastSwap.date).getTime();
   const daysSinceEntry = Math.max(0, (Date.now() - entryDateMs) / 86400000);
-  const isScalp = (lastSwap.tradeType || 'swing') === 'scalp';
+  const isScalp = true; // QSS is the only score now — every trade is monitored scalp-style
 
   // Fetch ratio history
   let ratioCloses = [], ratioTs = [];
   let meanW = 0, stdW = 0.001, currentZ = 0, entryZ = 0, entryRatioHist = null;
-  let et = null;
+  let isTurning = false;
 
   // Fetch with 10-second timeout — never hangs the UI
   const fetchJ = (url) => Promise.race([
@@ -5545,7 +3991,12 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
       entryZ = (entryRatioHist - meanW) / stdW;
     }
 
-    et = analyzeEntryTiming(ratioCloses);
+    // Momentum turn signal (same idea as QSS's own MT gate): the recent daily move
+    // decelerating or reversing while still below mean = "turning around".
+    const rn = ratioCloses.length;
+    const velNow  = rn>=2 ? ratioCloses[rn-1]-ratioCloses[rn-2] : 0;
+    const velPrev = rn>=3 ? ratioCloses[rn-2]-ratioCloses[rn-3] : 0;
+    isTurning = currentZ < 0 && velNow > velPrev;
   } catch(e) { return null; }
 
   const currentRatioNow = ratioCloses[ratioCloses.length-1];
@@ -5559,31 +4010,12 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   const gainSoFar      = entryRatioHist > 0 ? ((currentRatioNow / entryRatioHist) * (1 - SWAP_FEE_RATE) - 1) * 100 : 0;
   const remainingToMean = meanW > 0 ? ((meanW / currentRatioNow) * (1 - SWAP_FEE_RATE) - 1) * 100 : 0;
 
-  // Phase + estimated days
-  const phase      = et ? et.phase : 0;
-  const ouForcePct = et ? (et.ouForcePct || 0) : 0;
-  const halfLife   = et && et.halfLife < 990 ? et.halfLife : null;
-
   // Define exitThreshold here — used by estDays, status messages, progress bar, and exitLabel
-  const exitThreshold = isScalp ? 0.8 : 1.5;
+  const exitThreshold = 0.8;
 
-  let estDays;
-  if (isScalp) {
-    // Scalp: 30-day window, exits at Z=0.8 — typically resolves in 2–7 days
-    estDays = currentZ > 1.2 ? 0 : currentZ > 0.5 ? 1 : currentZ > -0.5 ? 2
-            : currentZ > -1.0 ? 3 : currentZ > -1.5 ? 5 : 7;
-  } else {
-    // Swing: must travel from currentZ all the way to exitThreshold (1.5)
-    // OU mean reversion: time ≈ halfLife × distance_to_exit / ln(2)
-    // A Z=-2.0 trade with halfLife=14 needs ~5–7 weeks, not 10 days
-    const distToExit = Math.max(0.5, exitThreshold - currentZ);
-    if (halfLife) {
-      estDays = Math.max(7, Math.min(120, Math.round(halfLife * distToExit / 0.693)));
-    } else {
-      estDays = currentZ < -2.0 ? 56 : currentZ < -1.5 ? 42 : currentZ < -0.8 ? 28
-              : currentZ < -0.3 ? 14 : 7;
-    }
-  }
+  // Scalp: 30-day window, exits at Z=0.8 — typically resolves in 2–7 days
+  const estDays = currentZ > 1.2 ? 0 : currentZ > 0.5 ? 1 : currentZ > -0.5 ? 2
+          : currentZ > -1.0 ? 3 : currentZ > -1.5 ? 5 : 7;
 
   // ── Multi-signal trade health check ──
   // Philosophy: any single metric can be noisy or normal. We require MULTIPLE independent
@@ -5670,8 +4102,8 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     : estDays <= 10 ? 'days' : 'weeks (est.)';
 
   // ── Entry quality context — full analysis combining score + Z-depth ──
-  const entryScore = lastSwap.score || 0; // OMEGA (swing) or QSS (scalp) stored at swap time
-  const scoreLabel = isScalp ? 'QSS' : 'OMEGA';
+  const entryScore = lastSwap.score || 0; // QSS stored at swap time
+  const scoreLabel = 'QSS';
   const entryZDepth = Math.abs(entryZ); // how deep into the anomaly the entry was
 
   // 4-level confidence: combines signal score AND Z-depth — both matter
@@ -5761,7 +4193,7 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     statusDetail = isScalp
       ? `Price is at its 30-day average. For a scalp, wait for it to go slightly above average — that is your exit. Est. ${estDays} day${estDays>1?'s':''}.`
       : `Price is back to average. Hold a bit longer — it usually overshoots above average before settling. That is your best exit.`;
-  } else if (phase === 3 || phase === 4 || phase === 5) {
+  } else if (isTurning) {
     statusIcon = '🔄'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
     statusLine = 'Turning around — reversal signs appearing';
     statusDetail = entryConfidence === 'strong' || entryConfidence === 'good'
@@ -6087,10 +4519,11 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
     ]);
     if(!sigEl.isConnected) return;
 
-    const omega  = res ? res.omega : 0;
+    const score  = res ? res.score : 0;
+    const isGo   = res?.qss?.isGo;
     const profit = currentGrowth || 0;
     const t1     = res ? Math.abs(res.trend1||0) : 0;
-    const isSpike= t1 > 6 && omega >= 40;
+    const isSpike= t1 > 6 && score >= 45;
 
     // Spike banner (always shown if detected)
     const spikeBannerHtml = isSpike
@@ -6101,25 +4534,25 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
 
     // Exit signal banner — shown on top of monitor when swap-back conditions met
     let exitBannerHtml = '';
-    if (isSpike || omega >= 60 || (profit >= 1 && omega <= 20)) {
+    if (isSpike || isGo || (profit >= 1 && score <= 20)) {
       const col    = '#00c076', bg = 'rgba(0,192,118,0.1)', border = 'rgba(0,192,118,0.4)';
-      const title  = isSpike ? '⚡ EXIT NOW — spike detected' : omega >= 60
-        ? '✅ SWAP BACK NOW — peak confirmed by OMEGA' : '✅ CONSIDER SWAPPING BACK';
+      const title  = isSpike ? '⚡ EXIT NOW — spike detected' : isGo
+        ? '✅ SWAP BACK NOW — confirmed by QSS' : '✅ CONSIDER SWAPPING BACK';
       const body   = isSpike
         ? `${curAsset} spiked ${t1.toFixed(1)}% in 24h. News moves don't last — lock in your +${profit.toFixed(2)}% profit now.`
-        : omega >= 60
-          ? `${curAsset} is at a confirmed ratio peak vs ${tr.assetA}. OMEGA ${omega}/100 — all forces say the overextension is ending. You have +${profit.toFixed(2)}% profit. Close this position.`
-          : `${curAsset} is weakening vs ${tr.assetA} (Ω ${omega}). You have +${profit.toFixed(2)}% — consider closing before it gives back gains.`;
+        : isGo
+          ? `${curAsset} is at a confirmed ratio peak vs ${tr.assetA}. QSS ${score}/100 — the overextension is real and confirmed. You have +${profit.toFixed(2)}% profit. Close this position.`
+          : `${curAsset} is weakening vs ${tr.assetA} (QSS ${score}). You have +${profit.toFixed(2)}% — consider closing before it gives back gains.`;
       exitBannerHtml = `<div style="background:${bg};border:2px solid ${border};border-radius:var(--rs);padding:10px 14px;margin-bottom:8px">
         <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">🔔 EXIT SIGNAL TRIGGERED</div>
         <div style="font-size:14px;font-weight:700;color:${col};margin-bottom:4px">${title}</div>
         <div style="font-size:11px;color:var(--text2);line-height:1.5">${body}</div>
         <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Confirm in analyzer →</button>
       </div>`;
-    } else if (profit >= 1 && omega >= 40) {
+    } else if (profit >= 1 && score >= 45) {
       exitBannerHtml = `<div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.3);border-radius:var(--rs);padding:8px 14px;margin-bottom:8px">
         <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">💰 +${profit.toFixed(2)}% profit — watch for exit</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">Ratio is mixed (Ω ${omega}). You're in profit. Check daily — exit when Z rises above +1.2σ or OMEGA drops below 25.</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Ratio is mixed (QSS ${score}). You're in profit. Check daily — exit when QSS confirms a real go signal.</div>
       </div>`;
     }
 
@@ -6142,19 +4575,20 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
   const res = await getScoreForPair(tr.assetA, tr.assetB);
   if(!sigEl.isConnected) return;
 
-  const omega = res ? res.omega : 0;
-  const col    = omega>=60?'#00c076':omega>=30?'#f5a623':'#ef4444';
-  const bg     = omega>=60?'rgba(0,192,118,0.1)':omega>=30?'rgba(245,166,35,0.08)':'rgba(239,68,68,0.06)';
-  const border = omega>=60?'rgba(0,192,118,0.45)':omega>=30?'rgba(245,166,35,0.35)':'rgba(239,68,68,0.3)';
-  const verdict= omega>=60?'✅ SWAP NOW — signal confirmed'
-               : omega>=40?'⚠️ APPROACHING — wait for Ω 60+'
-               : omega>=20?'👁 WATCH — no signal yet'
+  const score = res ? res.score : 0;
+  const isGo  = res?.qss?.isGo;
+  const col    = isGo?'#00c076':score>=45?'#f5a623':'#ef4444';
+  const bg     = isGo?'rgba(0,192,118,0.1)':score>=45?'rgba(245,166,35,0.08)':'rgba(239,68,68,0.06)';
+  const border = isGo?'rgba(0,192,118,0.45)':score>=45?'rgba(245,166,35,0.35)':'rgba(239,68,68,0.3)';
+  const verdict= isGo?'✅ SWAP NOW — signal confirmed'
+               : score>=45?'⚠️ APPROACHING — wait for a confirmed go'
+               : score>=25?'👁 WATCH — no signal yet'
                : '⛔ HOLD — conditions not met';
-  const body   = omega>=60
-    ? `${tr.assetB} is overextended vs ${tr.assetA} (Ω ${omega}/100). All forces aligned. Good time to swap ${tr.assetA} → ${tr.assetB}.`
-    : omega>=40
-    ? `Signal building (Ω ${omega}/100). Not enough conviction yet — check again tomorrow. Wait for Ω 60+.`
-    : `No swap signal for ${tr.assetA} → ${tr.assetB} right now (Ω ${omega}/100). Stay in ${tr.assetA} and monitor daily.`;
+  const body   = isGo
+    ? `${tr.assetB} is overextended vs ${tr.assetA} (QSS ${score}/100). Good time to swap ${tr.assetA} → ${tr.assetB}.`
+    : score>=45
+    ? `Signal building (QSS ${score}/100). Not enough conviction yet — check again tomorrow.`
+    : `No swap signal for ${tr.assetA} → ${tr.assetB} right now (QSS ${score}/100). Stay in ${tr.assetA} and monitor daily.`;
 
   if(!res){
     sigEl.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
@@ -6168,7 +4602,7 @@ async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
     <div style="font-size:16px;font-weight:700;color:${col};margin-bottom:4px">${verdict}</div>
     <div style="font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:8px">${body}</div>
     <div style="display:flex;align-items:center;gap:10px">
-      <span style="font-family:monospace;font-size:22px;font-weight:700;color:${col}">Ω ${omega}<span style="font-size:12px;opacity:.6">/100</span></span>
+      <span style="font-family:monospace;font-size:22px;font-weight:700;color:${col}">QSS ${score}<span style="font-size:12px;opacity:.6">/100</span></span>
       <button onclick="switchAnalyzerPair('${tr.assetA}','${tr.assetB}')" style="font-family:monospace;font-size:10px;padding:4px 12px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Analyze ${tr.assetA}→${tr.assetB} →</button>
     </div>
   </div>`;
@@ -6464,8 +4898,9 @@ function resetSwapForm(tr){
   const _prefill=_lastSwap?_lastSwap.toAmt:(tr?tr.startAmount:'');
   document.getElementById('sf-from-amt').value=_prefill||'';
   document.getElementById('sf-to-amt').value='';
-  setSwapType('swing'); // default to swing
+  setSwapType('scalp'); // QSS is the only score now — every trade is scalp-style
   document.getElementById('sf-score').value='';
+  document.getElementById('sf-score').placeholder='fetching live score...';
   document.getElementById('sf-entry-z').value='';
   document.getElementById('sf-notes').value='';
   document.getElementById('stSwapFormTitle').textContent='Record a swap';
@@ -6479,6 +4914,8 @@ function resetSwapForm(tr){
   swaps.forEach(sw=>{if(sw.fromAsset===curAsset) curAsset=sw.toAsset;});
 
   const holdingBase=curAsset===tr.assetA;
+  const _fromA=holdingBase?tr.assetA:curAsset;
+  const _toA=holdingBase?tr.assetB:tr.assetA;
   if(holdingBase){
     // Holding base → FROM locked to base, TO locked to paired asset only (two-coin tracker)
     populateAssetSelect('sf-from-asset',[tr.assetA],tr.assetA);
@@ -6492,6 +4929,21 @@ function resetSwapForm(tr){
     document.getElementById('sf-from-asset').disabled=true;
     document.getElementById('sf-to-asset').disabled=true;
   }
+
+  // Auto-capture the live QSS score + Z for this exact pair — replaces manual entry,
+  // which was error-prone and could drift from what the scanner actually showed.
+  // Still editable afterward (e.g. backfilling an older trade with a different score).
+  getScoreForPair(_fromA,_toA).then(res=>{
+    const scoreEl=document.getElementById('sf-score');
+    const zEl=document.getElementById('sf-entry-z');
+    if(scoreEl) scoreEl.placeholder='e.g. 78';
+    if(!res) return;
+    if(scoreEl && !scoreEl.value) scoreEl.value=res.score;
+    if(zEl && !zEl.value && res.qss) zEl.value=res.qss.z30.toFixed(4);
+  }).catch(()=>{
+    const scoreEl=document.getElementById('sf-score');
+    if(scoreEl) scoreEl.placeholder='e.g. 78';
+  });
 }
 
 function populateAssetSelect(id,assets,selected){
@@ -6667,7 +5119,7 @@ function initBestSwapNow(){
 
   scanBtn.onclick=async()=>{
     if(selected.size<1) return;
-    // Always bust cache on scan so OMEGA data is fresh (not stale pre-OMEGA results)
+    // Always bust cache on scan so QSS data is fresh
     Object.keys(_scoreCache).forEach(k=>{delete _scoreCache[k]; delete _scoreCacheTime[k];});
     scanBtn.disabled=true;
     scanBtn.textContent='⏳ Scanning...';
@@ -6695,20 +5147,22 @@ function initBestSwapNow(){
       const batch=tasks.slice(i,i+BATCH);
       const batchRes=await Promise.all(batch.map(t=>getScoreForPair(t.from,t.to).catch(()=>null)));
       batchRes.forEach((r,j)=>{
-        if(r&&r.omega>=0) scored.push({...batch[j],...r});
+        if(r&&r.score>=0) scored.push({...batch[j],...r});
       });
       // Update progress
       const done=Math.min(i+BATCH,tasks.length);
       scanBtn.textContent=`⏳ ${Math.round(done/tasks.length*100)}%`;
     }
 
-    // Sort by OMEGA (same formula as analyzer). When omega ties at 0, rank by swap score.
-    scored.sort((a,b)=> b.omega !== a.omega ? b.omega - a.omega : (b.zScore||0) - (a.zScore||0));
+    // Sort by QSS. Trustworthy "go" signals (isGo) always rank above a raw high score that
+    // failed the Z-depth or oscillation gate, even if the numbers look similar.
+    const rank=r=>(r.qss?.isGo?1000:0)+r.score;
+    scored.sort((a,b)=> rank(b) - rank(a));
 
     // Group by FROM coin — best swap for each held coin
     const byFrom={};
     scored.forEach(item=>{
-      if(!byFrom[item.from]) byFrom[item.from]=[]; 
+      if(!byFrom[item.from]) byFrom[item.from]=[];
       byFrom[item.from].push(item);
     });
 
@@ -6725,29 +5179,38 @@ function initBestSwapNow(){
     const scannedCoins=[...selected].join(', ');
     results.innerHTML=`<div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:.8rem;text-align:right">Scanned ${scored.length} pairs for <strong style="color:var(--text2)">${scannedCoins}</strong> · <span style="color:var(--amber)">⏱ ${scanTime}</span> — results expire in 5 min</div>`;
 
+    const gateNote=r=>{
+      if(!r.qss || r.score<45) return '';
+      if(r.qss.isGo) return '';
+      const reasons=[];
+      if(!r.qss.meetsZGate) reasons.push(`Z ${r.qss.z30.toFixed(2)}σ`);
+      if(!r.qss.oscillationOk) reasons.push('trending, not oscillating');
+      return reasons.length?`<div style="font-size:9px;font-family:monospace;color:#f5a623;margin-top:2px">⚠️ downgraded — ${reasons.join(' · ')}</div>`:'';
+    };
+
     // ── Best overall banner ──
-    const topOm = topOverall.omega || 0;
-    const bestCol = topOm>=55?'#00c076':topOm>=25?'#f5a623':'#ef4444';
-    const bestBg  = topOm>=55?'rgba(0,192,118,0.09)':'rgba(245,166,35,0.07)';
-    const bestVerdict = topOm>=55?'✅ SWAP NOW':topOm>=25?'⏳ WATCH':'🔴 HOLD';
-    const topPhaseLabel = topOverall.omegaPhaseLabel || '';
+    const topOm = topOverall.score || 0;
+    const topGo = topOverall.qss?.isGo;
+    const bestCol = topGo?'#00c076':topOm>=45?'#f5a623':'#ef4444';
+    const bestBg  = topGo?'rgba(0,192,118,0.09)':'rgba(245,166,35,0.07)';
+    const bestVerdict = topGo?'✅ SCALP NOW':topOm>=45?'⏳ WATCH':'🔴 HOLD';
     const banner=document.createElement('div');
     banner.style.cssText=`background:${bestBg};border:2px solid ${bestCol};border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.8rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap`;
     banner.innerHTML=`
       <span style="font-size:28px">🏆</span>
       <div style="flex:1;min-width:160px">
-        <div style="font-size:11px;font-family:monospace;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Best Ω OMEGA score across all your holdings</div>
+        <div style="font-size:11px;font-family:monospace;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Best QSS score across all your holdings</div>
         <div style="font-size:20px;font-weight:700;color:var(--text)">${topOverall.from} → ${topOverall.to}</div>
         <div style="font-size:11px;color:var(--text2)">${topOverall.fromName} → ${topOverall.toName}</div>
-        <div style="font-size:10px;font-family:monospace;color:${bestCol};margin-top:3px;opacity:.9">${topPhaseLabel||'—'}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:1px">Z-score: <strong style="color:${bestCol}">${topOverall.omegaAbsZ||topOverall.zScore?.toFixed(2)||'—'}σ</strong></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px">Z: <strong style="color:${bestCol}">${topOverall.qss?.z30?.toFixed(2)||'—'}σ</strong> · exp. gain +${topOverall.qss?.expGain?.toFixed(1)||'0'}% · ~${topOverall.qss?.holdDays||'—'}d</div>
+        ${gateNote(topOverall)}
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <div style="text-align:center">
           <div style="font-family:monospace;font-weight:700;font-size:30px;color:${bestCol};line-height:1">${topOm}</div>
-          <div style="font-size:9px;color:var(--text3);font-family:monospace;letter-spacing:.5px">Ω OMEGA</div>
+          <div style="font-size:9px;color:var(--text3);font-family:monospace;letter-spacing:.5px">QSS</div>
         </div>
-        <span style="font-size:11px;font-family:monospace;font-weight:700;padding:4px 12px;border-radius:12px;background:${topOm>=55?'rgba(0,192,118,0.15)':'rgba(245,166,35,0.12)'};color:${bestCol}">${bestVerdict}</span>
+        <span style="font-size:11px;font-family:monospace;font-weight:700;padding:4px 12px;border-radius:12px;background:${topGo?'rgba(0,192,118,0.15)':'rgba(245,166,35,0.12)'};color:${bestCol}">${bestVerdict}</span>
         <button class="bsn-analyze-btn" onclick="switchAnalyzerPair('${topOverall.from}','${topOverall.to}')">Analyze in detail →</button>
       </div>
     `;
@@ -6759,12 +5222,11 @@ function initBestSwapNow(){
     heading.textContent='Best swap for each coin you hold';
     results.appendChild(heading);
 
-    // Sort held coins by best OMEGA, swap score tiebreak for omega=0 pairs
-    Object.keys(byFrom).forEach(f=>byFrom[f].sort((a,b)=> b.omega !== a.omega ? b.omega-a.omega : b.score-a.score));
+    // Sort held coins by best QSS rank
+    Object.keys(byFrom).forEach(f=>byFrom[f].sort((a,b)=> rank(b)-rank(a)));
     const sortedFrom=Object.keys(byFrom).sort((a,b)=>{
       const bBest=byFrom[b][0]; const aBest=byFrom[a][0];
-      const bo=bBest?.omega||0, ao=aBest?.omega||0;
-      return bo!==ao ? bo-ao : (bBest?.zScore||0)-(aBest?.zScore||0);
+      return rank(bBest)-rank(aBest);
     });
 
     sortedFrom.forEach(fromSym=>{
@@ -6772,23 +5234,24 @@ function initBestSwapNow(){
       const top5=byFrom[fromSym].slice(0,5);
       if(!best) return;
 
-      const bOm = best.omega || 0;
-      const col = bOm>=55?'#00c076':bOm>=25?'#f5a623':'#ef4444';
-      const verdict = bOm>=55?'✅ SWAP NOW':bOm>=25?'⏳ WATCH':'❌ HOLD';
-      const verdictBg = bOm>=55?'rgba(0,192,118,0.12)':bOm>=25?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
+      const bOm = best.score || 0;
+      const bGo = best.qss?.isGo;
+      const col = bGo?'#00c076':bOm>=45?'#f5a623':'#ef4444';
+      const verdict = bGo?'✅ SCALP NOW':bOm>=45?'⏳ WATCH':'❌ HOLD';
+      const verdictBg = bGo?'rgba(0,192,118,0.12)':bOm>=45?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
 
       const card=document.createElement('div');
       card.className='bsn-result-item';
-      card.style.cssText=`border-color:${bOm>=60?'rgba(0,192,118,0.3)':'var(--border)'};margin-bottom:.5rem`;
+      card.style.cssText=`border-color:${bGo?'rgba(0,192,118,0.3)':'var(--border)'};margin-bottom:.5rem`;
 
       // Alt options — show up to 4 alternatives
       const altHtml=top5.length>1?
         '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">'+
         '<span style="font-size:10px;color:var(--text3);font-family:monospace;align-self:center">Also:</span>'+
         top5.slice(1).map(x=>{
-          const xOm=x.omega||0;
-          const xc=xOm>=55?'#00c076':xOm>=25?'#f5a623':'#ef4444';
-          return `<button onclick="switchAnalyzerPair('${x.from}','${x.to}')" style="font-size:11px;font-family:monospace;padding:3px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer">${x.to} <span style="color:${xc};font-weight:700">Ω${xOm}</span></button>`;
+          const xOm=x.score||0;
+          const xc=x.qss?.isGo?'#00c076':xOm>=45?'#f5a623':'#ef4444';
+          return `<button onclick="switchAnalyzerPair('${x.from}','${x.to}')" style="font-size:11px;font-family:monospace;padding:3px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer">${x.to} <span style="color:${xc};font-weight:700">QSS ${xOm}</span></button>`;
         }).join('')+
         '</div>':'';
 
@@ -6798,12 +5261,12 @@ function initBestSwapNow(){
             <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:3px">Best swap for <strong style="color:var(--text)">${fromSym}</strong></div>
             <div style="font-size:18px;font-weight:700;color:var(--text)">${best.from} → ${best.to}</div>
             <div style="font-size:11px;color:var(--text3)">${best.toName}</div>
-            ${best.omegaPhaseLabel?`<div style="font-size:10px;font-family:monospace;color:${col};margin-top:2px;opacity:.8">${best.omegaPhaseLabel}</div>`:''}
+            ${gateNote(best)}
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <div style="text-align:center">
               <div style="font-family:monospace;font-weight:700;font-size:24px;color:${col};line-height:1">${bOm}</div>
-              <div style="font-size:9px;color:var(--text3);font-family:monospace">Ω OMEGA</div>
+              <div style="font-size:9px;color:var(--text3);font-family:monospace">QSS</div>
             </div>
             <span style="font-size:10px;font-family:monospace;font-weight:700;padding:3px 10px;border-radius:10px;background:${verdictBg};color:${col}">${verdict}</span>
             <button class="bsn-analyze-btn" onclick="switchAnalyzerPair('${best.from}','${best.to}')">Analyze →</button>
@@ -6825,13 +5288,6 @@ function initBestSwapNow(){
   updateBsnState();
 }
 
-
-/* ══════════════════════════════════════
-   API KEY MANAGEMENT
-══════════════════════════════════════ */
-function _getApiKey(){
-  try{return localStorage.getItem('anthropicKey')||'';}catch(e){return '';}
-}
 
 
 /* ══════════════════════════════════════
