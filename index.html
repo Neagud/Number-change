@@ -1175,6 +1175,16 @@ const COINS=[
   {sym:'QNT', name:'Quant',        cat:'ISO20022'},
   // Infrastructure — correlated to ETH, foundational
   {sym:'LINK',name:'Chainlink',    cat:'Infra'},
+  {sym:'TRX', name:'Tron',         cat:'Infra'},
+  // More L1s — widens the search so a genuine dislocation is more likely to
+  // exist SOMEWHERE at any given time, without loosening what counts as one
+  {sym:'LTC', name:'Litecoin',     cat:'L1'},
+  {sym:'BCH', name:'Bitcoin Cash', cat:'L1'},
+  {sym:'NEAR',name:'Near',         cat:'L1'},
+  {sym:'APT', name:'Aptos',        cat:'L1'},
+  // DeFi — was an empty filter category before; now it actually has coins in it
+  {sym:'UNI', name:'Uniswap',      cat:'DeFi'},
+  {sym:'AAVE',name:'Aave',         cat:'DeFi'},
 ];
 function loadPrefs(){try{return JSON.parse(localStorage.getItem('swapPrefs')||'{}');}catch(e){return{};}}
 function savePrefs(){try{localStorage.setItem('swapPrefs',JSON.stringify({fromSym,toSym,activeTF,chartType,activeTab:_activeTab,activeTrackerId}));}catch(e){}}
@@ -3326,7 +3336,7 @@ function computeQSS(closes, corr) {
    Format: [ { id, name, assetA, assetB, startAmount, swaps:[] }, ... ]
    Each swap: { date, fromAsset, fromAmt, toAsset, toAmt, score, notes }
 ══════════════════════════════════════ */
-const COINS_LIST=['BTC','ETH','SOL','ADA','XRP','XLM','ALGO','HBAR','QNT','LINK','DOT','AVAX','ATOM'];
+const COINS_LIST=COINS.map(c=>c.sym); // single source of truth — was a separately hardcoded duplicate of COINS, which is exactly how it drifted out of sync before
 
 /* Weak coins exclusion — bottom 4 by 7-day performance are hidden from recommendations.
    They still appear in the coin selector but won't show up in BSN scanner results.
@@ -5326,7 +5336,7 @@ function initBestSwapNow(){
   // ── Scan entire market — every coin vs every other coin, no holdings needed.
   // This is the market-wide sweep that used to live in the standalone Quick
   // Scalps tab: it doesn't care what you hold, it just finds the best QSS
-  // setup anywhere in the 13-coin universe right now. More pairs scanned
+  // setup anywhere in the whole coin universe right now. More pairs scanned
   // means more chances to find a real, gate-passing opportunity — without
   // loosening the isGo bar itself.
   scanAllBtn.onclick=async()=>{
@@ -5449,8 +5459,13 @@ function initBestSwapNow(){
    Runs entirely client-side — nothing leaves the browser.
 ══════════════════════════════════════════════════════════════ */
 const LAB_LOOKBACK_DAYS = 730;   // ~2 years of daily candles
-const LAB_HORIZON_DAYS  = 21;    // how far forward we check for a profitable reversion
-const LAB_HIT_PCT       = 2.5;   // ratio must fall at least this % to count as a real round-trip win (covers ~1% fee each way + margin)
+const LAB_HORIZON_DAYS  = 10;    // catch window — matches "check daily, frequent small swaps," not a month-long hold
+const LAB_TARGETS_PCT   = [2, 3, 4]; // the actual target: small, frequent gains per swap, not rare big dislocations.
+                                  // (an earlier version used 1σ of each pair's own volatility as the bar — more
+                                  // statistically careful, but it answers "is this move unusual for this pair,"
+                                  // not "did I actually get my 2-4%." Testing the literal target return, at a
+                                  // realistic few-day catch window, is what actually tells us if the app is doing
+                                  // the job it's meant to do.)
 const LAB_STRIDE        = 2;     // sample every Nth day (keeps this runnable in-browser)
 const LAB_SLOW_EVERY    = 10;    // correlation & Hurst move slowly — only refresh every N sampled days
 
@@ -5475,15 +5490,20 @@ async function _labFetchCloses(sym){
   return kl.map(k=>+k[4]);
 }
 
-/* Did the ratio fall back at least LAB_HIT_PCT% within LAB_HORIZON_DAYS after day t? */
-function _labOutcome(ratio, t){
+/* For every target in LAB_TARGETS_PCT, did the ratio revert at least that % within
+   LAB_HORIZON_DAYS of day t? One forward scan, all targets checked simultaneously. */
+function _labOutcomesMulti(ratio, t){
   const entry=ratio[t];
-  if(!entry) return {hit:false, days:null};
+  const out=LAB_TARGETS_PCT.map(()=>({hit:false, days:null}));
+  if(!entry) return out;
   const end=Math.min(ratio.length-1, t+LAB_HORIZON_DAYS);
   for(let k=t+1;k<=end;k++){
-    if((entry-ratio[k])/entry*100 >= LAB_HIT_PCT) return {hit:true, days:k-t};
+    const dropPct=(entry-ratio[k])/entry*100;
+    for(let i=0;i<LAB_TARGETS_PCT.length;i++){
+      if(!out[i].hit && dropPct>=LAB_TARGETS_PCT[i]){ out[i].hit=true; out[i].days=k-t; }
+    }
   }
-  return {hit:false, days:null};
+  return out;
 }
 
 /* Split rows into quartiles by .val, report hit-rate per quartile */
@@ -5501,6 +5521,22 @@ function _labQuartiles(rows){
 
 function _labRow(n,hitRate,avgDays,extra){
   return `<tr${hitRate>=55?' class="hi"':''}><td>${extra}</td><td>${n}</td><td>${hitRate.toFixed(0)}%</td><td>${avgDays==null?'—':avgDays.toFixed(1)+'d'}</td></tr>`;
+}
+
+/* Two-proportion z-test — is the gap between two hit rates real, or just noise from small N? */
+function _labSig(n1,p1,n2,p2){
+  if(n1<10||n2<10) return null;
+  const P1=p1/100, P2=p2/100;
+  const se=Math.sqrt(P1*(1-P1)/n1 + P2*(1-P2)/n2);
+  if(se===0) return null;
+  return (P1-P2)/se;
+}
+function _labSigNote(z, label){
+  if(z===null) return `<div class="lab-note">Not enough samples yet to tell if this is real or noise.</div>`;
+  const az=Math.abs(z);
+  if(az>=2.6) return `<div class="lab-note" style="color:var(--green)">✓ This gap is large enough (z=${z.toFixed(1)}) to very likely be real signal, not noise — ${label}</div>`;
+  if(az>=1.96) return `<div class="lab-note" style="color:var(--amber)">~ This gap is borderline (z=${z.toFixed(1)}) — probably real but worth confirming with a re-run — ${label}</div>`;
+  return `<div class="lab-note">✗ This gap (z=${z.toFixed(1)}) is not distinguishable from noise — ${label}</div>`;
 }
 
 async function runSignalLab(){
@@ -5562,12 +5598,13 @@ async function runSignalLab(){
         hurst=hurstRS(ratio.slice(Math.max(0,t-89), t+1));
       }
       const q=computeQSS(ratio.slice(0,t+1), corr);
-      const outcome=_labOutcome(ratio, t);
+      const outcomes=_labOutcomesMulti(ratio, t); // one entry per LAB_TARGETS_PCT, e.g. [2%,3%,4%]
+      const mid=outcomes[Math.floor(outcomes.length/2)]; // 3% — canonical "hit" for triangular/cross-sectional/cadence
       isGoArr[key][m]=!!(q&&q.isGo);
-      hitArr[key][m]=outcome.hit;
+      hitArr[key][m]=mid.hit;
       if(q) baseline.push({
         isGo:q.isGo, meetsZGate:q.meetsZGate, oscillationOk:q.oscillationOk,
-        z30:q.z30, hurst, hit:outcome.hit, days:outcome.days
+        z30:q.z30, hurst, outcomes, hit:mid.hit, days:mid.days
       });
     }
     done++;
@@ -5600,13 +5637,43 @@ async function runSignalLab(){
     if(hitArr[key]) crossRows.push({hit:hitArr[key][m]});
   }
 
-  renderSignalLab({baseline, triBonus, directMisses, crossRows, pairCount:pairKeys.length, dayCount:n, sampledCount:sampledTs.length});
+  // ── Opportunity cadence — the question that actually matters day to day:
+  // does the WHOLE scanned market go quiet for weeks at a time, and specifically,
+  // how often does each coin you might be holding show up as a valid FROM leg? ──
+  const weeks={};             // weekIndex -> { anyGo, fromCoins:Set }
+  const fromTriggerDays={};   // sym -> [t, t, ...] where isGo fired with that coin as FROM
+  okSyms.forEach(s=>fromTriggerDays[s]=[]);
+  sampledTs.forEach((t,m)=>{
+    const week=Math.floor(t/7);
+    if(!weeks[week]) weeks[week]={anyGo:false};
+    pairKeys.forEach(key=>{
+      if(isGoArr[key][m]){
+        weeks[week].anyGo=true;
+        fromTriggerDays[key.split('_')[0]].push(t);
+      }
+    });
+  });
+  const weekKeys=Object.keys(weeks);
+  const weeksWithOpportunity=weekKeys.filter(w=>weeks[w].anyGo).length;
+  const weekCoveragePct=weekKeys.length?weeksWithOpportunity/weekKeys.length*100:0;
+
+  const perCoin=okSyms.map(s=>{
+    const days=fromTriggerDays[s];
+    let avgGapDays=null;
+    if(days.length>=2){
+      const gaps=[]; for(let i=1;i<days.length;i++) gaps.push(days[i]-days[i-1]);
+      avgGapDays=gaps.reduce((a,b)=>a+b,0)/gaps.length;
+    }
+    return {sym:s, n:days.length, avgGapDays};
+  }).sort((a,b)=>(a.avgGapDays??1e9)-(b.avgGapDays??1e9));
+
+  renderSignalLab({baseline, triBonus, directMisses, crossRows, pairCount:pairKeys.length, dayCount:n, sampledCount:sampledTs.length, weekKeys, weeksWithOpportunity, weekCoveragePct, perCoin});
   runBtn.disabled=false; runBtn.textContent='▶ Run analysis';
 }
 
 function renderSignalLab(d){
   const results=document.getElementById('labResults');
-  const {baseline, triBonus, directMisses, crossRows, pairCount, dayCount} = d;
+  const {baseline, triBonus, directMisses, crossRows, pairCount, dayCount, weekKeys, weeksWithOpportunity, weekCoveragePct, perCoin} = d;
   if(!baseline.length){
     results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1rem;text-align:center">Not enough data to analyze.</div>`;
     return;
@@ -5614,9 +5681,20 @@ function renderSignalLab(d){
 
   const goRows=baseline.filter(r=>r.isGo);
   const notGoRows=baseline.filter(r=>!r.isGo);
+  // "hit"/"days" on each row is the MID target (e.g. 3%) — used by quartile/gate comparisons below.
+  // The isGo table itself shows all of LAB_TARGETS_PCT side by side.
   const goHitRate=goRows.length?goRows.filter(r=>r.hit).length/goRows.length*100:0;
   const notGoHitRate=notGoRows.length?notGoRows.filter(r=>r.hit).length/notGoRows.length*100:0;
   const goAvgDays=goRows.filter(r=>r.hit).length?goRows.filter(r=>r.hit).reduce((s,r)=>s+r.days,0)/goRows.filter(r=>r.hit).length:null;
+  const _rateAt=(rows,i)=>rows.length?rows.filter(r=>r.outcomes[i].hit).length/rows.length*100:0;
+  const _multiRow=(rows,label)=>{
+    const n=rows.length;
+    const cells=LAB_TARGETS_PCT.map((tgt,i)=>{
+      const rate=_rateAt(rows,i);
+      return `<td${rate>=55?' style="color:var(--green);font-weight:700"':''}>${rate.toFixed(0)}%</td>`;
+    }).join('');
+    return `<tr><td>${label}</td><td>${n}</td>${cells}</tr>`;
+  };
 
   const z30Q=_labQuartiles(baseline.map(r=>({val:r.z30, hit:r.hit})));
   const hurstQ=_labQuartiles(baseline.map(r=>({val:r.hurst, hit:r.hit})));
@@ -5634,13 +5712,27 @@ function renderSignalLab(d){
   const crossHitRate=crossRows.length?crossRows.filter(r=>r.hit).length/crossRows.length*100:0;
 
   let html='';
-  html+=`<div class="lab-note">Replayed ${pairCount} pairs over ~${dayCount} days (sampled every ${LAB_STRIDE}${LAB_STRIDE===1?'day':'days'}). "Hit" = ratio reverted ≥${LAB_HIT_PCT}% within ${LAB_HORIZON_DAYS} days of the signal — a real, fee-covering round trip, not just "the score was high."</div>`;
+  html+=`<div class="lab-note">Replayed ${pairCount} pairs over ~${dayCount} days (sampled every ${LAB_STRIDE}${LAB_STRIDE===1?'day':'days'}). Tests the actual target — a small, fast reversion of ${LAB_TARGETS_PCT.join('/')}% within ${LAB_HORIZON_DAYS} days of the signal — not a rare big dislocation.</div>`;
 
-  html+=`<div class="lab-sec-title">Does the current live gate (isGo) actually work?</div>
-  <table class="lab-table"><tr><th>Signal</th><th>N</th><th>Hit rate</th><th>Avg days to hit</th></tr>
-    ${_labRow(goRows.length, goHitRate, goAvgDays, 'isGo = true (SCALP NOW today)')}
-    ${_labRow(notGoRows.length, notGoHitRate, null, 'isGo = false (everything else)')}
-  </table>`;
+  // ── Opportunity cadence — does the market go quiet, and which coins are "livelier"? ──
+  const cadCol = weekCoveragePct>=85?'var(--green)':weekCoveragePct>=60?'var(--amber)':'#ef4444';
+  html+=`<div class="lab-sec-title">Opportunity cadence — how often is there ANY valid signal, market-wide?</div>
+  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:.6rem">
+    <span style="font-family:monospace;font-weight:700;font-size:26px;color:${cadCol}">${weekCoveragePct.toFixed(0)}%</span>
+    <span style="font-size:11px;color:var(--text3)">of weeks (${weeksWithOpportunity} of ${weekKeys.length}) had at least one isGo pair somewhere across all ${perCoin.length} coins scanned</span>
+  </div>
+  <table class="lab-table"><tr><th>Coin (as FROM)</th><th># times triggered</th><th>Avg days between opportunities</th></tr>
+    ${perCoin.map(p=>`<tr${p.avgGapDays!=null&&p.avgGapDays<=10?' class="hi"':''}><td>${p.sym}</td><td>${p.n}</td><td>${p.avgGapDays==null?'never / too few':p.avgGapDays.toFixed(0)+'d'}</td></tr>`).join('')}
+  </table>
+  <div class="lab-note">This is the number that actually answers "if I'm holding X, how long until a real opportunity to move it comes along" — a market-wide scan can look busy while the one coin you're sitting in barely ever triggers. If a coin you hold often shows a long gap here, that's a reason to consider whether it's a good coin to be parked in right now, independent of any single day's snapshot.</div>`;
+
+  html+=`<div class="lab-sec-title">Does the current live gate (isGo) actually catch a real 2-4% swap gain?</div>
+  <table class="lab-table"><tr><th>Signal</th><th>N</th>${LAB_TARGETS_PCT.map(t=>`<th>Hit ≥${t}%</th>`).join('')}</tr>
+    ${_multiRow(goRows,'isGo = true (SCALP NOW today)')}
+    ${_multiRow(notGoRows,'isGo = false (everything else)')}
+  </table>
+  ${_labSigNote(_labSig(goRows.length,goHitRate,notGoRows.length,notGoHitRate), `isGo vs. everything else, at the ≥${LAB_TARGETS_PCT[Math.floor(LAB_TARGETS_PCT.length/2)]}% target`)}
+  <div class="lab-note">Avg days to hit (≥${LAB_TARGETS_PCT[Math.floor(LAB_TARGETS_PCT.length/2)]}% target, isGo=true only): ${goAvgDays==null?'—':goAvgDays.toFixed(1)+'d'}</div>`;
 
   if(z30Q){
     html+=`<div class="lab-sec-title">Z-depth quartiles — does a deeper Z genuinely predict a better outcome?</div>
@@ -5670,6 +5762,7 @@ function renderSignalLab(d){
   <table class="lab-table"><tr><th>Signal</th><th>N</th><th>Hit rate</th></tr>
     ${_labRow(crossRows.length,crossHitRate,null,'Top performer → bottom performer, ranked daily')}
   </table>
+  ${_labSigNote(_labSig(crossRows.length,crossHitRate,notGoRows.length,notGoHitRate), 'cross-sectional vs. the no-signal baseline')}
   <div class="lab-note">Compare this hit rate to isGo's above. If it's close or better, ranking the whole market at once is a legitimate way to surface more opportunities (this is what the "Scan entire market" button already does structurally) — if it's much worse, extreme cross-sectional movers aren't reliable on their own and shouldn't replace pair-specific gates.</div>`;
 
   const opportunityLift = directMisses>0 ? (triBonus/directMisses*100) : 0;
