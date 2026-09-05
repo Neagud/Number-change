@@ -2561,7 +2561,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v13'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v14'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2761,12 +2761,20 @@ function renderScore(j){
     const vtxt = p.querySelector('.sp-verdict-text');
     if (vtxt) vtxt.appendChild(trsTagInit);
   }
-  if (q && sc>=60 && !q.isGo) {
+  // Note: isGo is now a single clean qss>=60 condition (no external AND-gates), so this can no
+  // longer "downgrade" a passing score. Instead it surfaces context on plausible-looking trades
+  // (sc>=45) whose depth or reversion history is weaker than ideal — informational, not a veto.
+  if (q && sc>=45) {
     const reasons=[];
-    if(!q.meetsZGate) reasons.push(`Z only ${q.z30.toFixed(2)}σ — below the 0.8σ minimum for a real anomaly`);
-    if(!q.oscillationOk) reasons.push(q.oscillationNote);
-    trsTagInit.style.display='block';
-    trsTagInit.innerHTML=`⚠️ QSS ${sc} looks good, but downgraded to WATCH — ${reasons.join(' · ')}`;
+    if(q.z30 < 1.0) reasons.push(`Z only ${q.z30.toFixed(2)}σ — a shallower stretch than ideal`);
+    if(!q.oscillationOk && q.oscillationNote) reasons.push(q.oscillationNote);
+    if (reasons.length) {
+      trsTagInit.style.display='block';
+      trsTagInit.innerHTML=`⚠️ ${reasons.join(' · ')}`;
+    } else {
+      trsTagInit.style.display='none';
+      trsTagInit.innerHTML='';
+    }
   } else {
     trsTagInit.style.display='none';
     trsTagInit.innerHTML='';
@@ -3195,24 +3203,42 @@ function initTabs(){
 ══════════════════════════════════════════════════════════════ */
 
 function computeQSS(closes, corr) {
-  /* Quick Scalp Score (QSS) 0–100
-     Formula: QSS = MT × (SE_q×0.30 + BP×0.25 + RE×0.20 + QF×0.15 + CorrQ×0.10)
-     where MT = momentum turn gate (like EPM but lighter) */
+  /* Quick Scalp Score (QSS) 0–100 — rebuilt around three INDEPENDENT questions instead of
+     five overlapping ones plus two bolted-on hard gates:
+       DEPTH        — is the ratio actually statistically stretched right now?
+       REVERSION-Q  — does THIS pair actually tend to revert, or just trend? (folds in
+                      correlation, since reversion is only reliable between linked coins)
+       CONFIRM      — do the short-term technicals (RSI/Bollinger/OU-force) agree?
+     ...then TRAJECTORY (momentum turn) multiplies the weighted blend of those three.
+
+     Why rebuilt: the original 5-way sum (Z-score/Bollinger/RSI/OU/Corr) treated Z-score,
+     RSI-14 and Bollinger-20 as separate, independent votes — but all three are just
+     different transforms of "did the price run up over the last couple weeks." When they
+     happen to agree (common, since they're correlated with EACH OTHER, not with anything
+     new), it looks like strong multi-factor confirmation but isn't — that's how a shallow,
+     0.34σ, non-anomalous entry scored 71 and broke down (XRP/XLM). Patching that afterward
+     with two hard AND-gates (Z-depth, oscillation-count) stopped that specific case, but
+     meant any ONE weak dimension could veto an otherwise-solid setup outright — which is
+     why live scans kept returning zero opportunities even after loosening the numbers: the
+     binding constraint was never the threshold, it was the gate SHAPE. Every dimension here
+     scores continuously and combines by weight, so a pair that's merely decent on one axis
+     gets pulled down proportionally, not zeroed out. */
   if (!closes || closes.length < 22) return null;
   const n = closes.length;
 
-  /* ── 1. SE_q — Signal Edge on 30-day Z-score ──
-     Threshold: Z30 > 0.8 starts scoring, Z30 = 2.3 → 100.
-     Lower than OMEGA (1.0 threshold) — we act on smaller moves. */
+  /* ── DEPTH — 30-day Z-score, rescaled for the real target: small, frequent 2-4% catches,
+     not rare big dislocations. Starts scoring at 0.5σ, maxes at 1.8σ (was 0.8–2.3σ, calibrated
+     for bigger, rarer moves than what's actually being chased here). ── */
   const w30 = closes.slice(-30);
   const mean30 = w30.reduce((a,b)=>a+b,0)/w30.length;
   const std30  = Math.sqrt(w30.reduce((s,v)=>s+(v-mean30)**2,0)/w30.length) || 0.001;
   const z30    = (closes[n-1] - mean30) / std30;
-  // Directional: only reward positive Z (selling the overvalued asset)
-  const se_q   = Math.max(0, Math.min(100, Math.round((z30 - 0.8) / 1.5 * 100)));
+  const depth  = Math.max(0, Math.min(100, Math.round((z30 - 0.5) / 1.3 * 100)));
 
-  /* ── 2. BP — Bollinger Band Position (20-day, 2σ) ──
-     Near upper band = ratio overextended at short timescale = good scalp entry. */
+  /* ── CONFIRM — RSI-14 + Bollinger-20 + OU-force-20, AVERAGED into one smaller-weight
+     technical nudge instead of three separately-weighted "independent" votes. Kept for the
+     real, if modest, extra information they carry — demoted from primary driver to
+     supporting signal, since they overlap heavily with Depth and with each other. ── */
   const w20    = closes.slice(-20);
   const bMean  = w20.reduce((a,b)=>a+b,0)/20;
   const bStd   = Math.sqrt(w20.reduce((s,v)=>s+(v-bMean)**2,0)/20) || 0.001;
@@ -3225,9 +3251,6 @@ function computeQSS(closes, corr) {
     : bollPos > 60 ? Math.round((bollPos-60)/15*30)
     : 0;
 
-  /* ── 3. RE — RSI Extreme (14-period on ratio closes) ──
-     RSI > 70 = overbought ratio = good time to sell FROM.
-     RSI < 30 = oversold = bad direction. */
   const rsiArr = rsiCalc(closes.slice(-40));
   const rsi    = rsiArr.length ? rsiArr[rsiArr.length-1] : 50;
   const re     = rsi > 78 ? 100
@@ -3235,98 +3258,81 @@ function computeQSS(closes, corr) {
     : rsi > 58 ? Math.round((rsi-58)/10*30)
     : 0;
 
-  /* ── 4. QF — Quick OU Force (20-day window) ──
-     Same OU physics as OMEGA but using shorter window = faster spring detection.
-     Directional: negative force (pulling toward mean) = good. */
   const ouHL20  = ouHalfLifeET(closes.slice(-25));
-  // Use OU if half-life ≤ 20 days — still fast enough for a scalp
   const theta20 = ouHL20 <= 20 ? Math.log(2)/ouHL20 : 0;
   const ouF20   = theta20 * (mean30 - closes[n-1]);
   const ouFPct20 = std30 > 0 ? (ouF20/std30)*100 : 0;
-  // Negate: negative ouFPct20 (pulling down toward mean) → positive score
   const qf      = Math.max(0, Math.min(100, Math.round(-ouFPct20 * 2.2)));
 
-  /* ── 5. CorrQ — Correlation quality ──
-     High correlation = pair naturally reverts. Same logic as OMEGA MQ pairwise. */
-  const corrQ   = Math.max(0, Math.min(100, Math.round(((corr||0) - 0.50) / 0.40 * 100)));
+  const confirm = Math.round((bp + re + qf) / 3);
 
-  /* ── MT — Momentum Turn gate ──
-     Detects if momentum is decelerating at short timescale.
-     Velocity = last close minus previous close (1-day).
-     Acceleration = change in velocity.
-     Gate values: still accelerating = 0.55, decelerating = 1.0, already reversing = 0.75 */
-  const vel1  = closes[n-1] - closes[n-2];
-  const vel2  = closes[n-2] - closes[n-3];
-  const vel3  = closes[n-3] - closes[n-4];
-  const acc   = vel1 - vel2;   // current acceleration
-  const acc2  = vel2 - vel3;   // previous acceleration
-  let mt;
-  if (z30 < 0.8) {
-    mt = 0.40; // not extended enough — barely worth looking
-  } else if (vel1 > 0 && acc > 0) {
-    mt = 0.55; // still accelerating upward — too early
-  } else if (vel1 > 0 && acc <= 0) {
-    mt = 1.00; // moving up but slowing — PERFECT entry window
-  } else if (vel1 <= 0 && acc <= 0) {
-    mt = 0.75; // already reversing — still ok, some gain left
-  } else {
-    mt = 0.65;
-  }
-
-  /* ── Final QSS ── */
-  const inner = se_q*0.30 + bp*0.25 + re*0.20 + qf*0.15 + corrQ*0.10;
-  const qss   = Math.round(mt * inner);
-
-  /* ── Trade estimates ── */
-  // Expected gain = distance from current to 30-day mean
-  const expGain  = mean30 > 0 ? Math.abs((closes[n-1]/mean30 - 1)*100) : 0;
-  // Hold days estimate:
-  // If OU spring is fast (≤20d) → use OU half-life × 0.5, capped at 7d
-  // If OU spring is slow/absent → estimate from Z30 (further from mean = reverts faster at short scale)
-  const holdDays = ouHL20 <= 20
-    ? Math.min(7, Math.max(1, Math.round(ouHL20 * 0.5)))
-    : z30 > 2.0 ? 4 : z30 > 1.5 ? 5 : z30 > 1.0 ? 6 : 7;
-  const meanFmt  = mean30 > 1 ? mean30.toFixed(4) : mean30.toFixed(7);
-
-  /* ── Z-depth gate — require a REAL statistical anomaly, not just component overlap ──
-     A high QSS can happen even when z30 barely clears 0.8, because RSI/Bollinger/OU can
-     line up on their own. That's a shallow, low-conviction "anomaly" — the mean-reversion
-     edge behind it is thin. Require the same 0.8σ that SE_q itself already treats as "worth
-     scoring" (was 1.0σ — a stricter, separate bar than the score's own logic used, which
-     made a real anomaly by the score's own math still get rejected here; still shown
-     otherwise, just downgraded to watch-only). */
-  const meetsZGate = z30 >= 0.8;
-
-  /* ── Oscillation check — is this pair actually mean-reverting, or just trending? ──
-     Reuses the same idea as the post-entry health check (mean-crossing count), but applied
-     BEFORE entry: a pair that hasn't crossed its own 45-day mean at least twice recently has
-     been drifting in one direction, not oscillating. QSS's 30-day reversion assumption is
-     much weaker on a pair like that — this is exactly the "shifted structurally lower /
-     no recovery attempt" failure pattern, caught in advance instead of after the fact. */
-  let oscillationOk = true, oscillationNote = '';
+  /* ── REVERSION-QUALITY — does this pair actually oscillate, or just trend? Was a hard
+     veto (oscillationOk) able to zero out an otherwise-good setup outright; now a continuous
+     score, so "somewhat oscillating" isn't treated the same as "purely trending," but still
+     pulls the total down proportionally. Correlation folds in here — reversion is only a
+     reasonable bet between two genuinely linked coins. ── */
+  let crossings45 = null, oscScore = 50, oscillationNote = '';
   if (n >= 45) {
     const w45 = closes.slice(-45);
     const mean45 = w45.reduce((a,b)=>a+b,0)/45;
-    let crossings45 = 0;
+    crossings45 = 0;
     for (let i=1;i<w45.length;i++){
       if ((w45[i-1]-mean45)*(w45[i]-mean45) < 0) crossings45++;
     }
-    oscillationOk = crossings45 >= 2;
-    if (!oscillationOk) oscillationNote = 'This pair has been trending, not oscillating, over the last 45 days — mean-reversion is less reliable here.';
+    oscScore = Math.max(0, Math.min(100, crossings45 * 35)); // 0→0, 1→35, 2→70, 3+→100
+    if (crossings45 < 2) oscillationNote = `This pair has crossed its own 45-day mean only ${crossings45} time${crossings45===1?'':'s'} recently — more trending than oscillating, so mean-reversion here is less reliable.`;
+  }
+  const corrQ     = Math.max(0, Math.min(100, Math.round(((corr||0) - 0.50) / 0.40 * 100)));
+  const reversionQ = Math.round(oscScore*0.6 + corrQ*0.4);
+
+  /* ── TRAJECTORY — momentum turn. Catching a ratio while it's still accelerating away is a
+     worse entry than catching it just as it turns. "Already reversing" eased slightly
+     (0.75→0.85) — for a quick 2-4% catch, a ratio that's already turned is a fine entry, not
+     just a tolerable one. */
+  const vel1  = closes[n-1] - closes[n-2];
+  const vel2  = closes[n-2] - closes[n-3];
+  const acc   = vel1 - vel2;
+  let mt;
+  if (z30 < 0.5) {
+    mt = 0.40; // not extended enough — barely worth looking
+  } else if (vel1 > 0 && acc > 0) {
+    mt = 0.60; // still accelerating — too early
+  } else if (vel1 > 0 && acc <= 0) {
+    mt = 1.00; // moving up but slowing — perfect entry window
+  } else if (vel1 <= 0 && acc <= 0) {
+    mt = 0.85; // already turned — still a good entry for a quick catch
+  } else {
+    mt = 0.70;
   }
 
+  /* ── Final QSS — three independent pillars, weighted, times trajectory ── */
+  const inner = depth*0.45 + reversionQ*0.35 + confirm*0.20;
+  const qss   = Math.round(mt * inner);
+
+  const expGain  = mean30 > 0 ? Math.abs((closes[n-1]/mean30 - 1)*100) : 0;
+  const holdDays = ouHL20 <= 20
+    ? Math.min(7, Math.max(1, Math.round(ouHL20 * 0.5)))
+    : z30 > 1.5 ? 4 : z30 > 1.0 ? 5 : z30 > 0.7 ? 6 : 7;
+  const meanFmt  = mean30 > 1 ? mean30.toFixed(4) : mean30.toFixed(7);
+
+  // Kept as informational fields only now (still shown in the UI as context/caution notes)
+  // — neither one can veto the score outright any more. See isGo below.
+  const meetsZGate   = z30 >= 0.5;
+  const oscillationOk = crossings45===null ? true : crossings45 >= 2;
+
   return {
-    qss, se_q, bp, re, qf, corrQ, mt,
+    qss, depth, reversionQ, confirm,
+    se_q:depth, bp, re, qf, corrQ, mt,   // se_q kept as an alias so the existing breakdown-bar UI needs no changes
     z30, bollPos, rsi, ouFPct20,
     expGain, holdDays, mean30, meanFmt, ouHL20,
     meetsZGate, oscillationOk, oscillationNote,
-    /* A trustworthy "go" needs the score AND a real anomaly AND genuine oscillation history.
-       Threshold eased from 65→60: with a 13-coin universe (kept deliberately small for real
-       fee/liquidity reasons), 65 was leaving too few pairs able to clear it at all. 60 is
-       still the top 40% of the 0-100 scale, not a low bar — the oscillation and Z checks
-       are what actually stand between this and the shallow-entry failure mode, and neither
-       moved. */
-    isGo: qss >= 60 && meetsZGate && oscillationOk
+    /* No external AND-gates any more — a shallow-Z, non-reverting pair like the original
+       XRP/XLM entry (Z=0.34) now scores at most inner≈55 (Depth=0 kills 45% of the total
+       outright) times mt=0.40 → qss≈22, nowhere near a "go." That protection is now built
+       into the multiplication itself, not a separate condition layered on top — stronger
+       against a repeat of that failure than the old gate was, while not able to zero out a
+       pair that's merely so-so on one axis. */
+    isGo: qss >= 60
   };
 }
 
@@ -5094,16 +5100,15 @@ function initBestSwapNow(){
   if(!grid) return;
 
   // Shared by both scan modes (holdings-scoped and market-wide).
-  // Trustworthy "go" signals (isGo) always rank above a raw high score that
-  // failed the Z-depth or oscillation gate, even if the numbers look similar.
+  // isGo is simply qss>=60 (no external AND-gates), so this just ranks by score
+  // with a small nudge to keep go-signals grouped above near-misses of the same score.
   const rank=r=>(r.qss?.isGo?1000:0)+r.score;
   const gateNote=r=>{
-    if(!r.qss || r.score<45) return '';
-    if(r.qss.isGo) return '';
+    if(!r.qss || r.score<45 || r.qss.isGo) return '';
     const reasons=[];
-    if(!r.qss.meetsZGate) reasons.push(`Z ${r.qss.z30.toFixed(2)}σ`);
+    if(r.qss.z30 < 1.0) reasons.push(`Z ${r.qss.z30.toFixed(2)}σ — shallow`);
     if(!r.qss.oscillationOk) reasons.push('trending, not oscillating');
-    return reasons.length?`<div style="font-size:9px;font-family:monospace;color:#f5a623;margin-top:2px">⚠️ downgraded — ${reasons.join(' · ')}</div>`:'';
+    return reasons.length?`<div style="font-size:9px;font-family:monospace;color:#f5a623;margin-top:2px">⚠️ near miss — ${reasons.join(' · ')}</div>`:'';
   };
 
   let selected=new Set();
