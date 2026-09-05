@@ -145,16 +145,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .il{font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:2px}
 .iv{font-size:13px;font-weight:700;font-family:monospace}
 .is{font-size:10px;color:var(--text3);margin-top:1px}
-.sigs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:.7rem}
-.sig{border-radius:var(--rs);padding:8px 10px;border:1px solid}
-.sig.bull{background:var(--gd);border-color:rgba(0,192,118,.3)}
-.sig.bear{background:var(--rd);border-color:rgba(239,68,68,.25)}
-.sig.neut{background:var(--ad);border-color:rgba(245,166,35,.25)}
-.sn{font-size:10px;font-weight:700;font-family:monospace;margin-bottom:2px}
-.sig.bull .sn{color:var(--green)}.sig.bear .sn{color:var(--red)}.sig.neut .sn{color:var(--amber)}
-.sv{font-size:11px;color:var(--text2)}
-.rbar-w{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:4px}
-.rbar{height:100%;border-radius:2px}
 
 /* ═══════════════════════════════════
    CHART LAYOUT
@@ -593,101 +583,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .alert-del-btn{font-family:monospace;font-size:10px;padding:2px 7px;border-radius:var(--rs);border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text3);margin-left:auto}
 .alert-del-btn:hover{border-color:var(--red);color:var(--red)}
 .alert-empty{font-size:12px;color:var(--text3);font-family:monospace;padding:.5rem 0}
-
-/* ── Risk Dashboard ── */
-.risk-dashboard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;margin-bottom:.7rem}
-.risk-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:.8rem;display:flex;align-items:center;gap:8px}
-.risk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:.8rem}
-.risk-card{background:var(--bg3);border-radius:var(--rs);padding:.7rem .9rem;border:2px solid var(--border)}
-.risk-card.safe{border-color:rgba(0,192,118,.4);background:rgba(0,192,118,.05)}
-.risk-card.warn{border-color:rgba(245,166,35,.4);background:rgba(245,166,35,.05)}
-.risk-card.danger{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.05)}
-.risk-card-label{font-size:10px;font-family:monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;font-weight:700}
-.risk-card-val{font-size:17px;font-weight:700;font-family:monospace;margin-bottom:2px}
-.risk-card.safe .risk-card-val{color:var(--green)}
-.risk-card.warn .risk-card-val{color:var(--amber)}
-.risk-card.danger .risk-card-val{color:var(--red)}
-.risk-card-note{font-size:11px;color:var(--text2);line-height:1.4}
-
-/* ── Master Action Box ── */
-.master-action{border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:.7rem;border:2px solid}
-.master-action.go{background:rgba(0,192,118,.08);border-color:rgba(0,192,118,.5)}
-.master-action.wait{background:rgba(245,166,35,.07);border-color:rgba(245,166,35,.4)}
-.master-action.stop{background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.4)}
-.master-action.neutral{background:var(--bg2);border-color:var(--border2)}
-.ma-header{display:flex;align-items:center;gap:12px;margin-bottom:.6rem;flex-wrap:wrap}
-.ma-icon{font-size:28px;line-height:1}
-.ma-title{font-size:18px;font-weight:700}
-.master-action.go .ma-title{color:var(--green)}
-.master-action.wait .ma-title{color:var(--amber)}
-.master-action.stop .ma-title{color:var(--red)}
-.master-action.neutral .ma-title{color:var(--text2)}
-.ma-score-badge{font-family:monospace;font-size:13px;font-weight:700;padding:3px 12px;border-radius:10px;margin-left:auto}
-.master-action.go .ma-score-badge{background:rgba(0,192,118,.15);color:var(--green)}
-.master-action.wait .ma-score-badge{background:rgba(245,166,35,.12);color:var(--amber)}
-.master-action.stop .ma-score-badge{background:rgba(239,68,68,.1);color:var(--red)}
-.master-action.neutral .ma-score-badge{background:var(--bg3);color:var(--text2)}
-.ma-instruction{font-size:14px;color:var(--text);line-height:1.7;margin-bottom:.5rem}
-.ma-reason{font-size:11px;color:var(--text3);line-height:1.5;margin-top:2px}
-.ma-checklist{display:flex;flex-wrap:wrap;gap:6px;margin-top:.6rem}
-.ma-check{font-size:11px;padding:3px 10px;border-radius:8px;font-family:monospace;font-weight:700}
-.ma-check.pass{background:rgba(0,192,118,.12);color:var(--green)}
-.ma-check.fail{background:rgba(239,68,68,.1);color:var(--red)}
-.ma-check.warn{background:rgba(245,166,35,.1);color:var(--amber)}
-
-/* ── Correlation bar ── */
-.corr-bar-wrap{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;margin:4px 0}
-.corr-bar-fill{height:100%;border-radius:4px;transition:width .6s}
-
-/* ── Swap size recommendation ── */
-.swap-size-rec{display:flex;align-items:center;gap:10px;padding:.6rem .9rem;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border2);margin-top:.6rem;flex-wrap:wrap}
-.swap-size-label{font-size:11px;color:var(--text3);font-family:monospace;font-weight:700;text-transform:uppercase}
-.swap-size-val{font-size:22px;font-weight:700;font-family:monospace;color:var(--blue)}
-.swap-size-note{font-size:11px;color:var(--text2)}
-
-/* ── Volatility state indicator ── */
-.vol-state{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:monospace;font-weight:700;padding:2px 9px;border-radius:8px}
-.vol-state.calm{background:rgba(0,192,118,.12);color:var(--green)}
-.vol-state.normal{background:rgba(59,143,255,.1);color:var(--blue)}
-.vol-state.high{background:rgba(245,166,35,.12);color:var(--amber)}
-.vol-state.extreme{background:rgba(239,68,68,.1);color:var(--red)}
-
-/* ── Mobile ── */
-@media(max-width:640px){
-  .risk-grid{grid-template-columns:1fr 1fr}
-  .ma-instruction{font-size:13px}
-  .risk-card-val{font-size:15px}
-}
-
-/* ── Best Swap Partner ── */
-.best-partner{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.7rem}
-.best-partner-title{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.7rem;display:flex;align-items:center;gap:6px}
-.bp-grid{display:flex;flex-wrap:wrap;gap:8px}
-/* ── Quick Scalps ── */
-.qs-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;transition:border-color .2s;cursor:default}
-.qs-card.qs-hot{border-color:rgba(245,166,35,.5);background:rgba(245,166,35,.04)}
-.qs-card.qs-go{border-color:rgba(0,192,118,.5);background:rgba(0,192,118,.04)}
-.qs-card.qs-weak{opacity:.6}
-.qs-score{font-size:20px;font-weight:700;font-family:monospace}
-.qs-pair{font-size:13px;font-weight:700}
-.qs-badge{font-size:9px;font-family:monospace;padding:1px 6px;border-radius:8px;font-weight:700}
-.qs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:7px}
-.qs-bar-track{height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-top:2px}
-.qs-bar-fill{height:100%;border-radius:3px;transition:width .4s}
-/* ── /Quick Scalps ── */
-.bp-card{background:var(--bg3);border:2px solid var(--border);border-radius:var(--rs);padding:.6rem .8rem;cursor:pointer;transition:all .2s;min-width:110px;flex:1}
-.bp-card:hover{border-color:var(--blue);background:rgba(59,143,255,.06)}
-.bp-card.bp-best{border-color:rgba(0,192,118,.5);background:rgba(0,192,118,.06)}
-.bp-card.bp-warn{border-color:rgba(245,166,35,.4)}
-.bp-card.bp-bad{border-color:rgba(239,68,68,.3);opacity:.7}
-.bp-sym{font-size:14px;font-weight:700;font-family:monospace;margin-bottom:2px}
-.bp-card.bp-best .bp-sym{color:var(--green)}
-.bp-card.bp-warn .bp-sym{color:var(--amber)}
-.bp-corr{font-size:11px;font-family:monospace;font-weight:700;margin-bottom:2px}
-.bp-label{font-size:10px;color:var(--text3)}
-.bp-score-badge{font-size:10px;font-family:monospace;padding:1px 6px;border-radius:5px;display:inline-block;margin-top:3px}
-.bp-loading{font-size:12px;color:var(--text3);font-family:monospace;padding:.3rem 0}
-@media(max-width:640px){.bp-card{min-width:80px;padding:.5rem .6rem}}
 
 /* ── Toast notification ── */
 #toastContainer{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
@@ -1842,51 +1737,15 @@ function renderMain(series){
       </div>
     </div>
 
-    <!-- ══ MASTER ACTION BOX ══ -->
-    <div class="master-action neutral" id="masterAction" style="display:none">
-      <div class="ma-header">
-        <span class="ma-icon" id="maIcon">⏳</span>
-        <span class="ma-title" id="maTitle">Analyzing...</span>
-        <span class="ma-score-badge" id="maScoreBadge">—</span>
-      </div>
-      <div class="ma-instruction" id="maInstruction">Fetching market data...</div>
-      <div class="ma-reason" id="maReason"></div>
-      <div class="ma-checklist" id="maChecklist"></div>
-      <div id="maTradePlan" style="display:none"></div>
-      <div class="swap-size-rec" id="swapSizeRec" style="display:none!important">
-        <span class="swap-size-label">Recommended swap size</span>
-        <span class="swap-size-val" id="swapSizeVal">—</span>
-        <span class="swap-size-note" id="swapSizeNote"></span>
-      </div>
-    </div>
-    <div id="corrWarningBanner" style="display:none"></div>
-
-    <!-- ══ RISK DASHBOARD ══ -->
-    <div class="risk-dashboard" id="riskDashboard" style="display:none">
-      <div class="risk-title">🛡️ Risk Filters</div>
-      <div class="risk-grid" id="riskGrid"></div>
-      <div id="riskSummary" style="font-size:12px;color:var(--text2);line-height:1.6;padding:.5rem 0;border-top:1px solid var(--border)"></div>
-    </div>
-
-    <!-- ══ BEST CORRELATED SWAP PARTNERS ══ -->
-    <div class="best-partner" id="bestPartnerBox" style="display:none">
-      <div class="best-partner-title">
-        🔗 Best swap partners for <span id="bpFromLabel" style="color:var(--blue);margin-left:4px;margin-right:4px">—</span>
-        <span style="font-weight:400;font-size:10px;color:var(--text3)">corr + score</span>
-      </div>
-      <div class="bp-grid" id="bpGrid"><div class="bp-loading">Scanning correlations...</div></div>
-    </div>
-
     <div class="metrics" id="metricsRow"></div>
 
     ${chartHTML('mainChart',320,`Ratio ${fromSym}/${toSym} · 1D`,ctBtns+sep+tfBtns+sep)}
     <div class="inds" id="indsRow"></div>
-    <div class="sigs" id="sigsRow"></div>
     ${chartHTML('rsiChart',130,'RSI (14) &amp; Stoch RSI','')}
     ${chartHTML('macdChart',130,'MACD (12/26/9)','')}
   `;
 
-  renderMetrics(s);renderInds(s);renderSigs(s);
+  renderMetrics(s);renderInds(s);
 
   setTimeout(()=>{
     const closes=series.map(r=>r.c);
@@ -1990,40 +1849,8 @@ function renderInds(s){
     <div class="ind"><div class="il">Resistance</div><div class="iv" style="color:#ef4444">${fmt(s.res)}</div><div class="is">20D high</div></div>
   `;
 }
-function renderSigs(s){
-  const rt=s.rsi<35?'bull':s.rsi>65?'bear':'neut';
-  const mt=s.macdHist>0?'bull':s.macdHist<0?'bear':'neut';
-  const bt=s.bollPos<30?'bull':s.bollPos>70?'bear':'neut';
-  const tt=s.trend7>3?'bull':s.trend7<-3?'bear':'neut';
-  const z=s.zScore||0;
-  const zt=z>1.5?'bull':z<-1.5?'bear':'neut'; // bull = FROM overbought = good to swap
-  const zSv=z>2.5?`Extreme +${z.toFixed(2)}σ`
-    :z>1.5?`Overbought +${z.toFixed(2)}σ`
-    :z>1?`+${z.toFixed(2)}σ above mean`
-    :z<-2.5?`Extreme ${z.toFixed(2)}σ`
-    :z<-1.5?`Oversold ${z.toFixed(2)}σ`
-    :z<-1?`${z.toFixed(2)}σ below mean`
-    :`Neutral ${z>=0?'+':''}${z.toFixed(2)}σ`;
-  document.getElementById('sigsRow').innerHTML=`
-    <div class="sig ${zt}"><div class="sn">Z-Score <span style="font-size:9px;opacity:.6">90d</span></div><div class="sv">${zSv}</div><div class="rbar-w"><div class="rbar" style="width:${Math.min(100,Math.max(0,(z+3)/6*100))}%;background:${z>1.5?'#00c076':z<-1.5?'#ef4444':'#f5a623'}"></div></div></div>
-    <div class="sig ${rt}"><div class="sn">RSI (14)</div><div class="sv">${s.rsi>70?'Overbought · '+s.rsi.toFixed(0):s.rsi<30?'Oversold · '+s.rsi.toFixed(0):'Neutral · '+s.rsi.toFixed(0)}</div><div class="rbar-w"><div class="rbar" style="width:${s.rsi}%;background:${s.rsi>65?'#00c076':s.rsi<35?'#ef4444':'#f5a623'}"></div></div></div>
-    <div class="sig ${mt}"><div class="sn">MACD</div><div class="sv">${s.macdHist>0?'Bullish':'Bearish'} · ${s.macdHist>=0?'+':''}${s.macdHist.toFixed(5)}</div></div>
-    <div class="sig ${bt}"><div class="sn">Bollinger</div><div class="sv">${s.bollPos>70?'Upper band':s.bollPos<30?'Lower band':'Mid-range'} · ${s.bollPos.toFixed(0)}%</div></div>
-    <div class="sig ${tt}"><div class="sn">Momentum</div><div class="sv">${s.trend1>=0?'+':''}${s.trend1.toFixed(1)}% 1d · ${s.trend7>=0?'+':''}${s.trend7.toFixed(1)}% 7d</div></div>
-  `;
-}
-
-/* Legacy stub kept for scanBestPartners (correlation-ranked list, doesn't display this value) */
-function mathScore(s){
-  return 50;
-}
 /* ── Score cache: key = pair+timeframe, TTL = 5 min, stored in localStorage ── */
 const _SCORE_TTL = 5 * 60 * 1000;
-
-/* ════════════════════════════════════════════════════════
-   RISK ANALYSIS SYSTEM
-   Calculates 6 risk filters before recommending a swap
-════════════════════════════════════════════════════════ */
 
 /* Pearson correlation on daily returns (not raw prices).
    Raw price Pearson fails for crypto — coins at different price scales
@@ -2051,480 +1878,6 @@ function calcCorrelation(a, b){
   return denom===0?0:Math.round((num/denom)*100)/100;
 }
 
-/* ATR — average true range as % of price (volatility measure) */
-function calcATR(series, period=14){
-  if(series.length<period+1) return 5;
-  const trs=[];
-  for(let i=1;i<series.length;i++){
-    const h=series[i].h||series[i].c;
-    const l=series[i].l||series[i].c;
-    const pc=series[i-1].c;
-    trs.push(Math.max(h-l, Math.abs(h-pc), Math.abs(l-pc)));
-  }
-  const recent=trs.slice(-period);
-  const avgATR=recent.reduce((a,b)=>a+b,0)/recent.length;
-  const currentPrice=series[series.length-1].c;
-  return (avgATR/currentPrice)*100; // as % of price
-}
-
-/* Check if today's candle confirms signal direction */
-function calcConfirmationCandle(series, scoreIsHigh){
-  if(series.length<2) return null;
-  const last=series[series.length-1];
-  const open=last.o||last.c;
-  const close=last.c;
-  if(scoreIsHigh) return close>open; // green candle = confirms upward ratio move
-  else return close<open; // red candle = confirms downward ratio move
-}
-
-/* BTC dominance proxy — use BTC/ETH ratio trend as a dominance signal
-   Rising BTC/ETH = BTC gaining = altcoin risk rising */
-let _btcDomCache=null, _btcDomTime=0;
-async function getBTCDominanceTrend(){
-  const now=Date.now();
-  if(_btcDomCache&&now-_btcDomTime<15*60*1000) return _btcDomCache;
-  try{
-    const[btc,eth]=await Promise.all([
-      fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=10').then(r=>r.json()),
-      fetch('https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=1d&limit=10').then(r=>r.json())
-    ]);
-    const btcC=btc.map(k=>+k[4]);
-    const ethC=eth.map(k=>+k[4]);
-    const n=Math.min(btcC.length,ethC.length);
-    const ratioNow=btcC[n-1]/ethC[n-1];
-    const ratio7=btcC[Math.max(0,n-8)]/ethC[Math.max(0,n-8)];
-    const trend=((ratioNow-ratio7)/ratio7)*100;
-    _btcDomCache={trend, rising:trend>3};
-    _btcDomTime=now;
-    return _btcDomCache;
-  }catch(e){return{trend:0,rising:false};}
-}
-
-/* ── Build full risk analysis ── */
-function buildRiskAnalysis(opts){
-  const {score, corr90, atrPct, bollWidth, confirmed, btcDom, trend7, trend14, fromSym, toSym} = opts;
-  const risks=[];
-
-  /* 1. Correlation check */
-  let corrClass, corrLabel, corrNote;
-  if(corr90>=0.75){
-    corrClass='safe'; corrLabel=corr90.toFixed(2);
-    corrNote='Coins move together — ratio will likely revert ✓';
-  } else if(corr90>=0.60){
-    corrClass='warn'; corrLabel=corr90.toFixed(2);
-    corrNote='Lower correlation — higher risk of decoupling.';
-  } else {
-    corrClass='danger'; corrLabel=corr90.toFixed(2);
-    corrNote='Low correlation — coins may decouple. Not recommended.';
-  }
-  risks.push({label:'90-Day Correlation', val:corrLabel, cls:corrClass, note:corrNote,
-    bar:true, barPct:Math.max(0,Math.min(100,(corr90+1)/2*100))});
-
-  /* 2. Volatility / ATR check */
-  let volClass, volLabel, volNote;
-  if(atrPct<2){
-    volClass='safe'; volLabel='Calm'; volNote='Low volatility — signals are reliable ✓';
-  } else if(atrPct<4){
-    volClass='safe'; volLabel='Normal'; volNote='Normal volatility — good conditions ✓';
-  } else if(atrPct<7){
-    volClass='warn'; volLabel='High'; volNote='High volatility — signal less reliable, reduce swap size';
-  } else {
-    volClass='danger'; volLabel='Extreme'; volNote='Extreme volatility — wait for market to calm';
-  }
-  risks.push({label:'Volatility (ATR)', val:volLabel, cls:volClass, note:volNote});
-
-  /* 3. Confirmation candle */
-  let confClass, confLabel, confNote;
-  if(confirmed===true){
-    confClass='safe'; confLabel='✓ Confirmed';
-    confNote='Candle confirms signal direction ✓';
-  } else if(confirmed===false){
-    confClass='warn'; confLabel='⚠ Not yet';
-    confNote='Signal fired but candle not confirming — consider waiting 1 day';
-  } else {
-    confClass='warn'; confLabel='Pending';
-    confNote='Waiting for candle to close';
-  }
-  risks.push({label:'Candle Confirmation', val:confLabel, cls:confClass, note:confNote});
-
-  /* 4. BTC dominance */
-  let btcClass, btcLabel, btcNote;
-  if(!btcDom||Math.abs(btcDom.trend)<3){
-    btcClass='safe'; btcLabel='Stable';
-    btcNote='BTC not dominating — altcoin ratios are reliable ✓';
-  } else if(btcDom.rising){
-    btcClass='warn'; btcLabel='BTC Rising';
-    btcNote='BTC gaining dominance — altcoin ratios less predictable';
-  } else {
-    btcClass='safe'; btcLabel='Altcoins Up';
-    btcNote='Capital rotating into altcoins — favorable for swaps ✓';
-  }
-  // Only show BTC dominance if neither coin is BTC
-  if(fromSym!=='BTC'&&toSym!=='BTC'){
-    risks.push({label:'Market Phase', val:btcLabel, cls:btcClass, note:btcNote});
-  }
-
-  /* 5. Trend consistency */
-  let trendClass, trendLabel, trendNote;
-  const t7=trend7||0, t14=trend14||0;
-  const agree=(t7>0&&t14>0)||(t7<0&&t14<0);
-  const conflict=(t7>1&&t14<-1)||(t7<-1&&t14>1);
-  if(agree&&Math.abs(t7)>2){
-    trendClass='safe'; trendLabel='Consistent';
-    trendNote=`7d and 14d trends agree — ${t7>0?'both rising':'both falling'}, clear direction ✓`;
-  } else if(conflict){
-    trendClass='warn'; trendLabel='Conflicting';
-    trendNote='Short and long term trends disagree — possible reversal zone, act carefully';
-  } else {
-    trendClass='safe'; trendLabel='Neutral';
-    trendNote='No strong trend conflict — conditions acceptable ✓';
-  }
-  risks.push({label:'Trend Consistency', val:trendLabel, cls:trendClass, note:trendNote});
-
-  /* 6. Bollinger squeeze */
-  let bwClass, bwLabel, bwNote;
-  if(bollWidth<2.5){
-    bwClass='safe'; bwLabel='Squeeze ⚡';
-    bwNote='Bands very tight — breakout imminent, excellent timing for a swap ✓';
-  } else if(bollWidth<5){
-    bwClass='safe'; bwLabel='Normal';
-    bwNote='Normal band width — clean signal conditions ✓';
-  } else {
-    bwClass='warn'; bwLabel='Wide';
-    bwNote='Wide bands mean high recent volatility — slightly less reliable';
-  }
-  risks.push({label:'Band Width', val:bwLabel, cls:bwClass, note:bwNote});
-
-  /* Overall pass/fail count */
-  const passes=risks.filter(r=>r.cls==='safe').length;
-  const total=risks.length;
-  const failed=risks.filter(r=>r.cls!=='safe');
-
-  /* ── Swap recommendation based on passes out of 6 ──
-     ≤3 green = HIGH RISK — do not swap regardless of score
-     4 green  = Caution — swap small if score is strong
-     5 green  = Good — swap with confidence
-     6 green  = Perfect — full position
-  */
-  let swapSize, swapNote, riskLevel;
-  if(passes<=3){
-    swapSize='0%';
-    swapNote='Too many risk flags — wait for better conditions';
-    riskLevel='high';
-  } else if(passes===4){
-    swapSize=score>=80?'25%':'0%';
-    swapNote=score>=80?'Caution — swap maximum 25% of position':'Score not strong enough to override 2 risk flags';
-    riskLevel='caution';
-  } else if(passes===5){
-    swapSize=score>=90?'75%':score>=80?'50%':'25%';
-    swapNote=`Good conditions — ${swapSize} recommended`;
-    riskLevel='good';
-  } else {
-    swapSize=score>=90?'100%':score>=80?'75%':'50%';
-    swapNote=`Perfect conditions — ${swapSize} recommended`;
-    riskLevel='perfect';
-  }
-
-  return {risks, passes, total, failed, swapSize, swapNote, riskLevel};
-}
-
-/* ── Render risk dashboard + master action box ── */
-function renderRiskDashboard(opts){
-  const {score, corr90, atrPct, bollWidth, confirmed, btcDom, stats, fromSym, toSym} = opts;
-  const trend7=stats?stats.trend7:0;
-  const trend14=stats?stats.trend14:0;
-
-  const analysis=buildRiskAnalysis({score,corr90,atrPct,bollWidth,confirmed,btcDom,trend7,trend14,fromSym,toSym});
-
-  /* Risk grid */
-  const grid=document.getElementById('riskGrid');
-  const dash=document.getElementById('riskDashboard');
-  if(!grid||!dash) return;
-
-  dash.style.display='block';
-  grid.innerHTML='';
-  analysis.risks.forEach(r=>{
-    const card=document.createElement('div');
-    card.className='risk-card '+r.cls;
-    card.innerHTML=`
-      <div class="risk-card-label">${r.label}</div>
-      <div class="risk-card-val">${r.val}</div>
-      ${r.bar?`<div class="corr-bar-wrap"><div class="corr-bar-fill" style="width:${r.barPct}%;background:${r.cls==='safe'?'#00c076':r.cls==='warn'?'#f5a623':'#ef4444'}"></div></div>`:''}
-    `;
-    grid.appendChild(card);
-  });
-
-  /* Risk summary line */
-  const sumEl=document.getElementById('riskSummary');
-  if(sumEl){
-    const {passes,total,riskLevel}=analysis;
-    const col=riskLevel==='perfect'||riskLevel==='good'?'var(--green)':riskLevel==='caution'?'var(--amber)':'var(--red)';
-    const label=riskLevel==='perfect'?'🟢 Perfect conditions':riskLevel==='good'?'🟢 Good conditions':riskLevel==='caution'?'🟡 Caution — conditions mixed':'🔴 High risk — do not swap';
-    const failedNames=analysis.failed.map(f=>f.label).join(', ');
-    sumEl.innerHTML=
-      `<span style="color:${col};font-weight:700">${passes}/${total} filters passed · ${label}</span>`+
-      (analysis.failed.length?`<br><span style="font-size:11px;color:var(--text3)">Failing: ${failedNames}</span>`:'');
-  }
-
-  /* ── Master Action Box ── */
-  const ma=document.getElementById('masterAction');
-  if(!ma) return;
-  ma.style.display='block';
-
-  const isScoreSwap=score>=60;
-  const isScoreHold=score<45;
-  const {passes,total,riskLevel,failed,swapSize}=analysis;
-
-  let maClass, maIcon, maTitle, maInstruction, maReason;
-
-  /* Risk filters are the PRIMARY gate — they override the score */
-  if(riskLevel==='high'){
-    maClass='stop'; maIcon='🔴';
-    maTitle='HIGH RISK — DO NOT SWAP';
-    maInstruction=`Score <strong>${score}/100</strong> but only <strong>${passes}/${total}</strong> risk filters green. Not safe.`;
-    maReason=`Failing: ${failed.map(f=>f.label).join(' · ')}`;
-
-  } else if(riskLevel==='caution'){
-    if(isScoreSwap&&score>=80){
-      maClass='wait'; maIcon='🟡';
-      maTitle='CAUTION — SMALL SWAP ONLY';
-      maInstruction=`Score ${score}/100 but <strong>2 filters failing</strong>. Proceed with reduced size or wait.`;
-      maReason=`Failing: ${failed.map(f=>f.label).join(' · ')}`;
-    } else {
-      maClass='stop'; maIcon='🔴';
-      maTitle='DO NOT SWAP';
-      maInstruction=`Score ${score}/100 and <strong>2 filters failing</strong>. Wait for better conditions.`;
-      maReason=`Failing: ${failed.map(f=>f.label).join(' · ')}`;
-    }
-
-  } else if(riskLevel==='good'){
-    if(isScoreSwap){
-      maClass='go'; maIcon='🟢';
-      maTitle='GOOD TIME TO SWAP';
-      maInstruction=`Score <strong>${score}/100</strong> · ${passes}/${total} filters green. Swap <strong>${fromSym} → ${toSym}</strong>.`;
-      maReason=`Amber: ${failed.map(f=>f.label).join(', ')}`;
-    } else if(isScoreHold){
-      maClass='stop'; maIcon='🔴';
-      maTitle='DO NOT SWAP';
-      maInstruction=`Filters OK (${passes}/${total}) but score is only <strong>${score}/100</strong>. Wait for score ≥ 60.`;
-      maReason='';
-    } else {
-      maClass='wait'; maIcon='🟡';
-      maTitle='ALMOST — WATCH CLOSELY';
-      maInstruction=`Filters good (${passes}/${total}) but score <strong>${score}/100</strong> — needs 60. Set an alert.`;
-      maReason='';
-    }
-
-  } else {
-    if(isScoreSwap){
-      maClass='go'; maIcon='🟢';
-      maTitle='PERFECT — SWAP NOW';
-      maInstruction=`All ${total}/${total} filters green · Score <strong>${score}/100</strong>. Swap <strong>${fromSym} → ${toSym}</strong>.`;
-      maReason='';
-    } else if(isScoreHold){
-      maClass='stop'; maIcon='🔴';
-      maTitle='DO NOT SWAP';
-      maInstruction=`Filters perfect but score <strong>${score}/100</strong>. Stay in position — wait for ratio to recover.`;
-      maReason='';
-    } else {
-      maClass='wait'; maIcon='🟡';
-      maTitle='FILTERS READY — SCORE NOT YET';
-      maInstruction=`All filters green but score <strong>${score}/100</strong>. Set alert for ≥ 60 and act fast when it fires.`;
-      maReason='';
-    }
-  }
-
-  ma.className='master-action '+maClass;
-  document.getElementById('maIcon').textContent=maIcon;
-  document.getElementById('maTitle').textContent=maTitle;
-  document.getElementById('maInstruction').innerHTML=maInstruction;
-  const maReasonEl=document.getElementById('maReason');
-  maReasonEl.textContent=maReason;
-  maReasonEl.style.display=maReason?'block':'none';
-  document.getElementById('maScoreBadge').textContent='Score: '+score+'/100';
-
-  /* Correlation warning banner — shown below master action */
-  const corrWarn=document.getElementById('corrWarningBanner');
-  if(corrWarn){
-    if(corr90<0.60){
-      corrWarn.style.display='block';
-      corrWarn.innerHTML=`<div style="background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.5);border-radius:var(--rs);padding:10px 14px;margin-top:10px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px;line-height:1">⚠️</span>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:#ef4444">Low Correlation (${corr90.toFixed(2)}) — Ratio may not revert. Pick a different pair.</div>
-        </div>
-      </div>`;
-    } else if(corr90<0.75){
-      corrWarn.style.display='block';
-      corrWarn.innerHTML=`<div style="background:rgba(245,166,35,0.08);border:2px solid rgba(245,166,35,0.5);border-radius:var(--rs);padding:10px 14px;margin-top:10px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px;line-height:1">⚠️</span>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:#f5a623">Correlation ${corr90.toFixed(2)} — moderate. Higher risk pair.</div>
-        </div>
-      </div>`;
-    } else {
-      corrWarn.style.display='none';
-    }
-  }
-
-  /* Checklist pills */
-  const cl=document.getElementById('maChecklist');
-  if(cl){
-    cl.innerHTML='';
-    analysis.risks.forEach(r=>{
-      const span=document.createElement('span');
-      span.className='ma-check '+r.cls;
-      span.textContent=(r.cls==='safe'?'✓ ':'✗ ')+r.label;
-      cl.appendChild(span);
-    });
-  }
-
-  /* Swap size recommendation */
-  const ssr=document.getElementById('swapSizeRec');
-  const ssv=document.getElementById('swapSizeVal');
-  const ssn=document.getElementById('swapSizeNote');
-  if(ssr&&ssv&&ssn){
-    const showSize=isScoreSwap&&riskLevel!=='high';
-    ssr.style.display=showSize?'flex':'none';
-    // Swap size recommendation removed
-  }
-}
-
-/* ════════════════════════════════════════════════════════
-   BEST CORRELATED SWAP PARTNER SCANNER
-   For a given FROM coin, finds which coins in the list
-   have the highest 90-day correlation AND best swap score.
-   Combined ranking: 60% correlation + 40% swap score.
-════════════════════════════════════════════════════════ */
-
-let _bpCache={}, _bpCacheTime={};
-const _BP_TTL = 10 * 60 * 1000; // 10 min cache
-
-async function scanBestPartners(baseSym){
-  const box=document.getElementById('bestPartnerBox');
-  const grid=document.getElementById('bpGrid');
-  const lbl=document.getElementById('bpFromLabel');
-  if(!box||!grid) return;
-
-  box.style.display='block';
-  if(lbl) lbl.textContent=baseSym;
-  grid.innerHTML='<div class="bp-loading">⏳ Scanning correlations for all coins...</div>';
-
-  // Use cache
-  const cacheKey='bp_'+baseSym;
-  if(_bpCache[cacheKey]&&Date.now()-_bpCacheTime[cacheKey]<_BP_TTL){
-    renderBestPartners(baseSym, _bpCache[cacheKey]);
-    return;
-  }
-
-  // Fetch 90d klines for base coin
-  let baseCloses=[];
-  try{
-    const bk=await fetch('https://api.binance.com/api/v3/klines?symbol='+baseSym+'USDT&interval=1d&limit=91').then(r=>r.json());
-    baseCloses=bk.map(k=>+k[4]);
-  }catch(e){ grid.innerHTML='<div class="bp-loading">Could not fetch data</div>'; return; }
-
-  // Scan all other coins in batches
-  const candidates=COINS_LIST.filter(c=>c!==baseSym&&!_weakCoins.has(c));
-  const results=[];
-
-  // Fetch all in parallel (max 8 at once)
-  const batchSize=8;
-  for(let i=0;i<candidates.length;i+=batchSize){
-    const batch=candidates.slice(i,i+batchSize);
-    const fetches=batch.map(sym=>
-      fetch('https://api.binance.com/api/v3/klines?symbol='+sym+'USDT&interval=1d&limit=91')
-        .then(r=>r.json())
-        .then(klines=>{
-          const closes=klines.map(k=>+k[4]);
-          const corr=calcCorrelation(baseCloses, closes);
-          // Quick math score on the ratio
-          const toObj=k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],live:false});
-          const baseObj=klines.map((_,ii)=>({t:ii,o:baseCloses[ii]||baseCloses[0],h:baseCloses[ii]||baseCloses[0],l:baseCloses[ii]||baseCloses[0],c:baseCloses[ii]||baseCloses[0],live:false}));
-          const symObj=klines.map(toObj);
-          const ratioSeries=buildRatio(baseObj.slice(-Math.min(baseObj.length,symObj.length)), symObj.slice(-Math.min(baseObj.length,symObj.length)));
-          const stats=ratioSeries.length>15?getStats(ratioSeries):null;
-          const score=stats?mathScore(stats):50;
-          const swingPct=stats?stats.swingPct||0:0;
-          const zScore=stats?stats.zScore||0:0;
-          return {sym, corr, score, swingPct, zScore};
-        })
-        .catch(()=>({sym:batch[i], corr:0, score:50}))
-    );
-    const batchResults=await Promise.all(fetches);
-    results.push(...batchResults);
-
-    // Rank: 50% correlation + 30% score + 20% swing range (normalised to 0-1 over 60% max swing)
-    const rankFn=r=>(r.corr*0.5)+Math.min((r.swingPct||0)/60,1)*0.5;
-    const sorted=results.filter(r=>r.corr>0.3).sort((a,b)=>rankFn(b)-rankFn(a));
-    renderBestPartners(baseSym, sorted, true);
-  }
-
-  const rankFn=r=>(r.corr*0.5)+Math.min((r.swingPct||0)/60,1)*0.5;
-  // Final sort and cache
-  const final=results.filter(r=>r.corr>0.3).sort((a,b)=>rankFn(b)-rankFn(a));
-  _bpCache[cacheKey]=final;
-  _bpCacheTime[cacheKey]=Date.now();
-  renderBestPartners(baseSym, final, false);
-}
-
-function renderBestPartners(baseSym, results, isPartial){
-  const grid=document.getElementById('bpGrid');
-  if(!grid) return;
-  grid.innerHTML='';
-
-  const top=results.slice(0,8); // show top 8
-  if(!top.length){
-    grid.innerHTML='<div class="bp-loading">No correlated coins found</div>';
-    return;
-  }
-
-  top.forEach((r,idx)=>{
-    const card=document.createElement('div');
-    const combined=(r.corr*0.6)+Math.min((r.swingPct||0)/60,1)*0.4;
-    const isBest=idx===0;
-    const isWarn=r.corr<0.6;
-    const isBad=r.corr<0.4;
-    card.className='bp-card'+(isBest?' bp-best':isWarn&&!isBad?' bp-warn':isBad?' bp-bad':'');
-
-    const corrCol=r.corr>=0.75?'#00c076':r.corr>=0.55?'#f5a623':'#ef4444';
-    const zc=r.zScore||0;
-    const zCol2=zc>2?'#00c076':zc>1?'#f5a623':zc<-2?'#ef4444':zc<-1?'#f5a623':'var(--text3)';
-    const swingCol=(r.swingPct||0)>30?'#00c076':(r.swingPct||0)>15?'#f5a623':'var(--text3)';
-    // Show Z and Swing as the key metrics — not old score which means nothing to user
-    const zSignal = Math.abs(zc)>2.5?'Extreme':Math.abs(zc)>1.5?'Extended':Math.abs(zc)>1?'Mild':'Near mean';
-    card.innerHTML=
-      '<div class="bp-sym">'+(isBest?'⭐ ':'')+r.sym+'</div>'+
-      '<div class="bp-corr" style="color:'+corrCol+'">Corr: '+r.corr.toFixed(2)+'</div>'+
-      '<div class="bp-label" style="color:'+swingCol+'">Swing: '+(r.swingPct||0).toFixed(0)+'%</div>'+
-      '<div class="bp-label" style="color:'+zCol2+'">Z: '+(zc>=0?'+':'')+zc.toFixed(1)+'</div>'+
-      (isBest?'<div class="bp-score-badge" style="background:rgba(0,192,118,.12);color:#00c076">Best correlation</div>':'');
-
-    card.title='Click to analyze '+baseSym+'/'+r.sym;
-    card.onclick=()=>{
-      // Set TO coin and re-analyze
-      const toIdx=COINS.findIndex(c=>c.sym===r.sym);
-      if(toIdx>=0){
-        document.querySelectorAll('#toGrid .coin-chip').forEach(ch=>ch.classList.remove('active'));
-        const chip=document.querySelector('#toGrid [data-sym="'+r.sym+'"]');
-        if(chip) chip.classList.add('active');
-        toSym=r.sym;
-        updatePairBar();
-        _clearScore();
-        loadAndRender();
-      }
-    };
-    grid.appendChild(card);
-  });
-
-  if(isPartial){
-    const loading=document.createElement('div');
-    loading.className='bp-loading';
-    loading.style.width='100%';
-    loading.textContent='⏳ Still scanning...';
-    grid.appendChild(loading);
-  }
-}
 
 /* ── Telegram setup interactivity ── */
 function tgOnTokenInput(){
@@ -2592,19 +1945,6 @@ async function runAIScore(s, forceRefresh){
     if(cached){
       if(!currentStats&&s) currentStats=s;
       renderScore(cached);
-      // Restore risk dashboard from cached risk data if available
-      if(cached._risk){
-        renderRiskDashboard({
-          score:cached.score,
-          corr90:cached._risk.corr90||0,
-          atrPct:cached._risk.atrPct||3,
-          bollWidth:cached._risk.bollWidth||5,
-          confirmed:cached._risk.confirmed||null,
-          btcDom:null,
-          stats:currentStats,
-          fromSym, toSym
-        });
-      }
       const btn=panel.querySelector('.reanalyze-btn');
       if(btn)btn.disabled=false;
       return;
@@ -2617,14 +1957,9 @@ async function runAIScore(s, forceRefresh){
   panel.querySelector('.sp-sub').textContent='Fetching live market data...';
   panel.querySelector('.sp-fill').style.width='0%';
   panel.querySelector('.sp-needle').style.left='0%';
-  panel.querySelector('.sp-explain-body').textContent='Calculating risk filters...';
+  panel.querySelector('.sp-explain-body').textContent='Calculating...';
   panel.querySelector('.sp-situation').textContent='';
   panel.querySelector('.sp-pred').style.display='none';
-  /* Hide risk panels while loading */
-  const maEl=document.getElementById('masterAction');
-  const rdEl=document.getElementById('riskDashboard');
-  if(maEl) maEl.style.display='none';
-  if(rdEl) rdEl.style.display='none';
   const btn=panel.querySelector('.reanalyze-btn');if(btn)btn.disabled=true;
 
   /* Fetch fresh klines — 90d for correlation, standard for score */
@@ -2659,19 +1994,12 @@ async function runAIScore(s, forceRefresh){
     }
   }catch(e){}
 
-  /* ATR from ratio series */
-  // Convert raw Binance klines [t,o,h,l,c,...] to {t,o,h,l,c} objects for buildRatio
+  // Convert raw Binance klines [t,o,h,l,c,...] to {t,o,h,l,c} objects for buildRatio,
+  // used below as the closes series QSS computes on.
   const toObj=k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],live:false});
   const fk90obj=fromKlines90.length?fromKlines90.map(toObj):[];
   const tk90obj=toKlines90.length?toKlines90.map(toObj):[];
-  const ratioSeriesForATR=fk90obj.length>5&&tk90obj.length>5?buildRatio(fk90obj,tk90obj):[];
-  const atrPct=ratioSeriesForATR.length>15?calcATR(ratioSeriesForATR):3;
-
-  /* Confirmation candle — direction based on Z-score sign */
-  const confirmed=ratioSeriesForATR.length>2?calcConfirmationCandle(ratioSeriesForATR, (freshS.zScore||0)>=1.5):null;
-
-  /* BTC dominance trend */
-  const btcDom=(fromSym!=='BTC'&&toSym!=='BTC')?await getBTCDominanceTrend().catch(()=>null):null;
+  const ratioSeriesForQSS=fk90obj.length>5&&tk90obj.length>5?buildRatio(fk90obj,tk90obj):[];
 
   const buildPlainExplanation=(score,s)=>{
     const t=s.trend7;
@@ -2701,7 +2029,7 @@ async function runAIScore(s, forceRefresh){
   const divergenceWarn=Math.abs(z)>2&&freshS.streak&&Math.abs(freshS.streak)>=7&&Math.sign(freshS.streak)===Math.sign(z);
 
   /* ── QSS — the one score in the app, computed synchronously (no async pipeline) ── */
-  const ratioClosesForQSS = ratioSeriesForATR.length > 15 ? ratioSeriesForATR.map(r=>r.c) : (_currentRatioS||[]).map(r=>r.c);
+  const ratioClosesForQSS = ratioSeriesForQSS.length > 15 ? ratioSeriesForQSS.map(r=>r.c) : (_currentRatioS||[]).map(r=>r.c);
   const q = computeQSS(ratioClosesForQSS, corr90);
   const score = q ? q.qss : 0;
 
@@ -2717,21 +2045,12 @@ async function runAIScore(s, forceRefresh){
     market_situation:`${fromSym}/${toSym} ratio: ${freshS.cur>=1?freshS.cur.toFixed(4):freshS.cur.toFixed(7)} · Z-score ${z>=0?'+':''}${z.toFixed(2)} · ${freshS.trend7>=0?'▲ +':'▼ '}${freshS.trend7.toFixed(2)}% this week`,
     prediction: '',
     _stats:{cur:freshS.cur,trend7:freshS.trend7,trend1:freshS.trend1||0,zScore:z,expectedRevertGain:expGain,swingPct,mean90:freshS.mean90||0},
-    _risk:{corr90,atrPct,bollWidth:freshS.bollWidth,confirmed},
     _divergenceWarn:divergenceWarn
   };
 
   renderScore(mathResult);
   _syncScoreCache(fromSym, toSym, score, q);
   _saveScore(mathResult);
-  scanBestPartners(fromSym);
-
-  renderRiskDashboard({
-    score, corr90, atrPct,
-    bollWidth:freshS.bollWidth||5,
-    confirmed, btcDom,
-    stats:freshS, fromSym, toSym
-  });
 
   if(btn)btn.disabled=false;
 }
