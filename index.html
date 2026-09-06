@@ -1941,7 +1941,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v14'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v15'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2573,14 +2573,31 @@ function computeQSS(closes, corr) {
   if (!closes || closes.length < 22) return null;
   const n = closes.length;
 
-  /* ── DEPTH — 30-day Z-score, rescaled for the real target: small, frequent 2-4% catches,
-     not rare big dislocations. Starts scoring at 0.5σ, maxes at 1.8σ (was 0.8–2.3σ, calibrated
-     for bigger, rarer moves than what's actually being chased here). ── */
+  /* ── DEPTH — is the ratio ACTUALLY stretched right now? Two independent ways to qualify,
+     not one:
+       (a) Z-SCORE — a sharp, recent move away from its own 30-day average. Catches spikes.
+       (b) CUMULATIVE 30D MOVE — the ratio's raw total change over the full 30-day window,
+           regardless of whether that happened suddenly or as a slow, steady grind.
+     Z-score alone is blind to (b): a ratio that's been quietly climbing all month can stay
+     close to its own rolling mean the whole time (the mean drifts along with the trend), so Z
+     stays low even while the pair has genuinely, meaningfully diverged. This is exactly why a
+     coin that's clearly overvalued on raw 30-day return (confirmed independently by the
+     Market Position Map) could still be invisible here — it was grinding, not spiking, and
+     grinding doesn't move Z. Taking the BETTER of the two (not requiring both) means either
+     kind of stretch qualifies a pair, instead of only the sudden-spike shape. */
   const w30 = closes.slice(-30);
   const mean30 = w30.reduce((a,b)=>a+b,0)/w30.length;
   const std30  = Math.sqrt(w30.reduce((s,v)=>s+(v-mean30)**2,0)/w30.length) || 0.001;
   const z30    = (closes[n-1] - mean30) / std30;
-  const depth  = Math.max(0, Math.min(100, Math.round((z30 - 0.5) / 1.3 * 100)));
+  const depthZ = Math.max(0, Math.min(100, Math.round((z30 - 0.5) / 1.3 * 100)));
+
+  // Starts scoring at an 8% cumulative move, maxes at 35% — calibrated to the real gaps seen
+  // across this pool's actual coins (roughly 10-40 percentage points between the strongest
+  // and weakest performers at any given time), not an arbitrary round number.
+  const cum30    = (w30.length > 1 && w30[0] > 0) ? (closes[n-1]-w30[0])/w30[0]*100 : 0;
+  const depthCum = Math.max(0, Math.min(100, Math.round((cum30 - 8) / 27 * 100)));
+
+  const depth = Math.max(depthZ, depthCum);
 
   /* ── CONFIRM — RSI-14 + Bollinger-20 + OU-force-20, AVERAGED into one smaller-weight
      technical nudge instead of three separately-weighted "independent" votes. Kept for the
@@ -2635,13 +2652,17 @@ function computeQSS(closes, corr) {
   /* ── TRAJECTORY — momentum turn. Catching a ratio while it's still accelerating away is a
      worse entry than catching it just as it turns. "Already reversing" eased slightly
      (0.75→0.85) — for a quick 2-4% catch, a ratio that's already turned is a fine entry, not
-     just a tolerable one. */
+     just a tolerable one.
+     Gate updated to check BOTH z30 and cum30 — a pair that only qualifies as "extended" via
+     the cumulative-grind route (depthCum) must not get crushed back down to 0.40 here purely
+     because a spike-shaped Z-score alone is low. Either sign of being extended keeps this
+     gate open, matching the OR logic already used in DEPTH above. */
   const vel1  = closes[n-1] - closes[n-2];
   const vel2  = closes[n-2] - closes[n-3];
   const acc   = vel1 - vel2;
   let mt;
-  if (z30 < 0.5) {
-    mt = 0.40; // not extended enough — barely worth looking
+  if (z30 < 0.5 && cum30 < 8) {
+    mt = 0.40; // not extended enough by either measure — barely worth looking
   } else if (vel1 > 0 && acc > 0) {
     mt = 0.60; // still accelerating — too early
   } else if (vel1 > 0 && acc <= 0) {
@@ -2664,13 +2685,15 @@ function computeQSS(closes, corr) {
 
   // Kept as informational fields only now (still shown in the UI as context/caution notes)
   // — neither one can veto the score outright any more. See isGo below.
-  const meetsZGate   = z30 >= 0.5;
+  // meetsZGate now reflects the same OR as DEPTH/TRAJECTORY: extended via spike OR grind.
+  const meetsZGate   = z30 >= 0.5 || cum30 >= 8;
   const oscillationOk = crossings45===null ? true : crossings45 >= 2;
 
   return {
     qss, depth, reversionQ, confirm,
     se_q:depth, bp, re, qf, corrQ, mt,   // se_q kept as an alias so the existing breakdown-bar UI needs no changes
     z30, bollPos, rsi, ouFPct20,
+    depthZ, cum30, depthCum,   // exposed for transparency/debugging — which route (spike vs grind) qualified this pair
     expGain, holdDays, mean30, meanFmt, ouHL20,
     meetsZGate, oscillationOk, oscillationNote,
     /* No external AND-gates any more — a shallow-Z, non-reverting pair like the original
@@ -2876,68 +2899,6 @@ function initMarketMap(){
     chevron.classList.toggle('open',!isOpen);
   };
   if(runBtn) runBtn.onclick=()=>runMarketMap(true);
-}
-
-/* Each pool coin's own 30d return (reuses fetch30dReturn, already defined above for the
-   Market Map — 13 cheap, independent calls). This is what the BSN scanner uses to surface
-   "market divergence" opportunities: a coin can be genuinely overextended and worth
-   swapping even when its pairwise QSS is only WATCH, because QSS measures the RATIO's own
-   short-term stretch while this measures the coin's broader 30-day run — two different,
-   both-real signals, not a replacement for either. */
-async function fetchPoolReturns30d(){
-  const results=await Promise.all(COINS.map(async c=>{
-    const ret=await fetch30dReturn(c.sym);
-    return ret!=null ? {sym:c.sym, name:c.name, ret} : null;
-  }));
-  const out={};
-  results.forEach(r=>{ if(r) out[r.sym]=r; });
-  return out;
-}
-
-/* Rank every ordered pair in the pool by its 30d-return gap (FROM − TO). Validated in the
-   Signal Lab: the single most extreme pick hits 67% (z=5.0), and the gap-size quartiles
-   show the same direction holds at smaller gaps too — so every positive-gap pair here is a
-   legitimate candidate, not just the single top-vs-bottom extreme. restrictFromSet limits
-   the FROM leg to a specific set of coins (e.g. "Scan my holdings"); pass null for all. */
-function buildDivergenceRows(poolReturns, scoredList, restrictFromSet){
-  const syms=Object.keys(poolReturns);
-  const rows=[];
-  syms.forEach(a=>{
-    if(restrictFromSet && !restrictFromSet.has(a)) return;
-    syms.forEach(b=>{
-      if(a===b) return;
-      const gap=poolReturns[a].ret-poolReturns[b].ret;
-      if(gap<=0) return;
-      const qssMatch=scoredList.find(s=>s.from===a&&s.to===b);
-      rows.push({from:a, to:b, fromName:poolReturns[a].name, toName:poolReturns[b].name, gap, qss:qssMatch});
-    });
-  });
-  rows.sort((x,y)=>y.gap-x.gap);
-  return rows;
-}
-
-function divergenceSectionHtml(rows){
-  if(!rows.length) return '';
-  const items=rows.slice(0,10).map((r,idx)=>{
-    const qCol = r.qss ? (r.qss.qss?.isGo?'#00c076':r.qss.score>=45?'#f5a623':'#ef4444') : null;
-    const qssBadge = r.qss
-      ? `<span style="font-size:10px;font-family:monospace;font-weight:700;padding:2px 8px;border-radius:8px;background:${qCol}1a;color:${qCol}">QSS ${r.qss.score}</span>`
-      : `<span style="font-size:10px;font-family:monospace;color:var(--text3)">QSS —</span>`;
-    return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;${idx>0?'border-top:1px solid var(--border)':''}">
-      <div style="flex:1;min-width:140px">
-        <div style="font-size:14px;font-weight:700;color:var(--text)">${r.from} → ${r.to}</div>
-        <div style="font-size:10px;color:var(--text3)">${r.fromName} → ${r.toName}</div>
-      </div>
-      <div style="font-size:12px;font-family:monospace;font-weight:700;color:#9d7ff0">+${r.gap.toFixed(1)}pp gap</div>
-      ${qssBadge}
-      <button class="bsn-analyze-btn" onclick="switchAnalyzerPair('${r.from}','${r.to}')">Analyze →</button>
-    </div>`;
-  }).join('');
-  return `<div style="background:rgba(122,127,240,0.07);border:2px solid rgba(122,127,240,0.35);border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.8rem">
-    <div style="font-size:11px;font-family:monospace;font-weight:700;color:#9d7ff0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">🎯 Market divergence opportunities</div>
-    <div style="font-size:10px;color:var(--text3);margin-bottom:2px;line-height:1.5">Ranked by 30-day return gap within your pool — a separate signal from QSS, validated in the Signal Lab (top pick: 67% hit rate, z=5.0). This is why a coin like SOL or XRP can be worth swapping even when its QSS only says WATCH.</div>
-    ${items}
-  </div>`;
 }
 
 function loadTrackers(){
@@ -4774,9 +4735,6 @@ function initBestSwapNow(){
       });
     });
 
-    // Kick off the pool's 30d returns alongside the pairwise scan — independent data, no reason to wait.
-    const poolReturnsPromise=fetchPoolReturns30d();
-
     // Fetch in parallel batches of 10
     const BATCH=10;
     const scored=[];
@@ -4793,9 +4751,6 @@ function initBestSwapNow(){
 
     // Sort by QSS (isGo always ranks above a raw high score that failed a gate).
     scored.sort((a,b)=> rank(b) - rank(a));
-
-    const poolReturns=await poolReturnsPromise.catch(()=>({}));
-    const divergenceRows=buildDivergenceRows(poolReturns, scored, selected);
 
     // Group by FROM coin — best swap for each held coin
     const byFrom={};
@@ -4844,9 +4799,6 @@ function initBestSwapNow(){
       </div>
     `;
     results.appendChild(banner);
-
-    const divHtml=divergenceSectionHtml(divergenceRows);
-    if(divHtml) results.insertAdjacentHTML('beforeend', divHtml);
 
     // ── Best swap per held coin ──
     const heading=document.createElement('div');
@@ -4936,8 +4888,6 @@ function initBestSwapNow(){
         <div style="font-size:11px;color:var(--text3);margin-top:5px">Fetching live Binance data · Est. ${Math.ceil(tasks.length/10)*2}s</div>
       </div>`;
 
-    const poolReturnsPromise=fetchPoolReturns30d();
-
     const BATCH=10;
     const scored=[];
     for(let i=0;i<tasks.length;i+=BATCH){
@@ -4949,9 +4899,6 @@ function initBestSwapNow(){
     }
     scored.sort((a,b)=>rank(b)-rank(a));
     const top=scored[0];
-
-    const poolReturns=await poolReturnsPromise.catch(()=>({}));
-    const divergenceRows=buildDivergenceRows(poolReturns, scored, null);
 
     if(!top){
       results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1rem;text-align:center">Could not fetch data. Check your connection.</div>`;
@@ -4986,9 +4933,6 @@ function initBestSwapNow(){
       </div>
     `;
     results.appendChild(banner);
-
-    const divHtml=divergenceSectionHtml(divergenceRows);
-    if(divHtml) results.insertAdjacentHTML('beforeend', divHtml);
 
     const heading=document.createElement('div');
     heading.style.cssText='font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;margin-top:.3rem';
@@ -5378,7 +5322,7 @@ function renderSignalLab(d){
     <table class="lab-table"><tr><th>Return gap (FROM − TO)</th><th>N</th><th>Hit rate</th></tr>
       ${gapQ.map(b=>_labRow(b.n,b.hitRate,null,`${b.lo.toFixed(1)}pp – ${b.hi.toFixed(1)}pp`)).join('')}
     </table>
-    <div class="lab-note">If the top quartile's hit rate is clearly higher than the bottom's, the gap size itself is a real, usable signal — meaning a coin like SOL or XRP running hot doesn't need to be the single #1-vs-#12 pick above to be worth surfacing as an opportunity; a big-enough gap against ANY of the other 12 coins should count. That's the basis for the "Market Divergence" picks in the scanner below.</div>`;
+    <div class="lab-note">If the top quartile's hit rate is clearly higher than the bottom's, the gap size itself is a real, usable signal — meaning a coin like SOL or XRP running hot doesn't need to be the single #1-vs-#12 pick above to be worth surfacing as an opportunity; a big-enough gap against ANY of the other 12 coins should count. That's why QSS's DEPTH pillar now scores a pair on the better of its own Z-score OR its raw 30-day cumulative move (see the scanner below) — a steady grind shows up here.</div>`;
   }
 
   const opportunityLift = directMisses>0 ? (triBonus/directMisses*100) : 0;
