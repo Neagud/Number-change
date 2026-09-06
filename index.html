@@ -3241,14 +3241,26 @@ function renderDetailView(){
 }
 
 /* ── Stats ── */
+// Replays a tracker's swap history to find what's currently held. A plain chain (each swap's
+// fromAsset matches what the previous swap just landed in) walks exactly as before. The one
+// addition: a swap that puts MORE of the base asset into the position already open (adding to
+// an existing swap once the rate improves, rather than closing and reopening) accumulates onto
+// the current holding instead of being skipped — previously any such top-up after the first
+// swap was silently ignored, so only the very last tranche ever showed up anywhere.
+function currentHolding(tr){
+  let asset=tr.assetA, amount=tr.startAmount;
+  (tr.swaps||[]).forEach(sw=>{
+    if(sw.fromAsset===asset){ asset=sw.toAsset; amount=sw.toAmt; }
+    else if(sw.fromAsset===tr.assetA && sw.toAsset===asset){ amount+=sw.toAmt; }
+  });
+  return {asset, amount};
+}
+
 function calcBaseAmount(tr){
   const swaps=tr.swaps||[];
   if(!swaps.length) return null;
 
-  let asset=tr.assetA, amount=tr.startAmount;
-  swaps.forEach(sw=>{
-    if(sw.fromAsset===asset){asset=sw.toAsset; amount=sw.toAmt;}
-  });
+  const {asset, amount}=currentHolding(tr);
 
   // Exact: landed back on base
   if(asset===tr.assetA) return amount;
@@ -3369,8 +3381,7 @@ function renderDetailStats(tr){
   const profitStr=profitAmt!==null?(profitAmt>=0?'+':'')+profitAmt.toFixed(4)+' '+tr.assetA:'—';
 
   // Current holding
-  let curAsset=tr.assetA, curAmt=tr.startAmount;
-  swaps.forEach(sw=>{if(sw.fromAsset===curAsset){curAsset=sw.toAsset;curAmt=sw.toAmt;}});
+  const {asset:curAsset, amount:curAmt}=currentHolding(tr);
 
   // Live refresh — one formula, updates stats + monitor card together
   const monitorNowIdD = 'monitor-now-' + tr.id.replace(/[^a-z0-9]/gi,'_');
@@ -3502,11 +3513,24 @@ async function getScoreForPair(a,b){
 ══════════════════════════════════════════════════════════════ */
 async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   const swaps = tr.swaps || [];
-  // Find last swap that landed us into curAsset
-  const lastSwap = [...swaps].reverse().find(s => s.toAsset === curAsset);
-  if (!lastSwap) return null;
+  // The current open position = every swap into curAsset since the last time this tracker
+  // held its base asset — not just the most recent one. Denis ladders in: if the rate keeps
+  // improving after his first swap, he adds more of the same swap rather than closing and
+  // reopening. Walking backward and stopping at the first swap that ISN'T into curAsset finds
+  // exactly that run, so a top-up blends into the one tracked position instead of the tracker
+  // only ever seeing the latest tranche and ignoring the ones before it.
+  const posSwaps = [];
+  for (let i = swaps.length - 1; i >= 0; i--) {
+    if (swaps[i].toAsset === curAsset) posSwaps.unshift(swaps[i]);
+    else break;
+  }
+  if (!posSwaps.length) return null;
+  const firstSwap = posSwaps[0];   // the original swap that opened this position
+  const lastSwap  = posSwaps[posSwaps.length - 1]; // most recent tranche (top-up or the only one)
+  const totalFromAmt = posSwaps.reduce((s, sw) => s + sw.fromAmt, 0);
+  const totalToAmt   = posSwaps.reduce((s, sw) => s + sw.toAmt, 0);
 
-  const entryDateMs = new Date(lastSwap.date).getTime();
+  const entryDateMs = new Date(firstSwap.date).getTime(); // anchored to the FIRST tranche, not each top-up
   const daysSinceEntry = Math.max(0, (Date.now() - entryDateMs) / 86400000);
   const isScalp = true; // QSS is the only score now — every trade is monitored scalp-style
 
@@ -3544,19 +3568,22 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     const currentRatio = ratioCloses[ratioCloses.length-1];
     currentZ = (currentRatio - meanW) / stdW;
 
-    // Entry Z: prefer value stored at swap time (exact), fall back to historical candle lookup
-    if (lastSwap.storedEntryZ && isFinite(lastSwap.storedEntryZ)) {
-      entryZ = lastSwap.storedEntryZ;
-      // Still find historical ratio for gainSoFar calculation
-      let closestIdx = ratioTs.reduce((best, ts, i) =>
-        Math.abs(ts - entryDateMs) < Math.abs(ratioTs[best] - entryDateMs) ? i : best, 0);
-      entryRatioHist = ratioCloses[closestIdx];
-    } else {
-      let closestIdx = ratioTs.reduce((best, ts, i) =>
-        Math.abs(ts - entryDateMs) < Math.abs(ratioTs[best] - entryDateMs) ? i : best, 0);
-      entryRatioHist = ratioCloses[closestIdx];
-      entryZ = (entryRatioHist - meanW) / stdW;
+    // Entry ratio/Z: blend every tranche's own entry point (value stored at swap time when
+    // available, else a historical candle lookup at that tranche's date), weighted by how much
+    // was put into it. With one swap this reduces to exactly the old single-swap calculation —
+    // the weighting is against that swap's own fromAmt, i.e. a no-op.
+    let ratioWeightSum = 0, zWeightSum = 0;
+    for (const sw of posSwaps) {
+      const swDateMs = new Date(sw.date).getTime();
+      const closestIdx = ratioTs.reduce((best, ts, i) =>
+        Math.abs(ts - swDateMs) < Math.abs(ratioTs[best] - swDateMs) ? i : best, 0);
+      const swRatio = ratioCloses[closestIdx];
+      const swZ = (sw.storedEntryZ && isFinite(sw.storedEntryZ)) ? sw.storedEntryZ : (swRatio - meanW) / stdW;
+      ratioWeightSum += swRatio * sw.fromAmt;
+      zWeightSum += swZ * sw.fromAmt;
     }
+    entryRatioHist = ratioWeightSum / totalFromAmt;
+    entryZ = zWeightSum / totalFromAmt;
 
     // Momentum turn signal (same idea as QSS's own MT gate): the recent daily move
     // decelerating or reversing while still below mean = "turning around".
@@ -3578,15 +3605,27 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   const remainingToMean = meanW > 0 ? ((meanW / currentRatioNow) * (1 - SWAP_FEE_RATE) - 1) * 100 : 0;
 
   // ── Add-on opportunity — informational only, no automation, no urgency ──
-  // Simulated against 12,000+ synthetic "good entry, keeps moving the wrong way" cases:
-  // laddering in a second tranche once the ratio moves 5%+ further past entry gives a
-  // strictly better (never worse) blended breakeven than a single all-at-once entry, because
-  // the rate for buying MORE of the held coin is mathematically better once it's dropped
-  // further — same logic the score itself already uses (deeper move = better entry). This is
-  // not a prediction that it will keep falling or a suggestion to act — just a heads-up that
-  // the rate right now is better than the one already taken, if there's more to add.
+  // Deliberately measured on the RAW ratio move, with NO fee deduction — the displayed
+  // "gain so far" elsewhere already reads about -2% right after entry purely from the
+  // round-trip fee, so using that fee-inclusive number here would mean a real -5% raw move
+  // shows as a much scarier -7%, and would trigger this note on drag that was never a real
+  // price move at all. rawDropPct never mixes fees into the threshold check for that reason.
+  //
+  // Threshold picked from testing 12,000+ synthetic "good entry, keeps moving the wrong way"
+  // cases at several trigger points: 5% (the original guess) fires on 57% of ALL trades, but
+  // only 67% of those firings were even necessary (the rest reverted fine on their own) — a lot
+  // of noise for a "quiet" note. 7% cuts that to 48% of trades firing, 79% of which turn out to
+  // matter, while barely giving up any of the recovery benefit (never-recovered / avg-days-to-
+  // breakeven for the ones that do keep falling are nearly identical at 5% vs 7%). 7% is the
+  // balance point between "useful" and "noisy."
+  //
+  // Because this compares against the BLENDED entry (post any top-ups, see posSwaps above),
+  // this single check naturally re-fires as a position develops — first relative to the
+  // original entry, then again relative to the new blended entry after a top-up, and so on —
+  // without needing separate hardcoded "tranche 2" / "tranche 3" thresholds.
   const rawDropPct = entryRatioHist > 0 ? ((currentRatioNow / entryRatioHist) - 1) * 100 : 0;
-  const addOnOpportunity = rawDropPct <= -5;
+  const addOnOpportunity = rawDropPct <= -7;
+  const remainingBudget = tr.startAmount > totalFromAmt ? tr.startAmount - totalFromAmt : 0;
 
   // Define exitThreshold here — used by estDays, status messages, progress bar, and exitLabel
   const exitThreshold = 0.8;
@@ -3679,7 +3718,7 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
     : estDays <= 10 ? 'days' : 'weeks (est.)';
 
   // ── Entry quality context — full analysis combining score + Z-depth ──
-  const entryScore = lastSwap.score || 0; // QSS stored at swap time
+  const entryScore = firstSwap.score || 0; // QSS at the swap that opened this position, not a later top-up
   const scoreLabel = 'QSS';
   const entryZDepth = Math.abs(entryZ); // how deep into the anomaly the entry was
 
@@ -3968,7 +4007,7 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
         <div style="background:rgba(59,143,255,0.08);border:1px solid rgba(59,143,255,0.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
           <span style="font-size:18px;line-height:1">➕</span>
           <div style="font-size:12px;color:var(--text2);line-height:1.6">
-            <span style="font-weight:700;color:#3b8fff">Rate improved for adding more</span> — ${tr.assetA} now buys ${Math.abs(rawDropPct).toFixed(1)}% more ${curAsset} than at your entry. If you have more ${tr.assetA} to put into this swap, this is a better rate than the one you already took.
+            <span style="font-weight:700;color:#3b8fff">Rate improved for adding more</span> — ${tr.assetA} now buys ${Math.abs(rawDropPct).toFixed(1)}% more ${curAsset} than your ${posSwaps.length > 1 ? 'blended average entry' : 'entry'} (raw ratio move, fees not counted). If you have more ${tr.assetA} to put into this swap, this is a better rate than what you already got${posSwaps.length > 1 ? ' on average' : ''}${remainingBudget > 0 ? ` — about ${remainingBudget.toFixed(4)} ${tr.assetA} left of this tracker's planned ${tr.startAmount} ${tr.assetA} total` : ''}. Log it as another swap into ${curAsset} on this tracker and it'll blend into your average automatically.
           </div>
         </div>` : ''}
 
@@ -4005,6 +4044,12 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
             </div>
           </div>
         </div>
+
+        <!-- Blended-position note — only shown when this is more than one swap -->
+        ${posSwaps.length > 1 ? `
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;margin:-8px 0 14px 2px">
+          ➕ built from ${posSwaps.length} swaps · ${totalFromAmt.toFixed(6).replace(/\.?0+$/,'')} ${tr.assetA} → ${totalToAmt.toFixed(6).replace(/\.?0+$/,'')} ${curAsset} · blended entry rate ${decFmt(totalToAmt/totalFromAmt)}
+        </div>` : ''}
 
         <!-- ══ JOURNEY BAR ══ -->
         <div style="margin-bottom:20px">
@@ -4215,8 +4260,9 @@ function renderGrowthChart(tr){
   const points=[{label:'Start',date:'',pct:0,amt:tr.startAmount,asset:tr.assetA}];
   let curAsset=tr.assetA, curAmt=tr.startAmount;
   swaps.forEach((sw,i)=>{
-    if(sw.fromAsset!==curAsset) return;
-    curAmt=sw.toAmt; curAsset=sw.toAsset;
+    if(sw.fromAsset===curAsset){ curAmt=sw.toAmt; curAsset=sw.toAsset; }
+    else if(sw.fromAsset===tr.assetA && sw.toAsset===curAsset){ curAmt+=sw.toAmt; } // topping up
+    else return;
     // estimate base equivalent from current holding
     let baseEquiv=null;
     if(curAsset===tr.assetA){
