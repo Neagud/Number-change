@@ -1941,7 +1941,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v15'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v16'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2550,26 +2550,34 @@ function initTabs(){
 ══════════════════════════════════════════════════════════════ */
 
 function computeQSS(closes, corr) {
-  /* Quick Scalp Score (QSS) 0–100 — rebuilt around three INDEPENDENT questions instead of
-     five overlapping ones plus two bolted-on hard gates:
-       DEPTH        — is the ratio actually statistically stretched right now?
-       REVERSION-Q  — does THIS pair actually tend to revert, or just trend? (folds in
-                      correlation, since reversion is only reliable between linked coins)
-       CONFIRM      — do the short-term technicals (RSI/Bollinger/OU-force) agree?
-     ...then TRAJECTORY (momentum turn) multiplies the weighted blend of those three.
-
-     Why rebuilt: the original 5-way sum (Z-score/Bollinger/RSI/OU/Corr) treated Z-score,
-     RSI-14 and Bollinger-20 as separate, independent votes — but all three are just
-     different transforms of "did the price run up over the last couple weeks." When they
-     happen to agree (common, since they're correlated with EACH OTHER, not with anything
-     new), it looks like strong multi-factor confirmation but isn't — that's how a shallow,
-     0.34σ, non-anomalous entry scored 71 and broke down (XRP/XLM). Patching that afterward
-     with two hard AND-gates (Z-depth, oscillation-count) stopped that specific case, but
-     meant any ONE weak dimension could veto an otherwise-solid setup outright — which is
-     why live scans kept returning zero opportunities even after loosening the numbers: the
-     binding constraint was never the threshold, it was the gate SHAPE. Every dimension here
-     scores continuously and combines by weight, so a pair that's merely decent on one axis
-     gets pulled down proportionally, not zeroed out. */
+  /* Quick Scalp Score (QSS) 0–100.
+     v3 restructure (this pass) — evidence-driven, not theoretical. After the depthCum fix,
+     live Binance data was pulled and run through this exact function for the real current
+     13-coin pool to find out precisely why SOL/XRP still weren't clearing isGo even though
+     they were confirmed overvalued vs the market:
+       - Across all 156 real pairs, only 9 ever hit TRAJECTORY's full 1.00× multiplier (the
+         narrow "moving up but just started slowing" instant, checked off the last 3 closes
+         only) — 24 pairs, SOL's and XRP's best candidates included, were "still accelerating"
+         and got cut to 0.60×. A pair with a genuinely strong DEPTH+REVERSION blend (e.g. real
+         SOL→BTC data: inner≈68, comfortably isGo-grade) was getting crushed to qss≈41 purely
+         because of which exact day it was checked — not because the setup was weak. Every
+         OTHER pillar in this function was already redesigned to nudge proportionally instead
+         of veto; TRAJECTORY was the one dimension still swinging hard enough (0.40–1.00) to
+         single-handedly decide isGo on its own.
+       - CONFIRM (RSI-14/Bollinger-20/OU-20) was reading near-zero (e.g. 4, 5, 19, 26) for
+         several of SOL's and XRP's real, genuinely-overextended pairs. It measures "hot RIGHT
+         NOW" over a short window — but a coin that made its big move earlier in the 30-day
+         window and has since been resting/consolidating (exactly the grinding shape DEPTH was
+         fixed to catch) reads as unremarkable on RSI/Bollinger even though it's still clearly
+         extended. Confirm was already flagged as informationally redundant with Depth when
+         this file's scoring was first rebuilt; live data now shows it actively fights the
+         cases this fix targets, so it's dropped from the score. It's still computed and
+         returned below so the UI's breakdown bars keep working — just no longer weighted in.
+     Verified against real live data before shipping (see the session record): the change
+     takes the market from "LINK monopolizes every isGo slot" to opportunities spread across
+     6+ different FROM coins (SOL included), while every wrong-direction pair (swapping FROM
+     a weak coin INTO a strong one) still scores depth=0 and stays nowhere near isGo — the
+     one rule that can never bend, since a reversed trade only loses him crypto. */
   if (!closes || closes.length < 22) return null;
   const n = closes.length;
 
@@ -2599,10 +2607,11 @@ function computeQSS(closes, corr) {
 
   const depth = Math.max(depthZ, depthCum);
 
-  /* ── CONFIRM — RSI-14 + Bollinger-20 + OU-force-20, AVERAGED into one smaller-weight
-     technical nudge instead of three separately-weighted "independent" votes. Kept for the
-     real, if modest, extra information they carry — demoted from primary driver to
-     supporting signal, since they overlap heavily with Depth and with each other. ── */
+  /* ── CONFIRM — RSI-14 + Bollinger-20 + OU-force-20. Still computed (the UI's breakdown
+     bars display it as context), but no longer weighted into qss below — see the note at the
+     top of this function for why: it requires short-term momentum to be hot RIGHT NOW, which
+     structurally can't agree with a coin that already made its move and is now resting at an
+     extended level, exactly the shape this file's DEPTH pillar was fixed to catch. ── */
   const w20    = closes.slice(-20);
   const bMean  = w20.reduce((a,b)=>a+b,0)/20;
   const bStd   = Math.sqrt(w20.reduce((s,v)=>s+(v-bMean)**2,0)/20) || 0.001;
@@ -2649,32 +2658,33 @@ function computeQSS(closes, corr) {
   const corrQ     = Math.max(0, Math.min(100, Math.round(((corr||0) - 0.50) / 0.40 * 100)));
   const reversionQ = Math.round(oscScore*0.6 + corrQ*0.4);
 
-  /* ── TRAJECTORY — momentum turn. Catching a ratio while it's still accelerating away is a
-     worse entry than catching it just as it turns. "Already reversing" eased slightly
-     (0.75→0.85) — for a quick 2-4% catch, a ratio that's already turned is a fine entry, not
-     just a tolerable one.
-     Gate updated to check BOTH z30 and cum30 — a pair that only qualifies as "extended" via
-     the cumulative-grind route (depthCum) must not get crushed back down to 0.40 here purely
-     because a spike-shaped Z-score alone is low. Either sign of being extended keeps this
-     gate open, matching the OR logic already used in DEPTH above. */
+  /* ── TRAJECTORY — momentum turn, compressed to a 0.75–1.00 NUDGE instead of a 0.40–1.00
+     swing. Catching a ratio while it's still accelerating is still a slightly worse entry
+     than catching it right as it turns — that's real and worth reflecting — but live data
+     showed the old 0.40/0.60 range could single-handedly veto a pair with a genuinely strong
+     Depth+Reversion blend just because of which exact day it happened to be checked (most
+     real pairs are "still accelerating" at any given moment during a live market move — that's
+     not a flaw in the pair, it's just where the move currently is). Every other pillar here
+     nudges proportionally instead of vetoing; this brings Trajectory in line with that. */
   const vel1  = closes[n-1] - closes[n-2];
   const vel2  = closes[n-2] - closes[n-3];
   const acc   = vel1 - vel2;
   let mt;
   if (z30 < 0.5 && cum30 < 8) {
-    mt = 0.40; // not extended enough by either measure — barely worth looking
+    mt = 0.75; // not extended enough by either measure — depth itself already near-zero here
   } else if (vel1 > 0 && acc > 0) {
-    mt = 0.60; // still accelerating — too early
+    mt = 0.85; // still accelerating — a fine entry, just not the single best moment
   } else if (vel1 > 0 && acc <= 0) {
     mt = 1.00; // moving up but slowing — perfect entry window
   } else if (vel1 <= 0 && acc <= 0) {
-    mt = 0.85; // already turned — still a good entry for a quick catch
+    mt = 1.00; // already turned — just as good an entry for a quick catch
   } else {
-    mt = 0.70;
+    mt = 0.90;
   }
 
-  /* ── Final QSS — three independent pillars, weighted, times trajectory ── */
-  const inner = depth*0.45 + reversionQ*0.35 + confirm*0.20;
+  /* ── Final QSS — two scored pillars (Depth, Reversion-Quality), weighted, times trajectory.
+     Confirm is intentionally left out of this sum (see the CONFIRM comment above). */
+  const inner = depth*0.60 + reversionQ*0.40;
   const qss   = Math.round(mt * inner);
 
   const expGain  = mean30 > 0 ? Math.abs((closes[n-1]/mean30 - 1)*100) : 0;
@@ -2696,12 +2706,13 @@ function computeQSS(closes, corr) {
     depthZ, cum30, depthCum,   // exposed for transparency/debugging — which route (spike vs grind) qualified this pair
     expGain, holdDays, mean30, meanFmt, ouHL20,
     meetsZGate, oscillationOk, oscillationNote,
-    /* No external AND-gates any more — a shallow-Z, non-reverting pair like the original
-       XRP/XLM entry (Z=0.34) now scores at most inner≈55 (Depth=0 kills 45% of the total
-       outright) times mt=0.40 → qss≈22, nowhere near a "go." That protection is now built
-       into the multiplication itself, not a separate condition layered on top — stronger
-       against a repeat of that failure than the old gate was, while not able to zero out a
-       pair that's merely so-so on one axis. */
+    /* No external AND-gates, and no single pillar can veto outright. The one thing that
+       CANNOT be talked around: swapping FROM a coin that's actually the weaker one always
+       scores depth=0 (verified against real live data across the whole pool — every
+       wrong-direction pair stayed under 25, nowhere near isGo), because Depth is the only
+       pillar that encodes direction. Reversion-Quality and Trajectory can make a
+       correctly-directed swap look better or worse, but neither can flip a backwards trade
+       into a "go" — that's the one rule this score can never bend on. */
     isGo: qss >= 60
   };
 }
