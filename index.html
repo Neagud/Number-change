@@ -364,6 +364,18 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .lab-results{margin-top:1rem}
 .lab-sec-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 .5rem}
 .lab-sec-title:first-child{margin-top:0}
+
+/* ── Market Position Map ── */
+.mm-meta{font-size:11px;color:var(--text3);margin-bottom:.8rem}
+.mm-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.mm-label{width:42px;flex-shrink:0;font-size:12px;font-weight:700;font-family:monospace}
+.mm-bar-wrap{flex:1;position:relative;height:16px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.mm-center{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border2)}
+.mm-bar{position:absolute;top:2px;bottom:2px;border-radius:3px}
+.mm-bar-right{left:50%}
+.mm-bar-left{right:50%}
+.mm-val{width:58px;flex-shrink:0;text-align:right;font-size:11px;font-family:monospace;font-weight:700}
+.mm-suggestion{margin-top:.9rem;padding:.7rem .9rem;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);font-size:11px;color:var(--text2);line-height:1.6}
 .lab-table{width:100%;border-collapse:collapse;font-family:monospace;font-size:11px}
 .lab-table th{text-align:left;color:var(--text3);font-weight:700;padding:4px 8px;border-bottom:1px solid var(--border2);white-space:nowrap}
 .lab-table td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap}
@@ -744,6 +756,21 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <span class="bsn-selected-count" id="bsnCount">Select coins you currently hold</span>
     </div>
     <div class="bsn-results" id="bsnResults"></div>
+  </div>
+
+  <!-- Market Position Map — where your pool sits vs the broader crypto market right now,
+       not vs each other and not just vs what you hold. Same cross-sectional idea the
+       Signal Lab found to be the strongest real signal in the app. -->
+  <div class="lab-card">
+    <div class="lab-header" id="mmHeader">
+      <div class="lab-title">🗺️ Market Position Map <span class="lab-sub">— your coins vs the top ~100 crypto market, right now</span></div>
+      <span class="lab-chevron" id="mmChevron">▸</span>
+    </div>
+    <div class="lab-body" id="mmBody" hidden>
+      <p class="lab-desc">Ranks your 13 coins by 30-day return against the median of the top ~100 coins by trading volume (stablecoins excluded) — against the market as a whole, not against each other. Coins pushed right/green have outrun the market; coins pushed left/red have lagged it.</p>
+      <button class="bsn-scan-btn" id="mmRunBtn">▶ Load market map</button>
+      <div class="lab-results" id="mmResults"></div>
+    </div>
   </div>
 
   <div id="mainContent"><div class="loading"><div class="sp-anim"></div>Connecting to Binance...</div></div>
@@ -2472,6 +2499,7 @@ buildGrids();
 initSearchFilters();
 initBestSwapNow();
 initSignalLab();
+initMarketMap();
 loadAndRender();
 initTabs();
 initTrackerForm();
@@ -2690,6 +2718,165 @@ async function refreshWeakCoins(){
   }catch(e){}
 }
 refreshWeakCoins(); // fire on page load
+
+/* ══════════════════════════════════════
+   MARKET POSITION MAP
+   Where each of your 13 pool coins stands right now against the broader crypto
+   market — not against each other, and not just against what you hold. This is
+   the same cross-sectional idea the Signal Lab validated as the strongest real
+   edge in the app (rank by 30d return, swap the top performer into the bottom
+   performer — 67% hit rate, z=5.0). This section makes that signal visible and
+   actionable across the whole pool at a glance, using a real ~100-coin market
+   benchmark instead of just your own coins.
+══════════════════════════════════════ */
+
+// Stablecoins, wrapped/pegged assets and leveraged tokens don't represent real
+// market direction — excluded so they can't flatten or distort the benchmark.
+const MM_EXCLUDED = new Set([
+  'USDT','USDC','BUSD','TUSD','USDP','DAI','FDUSD','USDD','GUSD','USTC','EUR','EURI',
+  'FRAX','LUSD','SUSD','USDE','PYUSD','USD1','WBTC','WBETH','BETH','STETH'
+]);
+
+let _marketMapCache=null, _marketMapTime=0;
+const MARKET_MAP_TTL = 20*60*1000; // 20 min — a ~100-coin scan is expensive, no need to redo it often
+
+/* One call gets 24h volume for every Binance symbol — used purely as a liquidity/
+   size proxy to pick "the top ~100 coins," not as the return metric itself. */
+async function fetchMarketUniverse(limit){
+  const all=await fetch('https://api.binance.com/api/v3/ticker/24hr').then(r=>r.json());
+  if(!Array.isArray(all)) return [];
+  const bases=all
+    .filter(t=>typeof t.symbol==='string'&&t.symbol.endsWith('USDT'))
+    .map(t=>({sym:t.symbol.slice(0,-4), vol:+t.quoteVolume||0}))
+    .filter(c=>c.sym && !MM_EXCLUDED.has(c.sym) && !/(UP|DOWN|BULL|BEAR)$/.test(c.sym))
+    .sort((a,b)=>b.vol-a.vol);
+  const seen=new Set(), top=[];
+  for(const c of bases){
+    if(seen.has(c.sym)) continue;
+    seen.add(c.sym); top.push(c.sym);
+    if(top.length>=limit) break;
+  }
+  return top;
+}
+
+async function fetch30dReturn(sym){
+  try{
+    const d=await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=31`).then(r=>r.json());
+    if(!Array.isArray(d)||d.length<2) return null;
+    const first=+d[0][4], last=+d[d.length-1][4];
+    return first>0 ? (last-first)/first*100 : null;
+  }catch(e){ return null; }
+}
+
+/* Fetch 30d returns for many symbols in small parallel batches — a single burst
+   of ~100 simultaneous requests risks Binance rate limits and browser connection caps. */
+async function batchFetch30dReturns(syms, batchSize=10){
+  const out={};
+  for(let i=0;i<syms.length;i+=batchSize){
+    const batch=syms.slice(i,i+batchSize);
+    const results=await Promise.all(batch.map(async sym=>({sym, ret:await fetch30dReturn(sym)})));
+    results.forEach(r=>{ if(r.ret!=null) out[r.sym]=r.ret; });
+  }
+  return out;
+}
+
+function _mmMedian(arr){
+  if(!arr.length) return 0;
+  const s=[...arr].sort((a,b)=>a-b);
+  const mid=Math.floor(s.length/2);
+  return s.length%2 ? s[mid] : (s[mid-1]+s[mid])/2;
+}
+
+async function runMarketMap(forceRefresh){
+  const resultsEl=document.getElementById('mmResults');
+  const btn=document.getElementById('mmRunBtn');
+  if(!resultsEl) return;
+
+  const now=Date.now();
+  if(!forceRefresh && _marketMapCache && (now-_marketMapTime)<MARKET_MAP_TTL){
+    renderMarketMap(_marketMapCache);
+    return;
+  }
+
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Scanning ~100 coins...'; }
+  resultsEl.innerHTML='<div class="lab-desc">Fetching 30-day data for ~100 market coins — this takes a few seconds...</div>';
+
+  try{
+    const universe=await fetchMarketUniverse(100);
+    // Always include every pool coin too, even if one didn't make the top-100-by-volume cut
+    const need=Array.from(new Set([...universe, ...COINS_LIST]));
+    const returns=await batchFetch30dReturns(need, 10);
+
+    const marketReturns=universe.map(s=>returns[s]).filter(v=>v!=null);
+    if(marketReturns.length<20){ throw new Error('not enough market data'); }
+    const marketBenchmark=_mmMedian(marketReturns);
+
+    const poolRows=COINS_LIST
+      .filter(s=>returns[s]!=null)
+      .map(s=>({ sym:s, ret:returns[s], rel:returns[s]-marketBenchmark }))
+      .sort((a,b)=>b.rel-a.rel);
+
+    const data={marketBenchmark, marketN:marketReturns.length, poolRows, ts:now};
+    _marketMapCache=data; _marketMapTime=now;
+    renderMarketMap(data);
+  }catch(e){
+    resultsEl.innerHTML='<div class="lab-desc">Could not load the market map — Binance may be rate-limiting. Try again in a minute.</div>';
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent='↻ Refresh market map'; }
+  }
+}
+
+function renderMarketMap(data){
+  const resultsEl=document.getElementById('mmResults');
+  if(!resultsEl) return;
+  const {marketBenchmark, marketN, poolRows, ts}=data;
+  if(!poolRows.length){ resultsEl.innerHTML='<div class="lab-desc">No data yet.</div>'; return; }
+
+  const maxAbs=Math.max(1, ...poolRows.map(r=>Math.abs(r.rel)));
+  const rowsHtml=poolRows.map(r=>{
+    const pct=Math.min(100, Math.abs(r.rel)/maxAbs*100);
+    const isUp=r.rel>=0;
+    const col=isUp?'var(--green)':'var(--red)';
+    return `<div class="mm-row">
+      <div class="mm-label">${r.sym}</div>
+      <div class="mm-bar-wrap">
+        <div class="mm-center"></div>
+        <div class="mm-bar ${isUp?'mm-bar-right':'mm-bar-left'}" style="width:${(pct/2).toFixed(1)}%;background:${col}"></div>
+      </div>
+      <div class="mm-val" style="color:${col}">${r.rel>=0?'+':''}${r.rel.toFixed(1)}%</div>
+    </div>`;
+  }).join('');
+
+  const top=poolRows[0], bottom=poolRows[poolRows.length-1];
+  const suggestion=(top&&bottom&&top.sym!==bottom.sym)
+    ? `<div class="mm-suggestion">
+        This is the same cross-sectional idea the Signal Lab found to be a real edge (67% hit rate, z=5.0):
+        <strong style="color:var(--green)">${top.sym}</strong> is the most overextended vs the market right now,
+        <strong style="color:var(--red)">${bottom.sym}</strong> the most lagging.
+        <div><button class="bsn-scan-btn" style="margin-top:8px;padding:5px 12px;font-size:11px" onclick="switchAnalyzerPair('${top.sym}','${bottom.sym}')">Analyze ${top.sym} → ${bottom.sym}</button></div>
+      </div>`
+    : '';
+
+  resultsEl.innerHTML=`
+    <div class="mm-meta">30-day return vs the median of the top ${marketN} coins by trading volume (stablecoins excluded) · updated ${new Date(ts).toLocaleTimeString()}</div>
+    ${rowsHtml}
+    ${suggestion}
+  `;
+}
+
+function initMarketMap(){
+  const header=document.getElementById('mmHeader');
+  const bodyEl=document.getElementById('mmBody');
+  const chevron=document.getElementById('mmChevron');
+  const runBtn=document.getElementById('mmRunBtn');
+  if(!header) return;
+  header.onclick=()=>{
+    const isOpen=!bodyEl.hidden;
+    bodyEl.hidden=isOpen;
+    chevron.classList.toggle('open',!isOpen);
+  };
+  if(runBtn) runBtn.onclick=()=>runMarketMap(true);
+}
 
 function loadTrackers(){
   try{return JSON.parse(localStorage.getItem('swapTrackers')||'[]');}catch(e){return[];}
