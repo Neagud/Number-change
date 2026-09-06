@@ -352,7 +352,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .bsn-scan-btn.secondary{background:transparent;border:1px solid var(--border2);color:var(--text2)}
 .bsn-scan-btn.secondary:hover{border-color:var(--blue);color:var(--blue);opacity:1}
 
-/* ── Signal Lab ── */
+/* ── shared collapsible card (Market Position Map) ── */
 .lab-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;margin-top:1rem}
 .lab-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
 .lab-title{font-size:13px;font-weight:700;color:var(--text)}
@@ -362,8 +362,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .lab-body{margin-top:.8rem}
 .lab-desc{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:.8rem;max-width:640px}
 .lab-results{margin-top:1rem}
-.lab-sec-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 .5rem}
-.lab-sec-title:first-child{margin-top:0}
 
 /* ── Market Position Map ── */
 .mm-meta{font-size:11px;color:var(--text3);margin-bottom:.8rem}
@@ -376,12 +374,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .mm-bar-left{right:50%}
 .mm-val{width:58px;flex-shrink:0;text-align:right;font-size:11px;font-family:monospace;font-weight:700}
 .mm-suggestion{margin-top:.9rem;padding:.7rem .9rem;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);font-size:11px;color:var(--text2);line-height:1.6}
-.lab-table{width:100%;border-collapse:collapse;font-family:monospace;font-size:11px}
-.lab-table th{text-align:left;color:var(--text3);font-weight:700;padding:4px 8px;border-bottom:1px solid var(--border2);white-space:nowrap}
-.lab-table td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap}
-.lab-table tr.hi td{color:var(--green);font-weight:700}
-.lab-note{font-size:10px;color:var(--text3);line-height:1.6;margin-top:.5rem}
-.lab-progress{font-size:12px;color:var(--text2);font-family:monospace;text-align:center;padding:1rem}
 .bsn-selected-count{font-size:11px;color:var(--text2);font-family:monospace}
 .bsn-results{margin-top:.5rem}
 .bsn-result-item{background:var(--bg3);border:2px solid var(--border);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;gap:14px;flex-wrap:wrap;transition:border-color .2s;cursor:pointer}
@@ -774,19 +766,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
 
   <div id="mainContent"><div class="loading"><div class="sp-anim"></div>Connecting to Binance...</div></div>
-
-  <!-- Signal Lab — validates every idea against real history before it touches your live score -->
-  <div class="lab-card">
-    <div class="lab-header" id="labHeader">
-      <div class="lab-title">🧪 Signal Lab <span class="lab-sub">— test signals against real history before trusting them</span></div>
-      <span class="lab-chevron" id="labChevron">▸</span>
-    </div>
-    <div class="lab-body" id="labBody" hidden>
-      <p class="lab-desc">Pulls ~2.5 years of daily data for all coins and replays every past day: if the current QSS gates had fired, did the ratio actually revert profitably afterward? Runs entirely in your browser — nothing leaves your machine. This is how we find out whether an idea (or a threshold) really helps, instead of guessing.</p>
-      <button class="bsn-scan-btn" id="labRunBtn">▶ Run analysis</button>
-      <div class="lab-results" id="labResults"></div>
-    </div>
-  </div>
 </div>
 
 <!-- Alerts tab -->
@@ -1235,9 +1214,12 @@ function getStats(series){
   const range90Hi=Math.max(...win90);
   const range90Lo=Math.min(...win90);
   const swingPct=((range90Hi-range90Lo)/mean90)*100; // how wide does this ratio oscillate?
-  // Expected profit if ratio reverts to mean (as % gain on FROM coin)
-  // e.g. ratio currently 0.28, mean 0.20 → sell FROM now and get 40% more back later
-  const expectedRevertGain=mean90>0?((cur/mean90)-1)*100:0;
+  // Expected profit if ratio reverts to mean (as % gain on FROM coin), NET of the round-trip
+  // swap fee (entry + exit) — stress-testing found this was previously shown gross everywhere,
+  // which overstates real profit by ~2 points since the exit fee is still to come on every
+  // open position. Floored at 0 so a move too small to clear fees reads as "nothing yet."
+  // e.g. ratio currently 0.28, mean 0.20 → sell FROM now and get ~40% more back later, before fees
+  const expectedRevertGain=mean90>0?Math.max(0,((cur/mean90)-1)*100 - (1-(1-SWAP_FEE_RATE)*(1-SWAP_FEE_RATE))*100):0;
 
   return{cur,trend1,trend3,trend7,trend14,volSpike,
     zScore,mean90,std90,range90Hi,range90Lo,swingPct,expectedRevertGain,
@@ -1941,7 +1923,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v16'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='v17'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2297,55 +2279,6 @@ function refreshTrackerSignals(){
 }
 
 /* ═══════════════════════════════════════════════════════════
-   ENTRY TIMING ENGINE
-   Detects the OPTIMAL ENTRY MOMENT before full reversal fires
-   Physics: velocity + acceleration · Hurst exponent · OU force
-═══════════════════════════════════════════════════════════ */
-
-/* Hurst exponent via rescaled range (R/S) analysis.
-   H < 0.5 = anti-persistent (mean-reverting) ← what we want
-   H = 0.5 = random walk
-   H > 0.5 = persistent (trending, avoid mean-reversion trades) */
-function hurstRS(data) {
-  const n = data.length;
-  if (n < 20) return 0.5;
-  const scales = [];
-  for (let s = 8; s <= Math.floor(n / 3); s = Math.round(s * 2)) scales.push(s);
-  if (scales.length < 2) return 0.5;
-  const logScales = [], logRS = [];
-  for (const scale of scales) {
-    const chunks = Math.floor(n / scale);
-    let rsSum = 0, cnt = 0;
-    for (let c = 0; c < chunks; c++) {
-      const chunk = data.slice(c * scale, (c + 1) * scale);
-      const mean = chunk.reduce((a, b) => a + b, 0) / scale;
-      let cumDev = 0, minC = 0, maxC = 0, varSum = 0;
-      for (const v of chunk) {
-        cumDev += v - mean;
-        if (cumDev < minC) minC = cumDev;
-        if (cumDev > maxC) maxC = cumDev;
-        varSum += (v - mean) ** 2;
-      }
-      const R = maxC - minC;
-      const S = Math.sqrt(varSum / scale);
-      if (S > 0 && R > 0) { rsSum += R / S; cnt++; }
-    }
-    if (cnt > 0) { logScales.push(Math.log(scale)); logRS.push(Math.log(rsSum / cnt)); }
-  }
-  if (logScales.length < 2) return 0.5;
-  const nx = logScales.length;
-  const mx = logScales.reduce((a, b) => a + b, 0) / nx;
-  const my = logRS.reduce((a, b) => a + b, 0) / nx;
-  let num = 0, den = 0;
-  for (let i = 0; i < nx; i++) {
-    num += (logScales[i] - mx) * (logRS[i] - my);
-    den += (logScales[i] - mx) ** 2;
-  }
-  const H = den === 0 ? 0.5 : num / den;
-  return Math.min(1, Math.max(0, H));
-}
-
-/* ═══════════════════════════════════════════════════════════
    MULTI-SCALE HURST — Haar Wavelet Variance Method
    Based on: Var{d_j(k)} ≈ σ² · 2^(j·(2H−1))
    At each wavelet scale j, a local H is estimated from the
@@ -2498,7 +2431,6 @@ window.addEventListener('resize',()=>Object.values(CI).forEach(ch=>{try{ch.resiz
 buildGrids();
 initSearchFilters();
 initBestSwapNow();
-initSignalLab();
 initMarketMap();
 loadAndRender();
 initTabs();
@@ -2579,6 +2511,11 @@ function computeQSS(closes, corr) {
      a weak coin INTO a strong one) still scores depth=0 and stays nowhere near isGo — the
      one rule that can never bend, since a reversed trade only loses him crypto. */
   if (!closes || closes.length < 22) return null;
+  // Stress-tested against poisoned data (a bad exchange print showing $0, a momentary
+  // negative, or a dropped candle turning into NaN/Infinity somewhere upstream): reject
+  // outright rather than let garbage propagate into qss as NaN, which sorts/compares
+  // unpredictably and could hide a real opportunity behind a broken one.
+  if (!closes.every(v => Number.isFinite(v) && v > 0)) return null;
   const n = closes.length;
 
   /* ── DEPTH — is the ratio ACTUALLY stretched right now? Two independent ways to qualify,
@@ -2597,7 +2534,19 @@ function computeQSS(closes, corr) {
   const mean30 = w30.reduce((a,b)=>a+b,0)/w30.length;
   const std30  = Math.sqrt(w30.reduce((s,v)=>s+(v-mean30)**2,0)/w30.length) || 0.001;
   const z30    = (closes[n-1] - mean30) / std30;
-  const depthZ = Math.max(0, Math.min(100, Math.round((z30 - 0.5) / 1.3 * 100)));
+
+  // Stress-tested against a thin/illiquid or exchange-outage pair: real market prices at
+  // typical float precision essentially never repeat exactly day-to-day, so a run of
+  // literal duplicate closes inside the window is a strong, near-zero-false-positive signal
+  // that some of those "days" never actually traded (stale/frozen data). Mixing frozen and
+  // real days in one window UNDERSTATES std30, so the moment real movement resumes it can
+  // look like a huge, confident Z-spike that's really just an artifact of thin data — not a
+  // genuine statistical anomaly. Cap depthZ's confidence proportionally to how much of the
+  // window was frozen, so a resurfacing dead pair can't masquerade as a strong signal.
+  let frozenDays = 0;
+  for (let i=1;i<w30.length;i++) if (w30[i] === w30[i-1]) frozenDays++;
+  const frozenFrac = frozenDays / (w30.length - 1);
+  const depthZ = Math.max(0, Math.min(100, Math.round((z30 - 0.5) / 1.3 * 100 * Math.max(0, 1 - frozenFrac*2))));
 
   // Starts scoring at an 8% cumulative move, maxes at 35% — calibrated to the real gaps seen
   // across this pool's actual coins (roughly 10-40 percentage points between the strongest
@@ -2653,7 +2602,19 @@ function computeQSS(closes, corr) {
       if ((w45[i-1]-mean45)*(w45[i]-mean45) < 0) crossings45++;
     }
     oscScore = Math.max(0, Math.min(100, crossings45 * 35)); // 0→0, 1→35, 2→70, 3+→100
-    if (crossings45 < 2) oscillationNote = `This pair has crossed its own 45-day mean only ${crossings45} time${crossings45===1?'':'s'} recently — more trending than oscillating, so mean-reversion here is less reliable.`;
+    if (crossings45 <= 1 && depth >= 85) {
+      // Stress-testing turned up a real blind spot here: a coin that permanently re-rates
+      // (hacked, depegged, delisted, or just genuinely re-priced by real news) produces the
+      // exact same shape as a great reversion setup — a big jump that hasn't meaningfully
+      // come back yet — and nothing in price data alone can tell the two apart. A monotonic
+      // move always crosses its own window mean once (that's just arithmetic, not a sign of
+      // reverting), so 0-or-1 crossings at this much depth is the specific case worth a plain
+      // heads-up, exactly where Denis's own "quick news check before swapping" rule matters
+      // most — rather than treating it as just an ordinary trending pair.
+      oscillationNote = `This is a big move (depth ${depth}) that hasn't really started reverting yet. That's consistent with a normal-but-early grind, but it's also exactly what a permanent re-rating looks like (a hack, a depeg, delisting risk, real news) — worth a quick check on the TO coin before swapping.`;
+    } else if (crossings45 < 2) {
+      oscillationNote = `This pair has crossed its own 45-day mean only ${crossings45} time${crossings45===1?'':'s'} recently — more trending than oscillating, so mean-reversion here is less reliable.`;
+    }
   }
   const corrQ     = Math.max(0, Math.min(100, Math.round(((corr||0) - 0.50) / 0.40 * 100)));
   const reversionQ = Math.round(oscScore*0.6 + corrQ*0.4);
@@ -2687,7 +2648,17 @@ function computeQSS(closes, corr) {
   const inner = depth*0.60 + reversionQ*0.40;
   const qss   = Math.round(mt * inner);
 
-  const expGain  = mean30 > 0 ? Math.abs((closes[n-1]/mean30 - 1)*100) : 0;
+  // expGain is shown everywhere as "exp. gain" / "net gain" — it needs to answer the actual
+  // question ("will I end up with more crypto"), not just how far the ratio sits from its own
+  // mean. Stress-testing turned up that this number was GROSS: every swap pays the exit fee
+  // still to come on top of the entry fee already sunk, so a raw "+2.3%" reading was really
+  // netting close to zero once both legs of the round trip were paid. Subtracting the real
+  // round-trip cost here means every place that displays this number is honest by default —
+  // no per-screen fee math to keep in sync, and floored at 0 so a move too small to clear
+  // fees reads as "nothing here yet" instead of a small-but-misleading positive.
+  const grossGain = mean30 > 0 ? Math.abs((closes[n-1]/mean30 - 1)*100) : 0;
+  const roundTripFeePct = (1 - (1-SWAP_FEE_RATE)*(1-SWAP_FEE_RATE)) * 100;
+  const expGain = Math.max(0, grossGain - roundTripFeePct);
   const holdDays = ouHL20 <= 20
     ? Math.min(7, Math.max(1, Math.round(ouHL20 * 0.5)))
     : z30 > 1.5 ? 4 : z30 > 1.0 ? 5 : z30 > 0.7 ? 6 : 7;
@@ -2698,12 +2669,15 @@ function computeQSS(closes, corr) {
   // meetsZGate now reflects the same OR as DEPTH/TRAJECTORY: extended via spike OR grind.
   const meetsZGate   = z30 >= 0.5 || cum30 >= 8;
   const oscillationOk = crossings45===null ? true : crossings45 >= 2;
+  const illiquidNote = frozenFrac > 0.3
+    ? `${Math.round(frozenFrac*100)}% of this pair's last 30 days showed literally no price change — that's a sign of thin trading or a data gap, not real calm. Depth has been damped to account for it, but double-check this pair actually trades before swapping.`
+    : '';
 
   return {
     qss, depth, reversionQ, confirm,
     se_q:depth, bp, re, qf, corrQ, mt,   // se_q kept as an alias so the existing breakdown-bar UI needs no changes
     z30, bollPos, rsi, ouFPct20,
-    depthZ, cum30, depthCum,   // exposed for transparency/debugging — which route (spike vs grind) qualified this pair
+    depthZ, cum30, depthCum, frozenFrac, illiquidNote,   // exposed for transparency/debugging — which route (spike vs grind) qualified this pair, and whether thin data damped it
     expGain, holdDays, mean30, meanFmt, ouHL20,
     meetsZGate, oscillationOk, oscillationNote,
     /* No external AND-gates, and no single pillar can veto outright. The one thing that
@@ -4989,360 +4963,6 @@ function initBestSwapNow(){
   updateBsnState();
 }
 
-/* ══════════════════════════════════════════════════════════════
-   SIGNAL LAB
-   Replays ~2 years of real Binance history day-by-day, running the
-   EXACT same computeQSS() the live app uses, then checks what
-   actually happened next. This exists because of a hard lesson:
-   OMEGA (Kalman/RMT/entropy/Hurst) sounded more sophisticated than
-   QSS and performed worse in practice. Sounding right and being
-   right are different things — the only way to tell them apart is
-   to check against real outcomes. This also resurrects two OMEGA
-   ingredients that were deleted along with the rest of it (the
-   Hurst exponent estimator, still sitting unused in this file) and
-   tests them on equal footing against QSS's own gates, instead of
-   assuming either "QSS good, OMEGA bad" or the reverse.
-   Runs entirely client-side — nothing leaves the browser.
-══════════════════════════════════════════════════════════════ */
-const LAB_LOOKBACK_DAYS = 730;   // ~2 years of daily candles
-const LAB_HORIZON_DAYS  = 10;    // catch window — matches "check daily, frequent small swaps," not a month-long hold
-const LAB_TARGETS_PCT   = [2, 3, 4]; // the actual target: small, frequent gains per swap, not rare big dislocations.
-                                  // (an earlier version used 1σ of each pair's own volatility as the bar — more
-                                  // statistically careful, but it answers "is this move unusual for this pair,"
-                                  // not "did I actually get my 2-4%." Testing the literal target return, at a
-                                  // realistic few-day catch window, is what actually tells us if the app is doing
-                                  // the job it's meant to do.)
-const LAB_STRIDE        = 2;     // sample every Nth day (keeps this runnable in-browser)
-const LAB_SLOW_EVERY    = 10;    // correlation & Hurst move slowly — only refresh every N sampled days
-
-function initSignalLab(){
-  const header=document.getElementById('labHeader');
-  const body=document.getElementById('labBody');
-  const chevron=document.getElementById('labChevron');
-  const runBtn=document.getElementById('labRunBtn');
-  if(!header) return;
-  header.onclick=()=>{
-    const isOpen=!body.hidden;
-    body.hidden=isOpen;
-    chevron.classList.toggle('open',!isOpen);
-  };
-  runBtn.onclick=runSignalLab;
-}
-
-async function _labFetchCloses(sym){
-  const r=await fetch(`${BINANCE}/klines?symbol=${sym}USDT&interval=1d&limit=${LAB_LOOKBACK_DAYS}`);
-  if(!r.ok) throw new Error(sym+' '+r.status);
-  const kl=await r.json();
-  return kl.map(k=>+k[4]);
-}
-
-/* For every target in LAB_TARGETS_PCT, did the ratio revert at least that % within
-   LAB_HORIZON_DAYS of day t? One forward scan, all targets checked simultaneously. */
-function _labOutcomesMulti(ratio, t){
-  const entry=ratio[t];
-  const out=LAB_TARGETS_PCT.map(()=>({hit:false, days:null}));
-  if(!entry) return out;
-  const end=Math.min(ratio.length-1, t+LAB_HORIZON_DAYS);
-  for(let k=t+1;k<=end;k++){
-    const dropPct=(entry-ratio[k])/entry*100;
-    for(let i=0;i<LAB_TARGETS_PCT.length;i++){
-      if(!out[i].hit && dropPct>=LAB_TARGETS_PCT[i]){ out[i].hit=true; out[i].days=k-t; }
-    }
-  }
-  return out;
-}
-
-/* Split rows into quartiles by .val, report hit-rate per quartile */
-function _labQuartiles(rows){
-  const valid=rows.filter(r=>r.val!=null && isFinite(r.val));
-  if(valid.length<20) return null;
-  const sorted=[...valid].sort((a,b)=>a.val-b.val);
-  const q=Math.floor(sorted.length/4);
-  const cuts=[sorted.slice(0,q), sorted.slice(q,2*q), sorted.slice(2*q,3*q), sorted.slice(3*q)];
-  return cuts.map(b=>{
-    const n=b.length, hits=b.filter(r=>r.hit).length;
-    return { n, hitRate: n?hits/n*100:0, lo:b[0]?.val, hi:b[b.length-1]?.val };
-  });
-}
-
-function _labRow(n,hitRate,avgDays,extra){
-  return `<tr${hitRate>=55?' class="hi"':''}><td>${extra}</td><td>${n}</td><td>${hitRate.toFixed(0)}%</td><td>${avgDays==null?'—':avgDays.toFixed(1)+'d'}</td></tr>`;
-}
-
-/* Two-proportion z-test — is the gap between two hit rates real, or just noise from small N? */
-function _labSig(n1,p1,n2,p2){
-  if(n1<10||n2<10) return null;
-  const P1=p1/100, P2=p2/100;
-  const se=Math.sqrt(P1*(1-P1)/n1 + P2*(1-P2)/n2);
-  if(se===0) return null;
-  return (P1-P2)/se;
-}
-function _labSigNote(z, label){
-  if(z===null) return `<div class="lab-note">Not enough samples yet to tell if this is real or noise.</div>`;
-  const az=Math.abs(z);
-  if(az>=2.6) return `<div class="lab-note" style="color:var(--green)">✓ This gap is large enough (z=${z.toFixed(1)}) to very likely be real signal, not noise — ${label}</div>`;
-  if(az>=1.96) return `<div class="lab-note" style="color:var(--amber)">~ This gap is borderline (z=${z.toFixed(1)}) — probably real but worth confirming with a re-run — ${label}</div>`;
-  return `<div class="lab-note">✗ This gap (z=${z.toFixed(1)}) is not distinguishable from noise — ${label}</div>`;
-}
-
-async function runSignalLab(){
-  const runBtn=document.getElementById('labRunBtn');
-  const results=document.getElementById('labResults');
-  runBtn.disabled=true; runBtn.textContent='⏳ Fetching history...';
-  results.innerHTML=`<div class="lab-progress"><div class="sp-anim" style="margin:0 auto 10px"></div>Fetching ~${LAB_LOOKBACK_DAYS} days of history for ${COINS.length} coins...</div>`;
-
-  const rawClosesBySym={};
-  try{
-    const arr=await Promise.all(COINS.map(c=>_labFetchCloses(c.sym).catch(()=>null)));
-    COINS.forEach((c,i)=>{ if(arr[i] && arr[i].length>150) rawClosesBySym[c.sym]=arr[i]; });
-  }catch(e){}
-  const okSyms=Object.keys(rawClosesBySym);
-  if(okSyms.length<4){
-    results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1rem;text-align:center">Could not fetch enough history. Check your connection.</div>`;
-    runBtn.disabled=false; runBtn.textContent='▶ Run analysis'; return;
-  }
-
-  // Align every coin to the same trailing window so day-index t means the
-  // same calendar day across every symbol (needed so cross-sectional ranking
-  // and triangular checks can compare different pairs on "the same day").
-  const n=Math.min(...okSyms.map(s=>rawClosesBySym[s].length));
-  const closes={}; okSyms.forEach(s=>closes[s]=rawClosesBySym[s].slice(-n));
-
-  // 30-day trailing return per symbol per day, for cross-sectional ranking
-  const ret30={}; okSyms.forEach(s=>{
-    ret30[s]=new Array(n).fill(null);
-    for(let t=30;t<n;t++) ret30[s][t]=closes[s][t]/closes[s][t-30]-1;
-  });
-
-  // Build ratio series for every ordered pair
-  const pairKeys=[]; const ratioBySym={};
-  okSyms.forEach(a=>okSyms.forEach(b=>{
-    if(a===b) return;
-    const key=a+'_'+b;
-    ratioBySym[key]=Array.from({length:n},(_,i)=>closes[a][i]/closes[b][i]);
-    pairKeys.push(key);
-  }));
-
-  const sampledTs=[];
-  for(let t=100;t<n-LAB_HORIZON_DAYS-1;t+=LAB_STRIDE) sampledTs.push(t);
-
-  runBtn.textContent='⏳ 0%';
-  const baseline=[];               // flat rows: {isGo, meetsZGate, oscillationOk, z30, hurst, hit, days}
-  const isGoArr={}, hitArr={};      // [pairKey][m] lookups, reused by triangular + cross-sectional passes
-  let done=0;
-  for(const key of pairKeys){
-    const [a,b]=key.split('_');
-    const ratio=ratioBySym[key];
-    const caArr=closes[a], cbArr=closes[b];
-    isGoArr[key]=new Array(sampledTs.length);
-    hitArr[key]=new Array(sampledTs.length);
-    let corr=0, hurst=0.5;
-    for(let m=0;m<sampledTs.length;m++){
-      const t=sampledTs[m];
-      if(m%LAB_SLOW_EVERY===0){
-        corr=calcCorrelation(caArr.slice(0,t+1), cbArr.slice(0,t+1));
-        hurst=hurstRS(ratio.slice(Math.max(0,t-89), t+1));
-      }
-      const q=computeQSS(ratio.slice(0,t+1), corr);
-      const outcomes=_labOutcomesMulti(ratio, t); // one entry per LAB_TARGETS_PCT, e.g. [2%,3%,4%]
-      const mid=outcomes[Math.floor(outcomes.length/2)]; // 3% — canonical "hit" for triangular/cross-sectional/cadence
-      isGoArr[key][m]=!!(q&&q.isGo);
-      hitArr[key][m]=mid.hit;
-      if(q) baseline.push({
-        isGo:q.isGo, meetsZGate:q.meetsZGate, oscillationOk:q.oscillationOk,
-        z30:q.z30, hurst, outcomes, hit:mid.hit, days:mid.days
-      });
-    }
-    done++;
-    runBtn.textContent=`⏳ ${Math.round(done/pairKeys.length*100)}%`;
-    if(done%6===0) await new Promise(r=>setTimeout(r,0)); // keep the tab responsive
-  }
-
-  // ── Triangular pass — reuses isGoArr, no recomputation ──
-  let triBonus=0, directMisses=0;
-  for(let m=0;m<sampledTs.length;m++){
-    for(const key of pairKeys){
-      if(isGoArr[key][m]) continue;
-      directMisses++;
-      const [a,b]=key.split('_');
-      for(const c of okSyms){
-        if(c===a||c===b) continue;
-        if(isGoArr[a+'_'+c]?.[m] && isGoArr[c+'_'+b]?.[m]){ triBonus++; break; }
-      }
-    }
-  }
-
-  // ── Cross-sectional pass — rank all coins by 30d return, test top-vs-bottom ──
-  const crossRows=[];
-  for(let m=0;m<sampledTs.length;m++){
-    const t=sampledTs[m];
-    const ranked=okSyms.filter(s=>ret30[s][t]!=null).sort((x,y)=>ret30[y][t]-ret30[x][t]);
-    if(ranked.length<4) continue;
-    const top=ranked[0], bottom=ranked[ranked.length-1];
-    const key=top+'_'+bottom;
-    if(hitArr[key]) crossRows.push({hit:hitArr[key][m]});
-  }
-
-  // ── Market divergence pass — does the SIZE of the 30d-return gap between any
-  // two pool coins (not just the single most extreme daily pick above) predict
-  // the outcome? Reuses ret30 and hitArr, already computed above — no extra work.
-  // This is what decides whether ranking EVERY pair by this gap (not just picking
-  // one) is a sound way to surface more opportunities, e.g. when a coin like SOL
-  // or XRP is running hot but isn't literally the single #1 or #12 of the 13. */
-  const gapRows=[];
-  for(let m=0;m<sampledTs.length;m++){
-    const t=sampledTs[m];
-    for(const key of pairKeys){
-      const [a,b]=key.split('_');
-      if(ret30[a][t]==null||ret30[b][t]==null) continue;
-      gapRows.push({val:(ret30[a][t]-ret30[b][t])*100, hit:hitArr[key][m]});
-    }
-  }
-
-  // ── Opportunity cadence — the question that actually matters day to day:
-  // does the WHOLE scanned market go quiet for weeks at a time, and specifically,
-  // how often does each coin you might be holding show up as a valid FROM leg? ──
-  const weeks={};             // weekIndex -> { anyGo, fromCoins:Set }
-  const fromTriggerDays={};   // sym -> [t, t, ...] where isGo fired with that coin as FROM
-  okSyms.forEach(s=>fromTriggerDays[s]=[]);
-  sampledTs.forEach((t,m)=>{
-    const week=Math.floor(t/7);
-    if(!weeks[week]) weeks[week]={anyGo:false};
-    pairKeys.forEach(key=>{
-      if(isGoArr[key][m]){
-        weeks[week].anyGo=true;
-        fromTriggerDays[key.split('_')[0]].push(t);
-      }
-    });
-  });
-  const weekKeys=Object.keys(weeks);
-  const weeksWithOpportunity=weekKeys.filter(w=>weeks[w].anyGo).length;
-  const weekCoveragePct=weekKeys.length?weeksWithOpportunity/weekKeys.length*100:0;
-
-  const perCoin=okSyms.map(s=>{
-    const days=fromTriggerDays[s];
-    let avgGapDays=null;
-    if(days.length>=2){
-      const gaps=[]; for(let i=1;i<days.length;i++) gaps.push(days[i]-days[i-1]);
-      avgGapDays=gaps.reduce((a,b)=>a+b,0)/gaps.length;
-    }
-    return {sym:s, n:days.length, avgGapDays};
-  }).sort((a,b)=>(a.avgGapDays??1e9)-(b.avgGapDays??1e9));
-
-  renderSignalLab({baseline, triBonus, directMisses, crossRows, gapRows, pairCount:pairKeys.length, dayCount:n, sampledCount:sampledTs.length, weekKeys, weeksWithOpportunity, weekCoveragePct, perCoin});
-  runBtn.disabled=false; runBtn.textContent='▶ Run analysis';
-}
-
-function renderSignalLab(d){
-  const results=document.getElementById('labResults');
-  const {baseline, triBonus, directMisses, crossRows, gapRows, pairCount, dayCount, weekKeys, weeksWithOpportunity, weekCoveragePct, perCoin} = d;
-  if(!baseline.length){
-    results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1rem;text-align:center">Not enough data to analyze.</div>`;
-    return;
-  }
-
-  const goRows=baseline.filter(r=>r.isGo);
-  const notGoRows=baseline.filter(r=>!r.isGo);
-  // "hit"/"days" on each row is the MID target (e.g. 3%) — used by quartile/gate comparisons below.
-  // The isGo table itself shows all of LAB_TARGETS_PCT side by side.
-  const goHitRate=goRows.length?goRows.filter(r=>r.hit).length/goRows.length*100:0;
-  const notGoHitRate=notGoRows.length?notGoRows.filter(r=>r.hit).length/notGoRows.length*100:0;
-  const goAvgDays=goRows.filter(r=>r.hit).length?goRows.filter(r=>r.hit).reduce((s,r)=>s+r.days,0)/goRows.filter(r=>r.hit).length:null;
-  const _rateAt=(rows,i)=>rows.length?rows.filter(r=>r.outcomes[i].hit).length/rows.length*100:0;
-  const _multiRow=(rows,label)=>{
-    const n=rows.length;
-    const cells=LAB_TARGETS_PCT.map((tgt,i)=>{
-      const rate=_rateAt(rows,i);
-      return `<td${rate>=55?' style="color:var(--green);font-weight:700"':''}>${rate.toFixed(0)}%</td>`;
-    }).join('');
-    return `<tr><td>${label}</td><td>${n}</td>${cells}</tr>`;
-  };
-
-  const z30Q=_labQuartiles(baseline.map(r=>({val:r.z30, hit:r.hit})));
-  const hurstQ=_labQuartiles(baseline.map(r=>({val:r.hurst, hit:r.hit})));
-
-  const oscOk=baseline.filter(r=>r.oscillationOk);
-  const oscBad=baseline.filter(r=>!r.oscillationOk);
-  const oscOkRate=oscOk.length?oscOk.filter(r=>r.hit).length/oscOk.length*100:0;
-  const oscBadRate=oscBad.length?oscBad.filter(r=>r.hit).length/oscBad.length*100:0;
-
-  const lowHurst=baseline.filter(r=>r.hurst<0.45);
-  const highHurst=baseline.filter(r=>r.hurst>=0.45);
-  const lowHurstRate=lowHurst.length?lowHurst.filter(r=>r.hit).length/lowHurst.length*100:0;
-  const highHurstRate=highHurst.length?highHurst.filter(r=>r.hit).length/highHurst.length*100:0;
-
-  const crossHitRate=crossRows.length?crossRows.filter(r=>r.hit).length/crossRows.length*100:0;
-  const gapQ=_labQuartiles(gapRows);
-
-  let html='';
-  html+=`<div class="lab-note">Replayed ${pairCount} pairs over ~${dayCount} days (sampled every ${LAB_STRIDE}${LAB_STRIDE===1?'day':'days'}). Tests the actual target — a small, fast reversion of ${LAB_TARGETS_PCT.join('/')}% within ${LAB_HORIZON_DAYS} days of the signal — not a rare big dislocation.</div>`;
-
-  // ── Opportunity cadence — does the market go quiet, and which coins are "livelier"? ──
-  const cadCol = weekCoveragePct>=85?'var(--green)':weekCoveragePct>=60?'var(--amber)':'#ef4444';
-  html+=`<div class="lab-sec-title">Opportunity cadence — how often is there ANY valid signal, market-wide?</div>
-  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:.6rem">
-    <span style="font-family:monospace;font-weight:700;font-size:26px;color:${cadCol}">${weekCoveragePct.toFixed(0)}%</span>
-    <span style="font-size:11px;color:var(--text3)">of weeks (${weeksWithOpportunity} of ${weekKeys.length}) had at least one isGo pair somewhere across all ${perCoin.length} coins scanned</span>
-  </div>
-  <table class="lab-table"><tr><th>Coin (as FROM)</th><th># times triggered</th><th>Avg days between opportunities</th></tr>
-    ${perCoin.map(p=>`<tr${p.avgGapDays!=null&&p.avgGapDays<=10?' class="hi"':''}><td>${p.sym}</td><td>${p.n}</td><td>${p.avgGapDays==null?'never / too few':p.avgGapDays.toFixed(0)+'d'}</td></tr>`).join('')}
-  </table>
-  <div class="lab-note">This is the number that actually answers "if I'm holding X, how long until a real opportunity to move it comes along" — a market-wide scan can look busy while the one coin you're sitting in barely ever triggers. If a coin you hold often shows a long gap here, that's a reason to consider whether it's a good coin to be parked in right now, independent of any single day's snapshot.</div>`;
-
-  html+=`<div class="lab-sec-title">Does the current live gate (isGo) actually catch a real 2-4% swap gain?</div>
-  <table class="lab-table"><tr><th>Signal</th><th>N</th>${LAB_TARGETS_PCT.map(t=>`<th>Hit ≥${t}%</th>`).join('')}</tr>
-    ${_multiRow(goRows,'isGo = true (SCALP NOW today)')}
-    ${_multiRow(notGoRows,'isGo = false (everything else)')}
-  </table>
-  ${_labSigNote(_labSig(goRows.length,goHitRate,notGoRows.length,notGoHitRate), `isGo vs. everything else, at the ≥${LAB_TARGETS_PCT[Math.floor(LAB_TARGETS_PCT.length/2)]}% target`)}
-  <div class="lab-note">Avg days to hit (≥${LAB_TARGETS_PCT[Math.floor(LAB_TARGETS_PCT.length/2)]}% target, isGo=true only): ${goAvgDays==null?'—':goAvgDays.toFixed(1)+'d'}</div>`;
-
-  if(z30Q){
-    html+=`<div class="lab-sec-title">Z-depth quartiles — does a deeper Z genuinely predict a better outcome?</div>
-    <table class="lab-table"><tr><th>Z30 range</th><th>N</th><th>Hit rate</th></tr>
-      ${z30Q.map(b=>_labRow(b.n,b.hitRate,null,`${b.lo.toFixed(2)}σ – ${b.hi.toFixed(2)}σ`)).join('')}
-    </table>`;
-  }
-
-  if(hurstQ){
-    html+=`<div class="lab-sec-title">Hurst exponent quartiles — an OMEGA ingredient, tested on its own merits</div>
-    <table class="lab-table"><tr><th>Hurst range</th><th>N</th><th>Hit rate</th></tr>
-      ${hurstQ.map(b=>_labRow(b.n,b.hitRate,null,`H ${b.lo.toFixed(2)} – ${b.hi.toFixed(2)}`)).join('')}
-    </table>
-    <div class="lab-note">H &lt; 0.5 = anti-persistent (genuinely mean-reverting). H &gt; 0.5 = trending/persistent. If the low-H quartile's hit rate is clearly higher, Hurst is real signal that OMEGA had access to but drowned in Kalman/RMT/phase-gate complexity — worth adding back on its own.</div>`;
-  }
-
-  html+=`<div class="lab-sec-title">Current oscillation gate vs. Hurst as a mean-reversion filter</div>
-  <table class="lab-table"><tr><th>Gate</th><th>N</th><th>Hit rate</th></tr>
-    ${_labRow(oscOk.length,oscOkRate,null,'oscillationOk = true (current gate)')}
-    ${_labRow(oscBad.length,oscBadRate,null,'oscillationOk = false (current gate)')}
-    ${_labRow(lowHurst.length,lowHurstRate,null,'Hurst &lt; 0.45 (candidate replacement)')}
-    ${_labRow(highHurst.length,highHurstRate,null,'Hurst ≥ 0.45 (candidate replacement)')}
-  </table>
-  <div class="lab-note">If Hurst separates hit rate more cleanly than the mean-crossing count, it's the better statistical gate and a strong candidate to swap in.</div>`;
-
-  html+=`<div class="lab-sec-title">Cross-sectional ranking — best-vs-worst coin by 30d return, market-wide</div>
-  <table class="lab-table"><tr><th>Signal</th><th>N</th><th>Hit rate</th></tr>
-    ${_labRow(crossRows.length,crossHitRate,null,'Top performer → bottom performer, ranked daily')}
-  </table>
-  ${_labSigNote(_labSig(crossRows.length,crossHitRate,notGoRows.length,notGoHitRate), 'cross-sectional vs. the no-signal baseline')}
-  <div class="lab-note">Compare this hit rate to isGo's above. If it's close or better, ranking the whole pool at once is a legitimate way to surface more opportunities — if it's much worse, extreme cross-sectional movers aren't reliable on their own and shouldn't replace pair-specific gates.</div>`;
-
-  if(gapQ){
-    html+=`<div class="lab-sec-title">Market divergence quartiles — does the SIZE of the 30d-return gap between any two pool coins predict the outcome (not just the single most extreme pick)?</div>
-    <table class="lab-table"><tr><th>Return gap (FROM − TO)</th><th>N</th><th>Hit rate</th></tr>
-      ${gapQ.map(b=>_labRow(b.n,b.hitRate,null,`${b.lo.toFixed(1)}pp – ${b.hi.toFixed(1)}pp`)).join('')}
-    </table>
-    <div class="lab-note">If the top quartile's hit rate is clearly higher than the bottom's, the gap size itself is a real, usable signal — meaning a coin like SOL or XRP running hot doesn't need to be the single #1-vs-#12 pick above to be worth surfacing as an opportunity; a big-enough gap against ANY of the other 12 coins should count. That's why QSS's DEPTH pillar now scores a pair on the better of its own Z-score OR its raw 30-day cumulative move (see the scanner below) — a steady grind shows up here.</div>`;
-  }
-
-  const opportunityLift = directMisses>0 ? (triBonus/directMisses*100) : 0;
-  html+=`<div class="lab-sec-title">Triangular (2-hop) opportunities</div>
-  <div class="lab-note" style="font-size:11px;color:var(--text2)">On days when a direct pair had no valid isGo signal, a 2-hop path (A→C→B, both legs passing the same gates) was available <strong style="color:var(--text)">${triBonus.toLocaleString()}</strong> times out of ${directMisses.toLocaleString()} direct misses (+${opportunityLift.toFixed(1)}% more opportunities than direct pairs alone) — without lowering the bar for what counts as trustworthy on either leg.</div>`;
-
-  results.innerHTML=html;
-  try{localStorage.setItem('labHTML',html);}catch(e){}
-}
 
 
 
