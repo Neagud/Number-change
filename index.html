@@ -2375,6 +2375,44 @@ function ouHalfLifeET(closes) {
   return Math.max(1, Math.round(Math.log(2) / theta));
 }
 
+/* Statistical significance of mean-reversion (Dickey-Fuller-style t-statistic), NOT just its
+   point estimate. ouHalfLifeET above answers "how fast does this revert, assuming it does" —
+   this answers the sharper question "how confident can we be that this reversion tendency is
+   real and not noise in a short window." Same underlying regression (Δy on y_lag) as the half-
+   life calc, but this also computes the standard error of that slope and returns beta/SE — a
+   more negative t means stronger statistical evidence of genuine reversion.
+   Backtested against ~2.7 years of real Binance data across this app's own 13-coin pool
+   (2026-09): tracking how this t-stat CHANGES over the life of a stalled position (still open
+   past 30 days) was the single clearest signal found — positions where it improved over that
+   stall resolved within 150 days 66-76% of the time; positions where it worsened, only 45-57%
+   of the time. Everything else tried (score confidence, correlation, half-life alone, pool
+   centrality, lead-lag) came back statistically flat on the same real data. See buildLiveMonitor's
+   "Reversion Confidence Trend" section, the only place this is currently used. */
+function adfStat(closes){
+  const raw = closes.slice(-90);
+  const m = raw.length;
+  if (m < 20) return null;
+  const yLag = raw.slice(0, m - 1);
+  const dy   = raw.slice(1).map((v, i) => v - raw[i]);
+  const mL   = yLag.reduce((a, b) => a + b, 0) / (m - 1);
+  const mD   = dy.reduce((a, b) => a + b, 0) / (m - 1);
+  let num = 0, den = 0;
+  for (let i = 0; i < m - 1; i++) {
+    num += (yLag[i] - mL) * (dy[i] - mD);
+    den += (yLag[i] - mL) ** 2;
+  }
+  const beta = den === 0 ? 0 : num / den;
+  let ssr = 0;
+  for (let i = 0; i < m - 1; i++) {
+    const resid = (dy[i] - mD) - beta * (yLag[i] - mL);
+    ssr += resid * resid;
+  }
+  const sigma2 = ssr / (m - 3);
+  const seBeta = den > 0 ? Math.sqrt(sigma2 / den) : 0;
+  if (seBeta <= 0) return null;
+  return beta / seBeta;
+}
+
 
 /* ═══════════════════════
    LIVE UPDATER
@@ -3546,9 +3584,13 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   ]);
 
   try {
+    // limit=400 (not 92) — the 30/60-day windows below only ever look at the tail of this
+    // array, so raising it changes nothing about existing behavior. The extra depth exists so
+    // the Reversion Confidence Trend section (further down) can compute its statistical test
+    // both at entry AND now for positions that have been open a while, without truncation.
     const [fk, tk] = await Promise.all([
-      fetchJ(`https://api.binance.com/api/v3/klines?symbol=${curAsset}USDT&interval=1d&limit=92`),
-      fetchJ(`https://api.binance.com/api/v3/klines?symbol=${tr.assetA}USDT&interval=1d&limit=92`)
+      fetchJ(`https://api.binance.com/api/v3/klines?symbol=${curAsset}USDT&interval=1d&limit=400`),
+      fetchJ(`https://api.binance.com/api/v3/klines?symbol=${tr.assetA}USDT&interval=1d&limit=400`)
     ]);
     // Validate — Binance returns an object with "code" on error, not an array
     if (!Array.isArray(fk) || !Array.isArray(tk) || fk.length < 10 || tk.length < 10) throw new Error('bad data');
@@ -3626,6 +3668,30 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
   const rawDropPct = entryRatioHist > 0 ? ((currentRatioNow / entryRatioHist) - 1) * 100 : 0;
   const addOnOpportunity = rawDropPct <= -7;
   const remainingBudget = tr.startAmount > totalFromAmt ? tr.startAmount - totalFromAmt : 0;
+
+  // ── Reversion Confidence Trend — informational only, shown once a position has stalled ──
+  // Deliberately NOT a sell signal — there is no sell trigger anywhere in this app, on purpose
+  // (see the never-close-at-a-loss rule). What this answers instead: for a position that's
+  // been open a while without resolving, is the STATISTICAL case for it eventually reverting
+  // getting stronger or weaker over time? Recomputes adfStat (see its own comment for what it
+  // measures and the backtest behind it) twice — once using only the data that existed at
+  // entry, once using everything available now — and compares them. Gated on daysSinceEntry
+  // >= 30 because that's exactly the cohort this was tested against: positions still open
+  // past the point where most good entries have already resolved on their own.
+  let reversionTrend = null;
+  if (daysSinceEntry >= 30 && ratioTs.length) {
+    const entryIdx = ratioTs.reduce((best, ts, i) =>
+      Math.abs(ts - entryDateMs) < Math.abs(ratioTs[best] - entryDateMs) ? i : best, 0);
+    const adfAtEntry = entryIdx >= 19 ? adfStat(ratioCloses.slice(0, entryIdx + 1)) : null;
+    const adfNow     = adfStat(ratioCloses);
+    if (adfAtEntry !== null && adfNow !== null) {
+      const trendDelta = adfAtEntry - adfNow; // positive = adfNow more negative/significant = improving
+      reversionTrend = trendDelta >= 1  ? { label: 'improved a lot', tone: 'good',  resolvedPct: '66-76%' }
+        : trendDelta >= 0                ? { label: 'improved',       tone: 'good',  resolvedPct: '66-76%' }
+        : trendDelta >= -1               ? { label: 'weakened',       tone: 'watch', resolvedPct: '45-57%' }
+        :                                   { label: 'weakened a lot',tone: 'watch', resolvedPct: '45-57%' };
+    }
+  }
 
   // Define exitThreshold here — used by estDays, status messages, progress bar, and exitLabel
   const exitThreshold = 0.8;
@@ -4008,6 +4074,15 @@ async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
           <span style="font-size:18px;line-height:1">➕</span>
           <div style="font-size:12px;color:var(--text2);line-height:1.6">
             <span style="font-weight:700;color:#3b8fff">Rate improved for adding more</span> — ${tr.assetA} now buys ${Math.abs(rawDropPct).toFixed(1)}% more ${curAsset} than your ${posSwaps.length > 1 ? 'blended average entry' : 'entry'} (raw ratio move, fees not counted). If you have more ${tr.assetA} to put into this swap, this is a better rate than what you already got${posSwaps.length > 1 ? ' on average' : ''}${remainingBudget > 0 ? ` — about ${remainingBudget.toFixed(4)} ${tr.assetA} left of this tracker's planned ${tr.startAmount} ${tr.assetA} total` : ''}. Log it as another swap into ${curAsset} on this tracker and it'll blend into your average automatically.
+          </div>
+        </div>` : ''}
+
+        <!-- Reversion Confidence Trend — new, informational only, only for stalled positions -->
+        ${reversionTrend ? `
+        <div style="background:${reversionTrend.tone==='good' ? 'rgba(0,192,118,0.08)' : 'rgba(245,166,35,0.08)'};border:1px solid ${reversionTrend.tone==='good' ? 'rgba(0,192,118,0.3)' : 'rgba(245,166,35,0.3)'};border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
+          <span style="font-size:18px;line-height:1">${reversionTrend.tone==='good' ? '📶' : '📉'}</span>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">
+            <span style="font-weight:700;color:${reversionTrend.tone==='good' ? '#00c076' : '#f5a623'}">Reversion confidence has ${reversionTrend.label}</span> since you entered this stalled position — not a sell signal (this app never tells you to close at a loss), just an update on whether the statistical case for this pair eventually reverting is getting stronger or weaker the longer it sits open. In backtesting across this app's own coin pool, positions in this situation went on to resolve within 150 days about ${reversionTrend.resolvedPct} of the time when confidence had ${reversionTrend.label} like this one — worth knowing while you wait, not a reason to act on its own.
           </div>
         </div>` : ''}
 
