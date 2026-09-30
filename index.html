@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crypto Swap Analyzer</title>
+<title>ProfitSwap · Crypto accumulation</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -680,25 +680,44 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .et-score-body{flex:1}
 .et-score-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
 .et-score-sub{font-size:10px;color:var(--text3);line-height:1.5}
+/* A calm accumulation workspace: slate blue, readable data, a visible coin cycle. */
+:root{--bg:#111d2b;--bg2:#192a3c;--bg3:#21354a;--text:#eef3f8;--text2:#bed0de;--text3:#9eb3c5;--border:rgba(185,210,231,.16);--border2:rgba(185,210,231,.28);--blue:#8cc6f3;--green:#72d9b3;--amber:#f0c182;--red:#ff9292;--r:16px;--rs:8px}
+body{max-width:1120px;padding:28px 28px 60px;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.5}
+button,input,select{font:inherit}button{touch-action:manipulation}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #9bd3ff;outline-offset:3px}button:disabled{cursor:wait;opacity:.55}
+.hdr{align-items:center;margin-bottom:26px}.brand{font-size:24px;letter-spacing:-.8px;font-weight:650}.brand em{font-style:normal;color:inherit}.brand .live-dot{display:none}.brand-note{font-size:12px;color:var(--text2);margin-top:3px}.badge{background:transparent;border-color:var(--border2);color:var(--text2);font-family:inherit;font-size:11px}.btn{font-family:inherit;font-size:12px;padding:8px 13px;border-radius:8px;color:var(--text)}
+.accumulation-intro{display:grid;grid-template-columns:1.05fr 1fr;gap:40px;padding:16px 0 30px;align-items:center}.accumulation-intro h1{font-size:clamp(27px,3.7vw,40px);font-weight:600;line-height:1.13;letter-spacing:-1.1px;max-width:15ch;margin-bottom:15px}.accumulation-intro p{color:var(--text2);max-width:50ch;line-height:1.7}.hero-cycle{display:flex;align-items:center;justify-content:space-between;padding:25px 20px;border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);gap:8px}.hero-cycle strong{font-size:22px;font-weight:600;display:block}.hero-cycle span{color:var(--text2);font-size:12px}.hero-cycle b{font-weight:400;color:var(--text3);font-size:25px}.hero-cycle .cycle-result strong{color:var(--green)}
+.plan-panel{padding:20px 22px;background:var(--bg2);border-radius:16px;margin-bottom:24px}.plan-panel h2{font-size:16px;font-weight:600;margin-bottom:4px}.plan-panel p{font-size:12px;color:var(--text2);margin-bottom:16px}.plan-fields{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr auto;gap:12px;align-items:end}.plan-fields label{font-size:12px;color:var(--text2);display:grid;gap:7px}.plan-fields input,.plan-fields select,.quote-input{min-width:0;width:100%;border:1px solid var(--border2);background:var(--bg);color:var(--text);border-radius:7px;padding:9px 10px;font-size:14px}.primary-action{background:#b8d9ef;color:#10283b;border:0;border-radius:8px;padding:11px 16px;font-weight:650;cursor:pointer}.plan-panel #planStatus{font-size:12px;color:var(--green);margin-top:8px;min-height:18px}
+.tab-bar{position:sticky;top:0;z-index:10;background:var(--bg);padding:8px 0;border-bottom:1px solid var(--border2);gap:6px;margin-bottom:22px}.tab-btn{font-family:inherit;font-size:14px;padding:11px 15px;border-radius:8px}.tab-btn.active{background:#b8d9ef;color:#10283b;border-color:#b8d9ef}.coin-selector{padding:18px 20px}.cs-chips{gap:7px}.cs-chip{min-height:34px}.cs-search{font-size:14px}.cs-label{font-family:inherit;text-transform:none;font-size:12px}.bsn-card,.lab-card{padding:20px;margin-bottom:18px}.bsn-title,.lab-title{font-size:16px;font-family:inherit;text-transform:none;letter-spacing:0}.bsn-scan-btn,.bsn-analyze-btn{font-family:inherit;min-height:38px;font-size:12px}.bsn-coin-btn{min-height:36px}.bsn-results{line-height:1.6}
+.sp-box{padding:24px;border-width:1px}.sp-num{font-size:44px;min-width:64px;font-variant-numeric:tabular-nums}.sp-verdict{font-size:22px}.sp-sub,.sp-explain-body{font-size:14px;line-height:1.7}.sp-labels{font-family:inherit;font-size:11px}.sp-explain{padding:16px;border-left-width:2px}.metrics-row{gap:10px}.metric{padding:12px}.metric .ml{font-family:inherit;font-size:11px}.metric .mv{font-size:17px}.qss-section{font-family:inherit}
+.research-panel{background:var(--bg2);padding:22px;border-radius:16px;margin:20px 0}.research-panel h2{font-size:18px;font-weight:600;margin-bottom:8px}.research-panel>p{color:var(--text2);max-width:78ch;font-size:13px}.research-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}.research-result{font-size:13px;line-height:1.7;color:var(--text2)}.research-result h3{color:var(--text);font-size:18px;margin:12px 0}.research-result p{margin:12px 0}.research-panel details{margin-top:20px;border-top:1px solid var(--border);padding-top:15px}.research-panel summary{cursor:pointer;color:var(--text);font-weight:600}.quote-row{display:flex;gap:10px;align-items:end;margin:15px 0}.quote-row label{flex:1;max-width:260px;font-size:12px}.quote-input{display:block;margin-top:6px}
+.evidence-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:18px 0}.evidence-grid>div{background:var(--bg2);padding:16px}.evidence-grid span,.evidence-grid small{display:block;color:var(--text2);font-size:12px}.evidence-grid strong{display:block;font-size:23px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.5;color:var(--text);overflow-wrap:anywhere}.evidence-grid small{font-size:11px;margin-top:4px}.muted{color:var(--text3);font-size:12px}.position-panel{background:var(--bg2);padding:22px;border:1px solid var(--border);border-radius:16px;margin-bottom:18px}.position-panel p{margin:12px 0;color:var(--text2);font-size:13px;max-width:78ch}.position-heading{display:flex;justify-content:space-between;gap:12px;align-items:center}.position-heading h3{font-size:18px}.position-heading>span{font-size:12px;color:var(--text2)}.cycle-path{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:20px}.cycle-path>span{font-size:17px;font-weight:600;overflow-wrap:anywhere;min-width:0}.cycle-path small{font-size:11px;font-weight:400;display:block;color:var(--text2)}.cycle-path b{font-weight:400;color:var(--text3)}.return-banner{display:flex;flex-direction:column;gap:5px;padding:16px 20px;border-radius:12px;background:var(--bg3);margin:10px 0;color:var(--text2)}.return-banner.positive{border-left:4px solid var(--green);background:rgba(114,217,179,.09);color:var(--green)}.return-banner strong{font-size:18px}.return-banner small{color:var(--text2)}.review-note{border-left:3px solid var(--amber);padding-left:12px}.position-panel summary{cursor:pointer;color:var(--blue)}
+.st-tracker-card{padding:18px;border-width:1px!important}.stc-name{font-size:17px}.stc-meta{font-size:12px}.st-view-btn,.st-add-btn,.st-save-btn{min-height:36px;font-family:inherit}.st-stats{gap:12px}table{font-variant-numeric:tabular-nums}.table-wrap{overflow-x:auto}
+.technical-details{margin:0 0 22px;border:1px solid var(--border);border-radius:12px;padding:14px}.technical-details>summary{font-size:14px;color:var(--text2);cursor:pointer}.technical-details>p{margin:12px 0}.sp-box.red{background:var(--bg2);border-color:var(--border2)}.sp-box.red .sp-verdict,.sp-box.red .sp-num{color:var(--text2)}.sp-box.red .sp-explain{border-color:var(--border2)}.qss-section>div:first-child{text-transform:none!important;font-family:inherit!important;font-size:12px!important}.bsn-results{max-height:760px;overflow-y:auto;overscroll-behavior:contain}.cs-chips .cs-btn{min-height:32px}
+.paper-list>div{display:grid;grid-template-columns:1fr auto;gap:4px;padding:10px 0;border-bottom:1px solid var(--border)}.paper-list small{grid-column:1/-1;color:var(--text3)}.paper-details{margin-bottom:16px}.paper-details>p{margin:10px 0}
+@media(max-width:760px){body{padding:18px 14px 40px}.accumulation-intro{grid-template-columns:1fr;gap:20px;padding-bottom:22px}.accumulation-intro h1{max-width:24ch;font-size:32px}.hero-cycle{padding:16px 8px}.plan-fields{grid-template-columns:1fr 1fr}.plan-fields .primary-action{grid-column:1/-1}.plan-panel{padding:16px}.tab-bar{overflow-x:auto;flex-wrap:nowrap}.tab-btn{white-space:nowrap;font-size:12px;padding:10px}.sp-box{padding:17px}.evidence-grid{grid-template-columns:1fr}.evidence-grid>div{padding:12px 15px}.evidence-grid strong{font-size:21px}.position-panel{padding:16px}.cycle-path{align-items:flex-start}.cycle-path>span{font-size:13px}.cycle-path small{font-size:10px}.research-panel{padding:16px}.hdr{margin-bottom:12px}.st-tracker-card{flex-wrap:wrap}.stc-right{margin-left:auto;max-width:100%}.sp-verdict{font-size:19px}.sp-verdict-left{gap:10px}.bsn-card{padding:15px}.bsn-search-input{max-width:none!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
 </style>
 </head>
 <body>
 
 <div class="hdr">
   <div>
-    <div class="brand"><span class="live-dot"></span>Swap<em>Analyzer</em></div>
+    <div class="brand">ProfitSwap</div><div class="brand-note">Your crypto, working toward more crypto.</div>
   </div>
   <div class="hdr-r">
-    <span class="badge">Binance live</span>
+    <span class="badge">Binance reference data</span>
     <button class="btn" id="refreshBtn">↻ Refresh</button>
   </div>
 </div>
 
+<section class="accumulation-intro"><div><h1>Make the round trip count.</h1><p>Find a relative-price opportunity. Swap into another coin. Return with more of the coin you started with.</p></div><div class="hero-cycle" aria-label="Starting coin to paired coin to more starting coins"><div><strong>Your coin</strong><span>Start with what you hold</span></div><b>→</b><div><strong>Swap</strong><span>Let the ratio work</span></div><b>→</b><div class="cycle-result"><strong>More coins</strong><span>Complete after costs</span></div></div></section>
+<section class="plan-panel"><h2>Your accumulation plan</h2><p>Look for smaller, repeatable cycles. The time window is a preference, not a promised weekly or monthly profit. Costs must match your swap provider and route.</p><form id="accumulationPlan"><div class="plan-fields"><label>Preferred cycle<select name="horizon"><option value="7">Within a week</option><option value="14">Within two weeks</option><option value="30">Within a month</option></select></label><label>Net gain target (%)<input name="targetPct" type="number" min="0.1" max="20" step="0.05" required></label><label>Total fee per swap (%)<input name="feePct" type="number" min="0" max="5" step="0.01" required></label><label>Slippage buffer (%)<input name="slippagePct" type="number" min="0" max="5" step="0.01" required></label><button class="primary-action" type="submit">Apply plan</button></div><div id="planStatus" role="status" aria-live="polite"></div></form></section>
 <div class="tab-bar">
-  <button class="tab-btn active" data-tab="analyzer">📊 Analyzer</button>
-  <button class="tab-btn" data-tab="trendrider">🚀 Trend Rider</button>
-  <button class="tab-btn" data-tab="tracker">📈 Swap Tracker</button>
-  <button class="tab-btn" data-tab="alerts">🔔 Alerts <span id="alertBadge" style="display:none;background:#ef4444;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:3px;font-family:monospace">0</span></button>
+  <button class="tab-btn active" data-tab="analyzer">Opportunities</button>
+  <button class="tab-btn" data-tab="trendrider">Momentum watch</button>
+  <button class="tab-btn" data-tab="tracker">My cycles</button>
+  <button class="tab-btn" data-tab="alerts">Alerts <span id="alertBadge" style="display:none;background:#ef4444;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:3px;font-family:monospace">0</span></button>
 </div>
 
 <div class="tab-pane active" id="tab-analyzer">
@@ -727,9 +746,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="cs-pair" id="pairBar"><span style="color:var(--text3);font-family:monospace;font-size:11px">Select a pair above</span></div>
   </div>
 
+  <div id="mainContent"><div class="loading"><div class="sp-anim"></div>Connecting to Binance...</div></div>
   <!-- Best Swap Now -->
   <div class="bsn-card">
-    <div class="bsn-title">🔍 Best Swap Right Now</div>
+    <div class="bsn-title">Find your next cycle</div>
     <!-- Search + category filter row -->
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:.7rem">
       <input class="bsn-search-input" id="bsnSearch" placeholder="🔎 Search coin..." autocomplete="off" style="flex:1;min-width:140px;max-width:220px">
@@ -766,7 +786,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
   </div>
 
-  <div id="mainContent"><div class="loading"><div class="sp-anim"></div>Connecting to Binance...</div></div>
+  <section class="research-panel"><h2>Check a pair before committing coins</h2><p>Use the pair selected above. See how often the current rules completed a profitable cycle, including times your coins stayed stuck.</p><div class="research-actions"><button id="historyCheck" class="primary-action">Check historical cycles</button><span class="muted">Up to 1,000 daily candles · actual net costs</span></div><details class="paper-details"><summary>Signal notebook · paper cycles</summary><p class="muted">Track future opportunities without committing coins. One open paper cycle per pair. This is not a shared-capital portfolio.</p><button class="btn" id="paperRefresh" type="button">Refresh observations</button><div id="paperJournal" class="research-result" aria-live="polite"></div></details><div id="researchResult" class="research-result" aria-live="polite">Choose a pair, then run a historical check. No success rate is assumed.</div><details><summary>Estimate your swap and required return rate</summary><div class="quote-row"><label>Amount of your starting coin<input id="quoteAmount" class="quote-input" type="number" min="0" step="any" value="1"></label><button id="quoteCheck" class="btn">Check reference quote</button></div><div id="quoteResult" class="research-result" aria-live="polite">Uses current bid and ask prices and your cost settings.</div></details></section>
+
 </div>
 
 <!-- Trend Rider tab — short-horizon MOMENTUM scanner (7-14 day quick gains).
@@ -778,10 +799,17 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="bsn-card">
     <div class="bsn-title">🚀 Trend Rider — short-term momentum (independent from the reversion score)</div>
     <p style="font-size:12px;color:var(--text2);line-height:1.6;margin:.4rem 0 .8rem">
-      A different idea from the rest of the app: instead of waiting for an extended ratio to revert, this looks for a pair whose ratio was flat or falling and just turned upward in the last day or two — then bets that move keeps going a little further, aiming for +2% (net of fees) within 7-14 days. Works from any starting level, weak or strong — it only cares that the turn is fresh. Backtested on this app's real ~2.7-year Binance history: about 47% of setups like this hit the target within 7 days, about 61% within 14 days — a real, moderate edge, not a high-confidence signal. This tab never overrides the golden rule used everywhere else in the app.
+      A different idea from the rest of the app: instead of waiting for an extended ratio to revert, this looks for a coin that was flat or falling against another coin and just turned upward in the last day or two — then bets that move keeps going a little further, aiming for +2% (net of fees) within 7-14 days. Works from any starting level, weak or strong — it only cares that the turn is fresh. Historical success rates from earlier versions are unverified. This is an experimental watchlist; the cycle checks in Opportunities apply to the reversion strategy only. This tab never overrides the golden rule used everywhere else in the app.
     </p>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:.7rem">
+      <input class="bsn-search-input" id="trendSearch" placeholder="🔎 Search coin..." autocomplete="off" style="flex:1;min-width:140px;max-width:220px">
+    </div>
+    <div class="bsn-coin-grid" id="trendCoinGrid"></div>
     <div class="bsn-actions">
-      <button class="bsn-scan-btn secondary" id="trendScanBtn">🚀 Scan for fresh trends</button>
+      <button class="bsn-scan-btn" id="trendScanBtn" disabled>🚀 Find a trend to swap my coin into</button>
+      <button class="bsn-scan-btn secondary" id="trendScanAllBtn">🌐 Scan entire market</button>
+      <button class="bsn-clear-btn" id="trendClearBtn">✕ Clear</button>
+      <span class="bsn-selected-count" id="trendCount">Select the coin(s) you currently hold</span>
     </div>
     <div class="bsn-results" id="trendResults"></div>
   </div>
@@ -799,7 +827,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
 
     <p style="font-size:11px;color:var(--text3);margin-bottom:.9rem">
-      Score hits target → browser notification + in-app toast. Checks every 5 min while the tab is open.
+      Score hits target → browser notification + in-app toast. Checks every 5 min while this tab is visible; checks resume when you return.
     </p>
 
     <!-- Telegram notifications setup -->
@@ -909,9 +937,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <div class="alert-form-group">
         <label>When score reaches</label>
         <select class="alert-form-select" id="alertCondition">
-          <option value="gte75">≥ 70 — SWAP NOW signal</option>
+          <option value="go">Cost-covered cycle candidate</option><option value="gte75">≥ 75 — watchlist score</option>
           <option value="gte60">≥ 60 — getting close</option>
-          <option value="lte25">≤ 30 — DO NOT SWAP signal</option>
+          <option value="lte25">≤ 25 — weak setup</option>
           <option value="lte40">≤ 40 — score weakening</option>
         </select>
       </div>
@@ -1006,7 +1034,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
     <!-- Growth chart -->
     <div class="st-chart-wrap">
-      <div class="st-title">Portfolio growth in base asset</div>
+      <div class="st-title">Realized growth from completed cycles</div>
       <div style="position:relative;width:100%;height:240px"><canvas id="stGrowthChart"></canvas></div>
     </div>
 
@@ -1018,7 +1046,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
     <!-- Swap form -->
     <div class="st-form" id="stSwapForm" style="display:none">
-      <div class="st-title" id="stSwapFormTitle">Record a swap</div>
+      <div class="st-title" id="stSwapFormTitle">Record a swap</div><div id="swapDirection" style="margin:12px 0"></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px">
         <div class="st-form-group">
           <label>Date</label>
@@ -1075,6 +1103,401 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 
 <script>
+/* ProfitSwap accumulation engine. Amounts and returns are always in the starting coin. */
+const ENGINE_VERSION = 'accumulation-1';
+const DAY_MS = 86400000;
+const DEFAULT_PLAN = { horizon: 7, targetPct: 0.75, feePct: 1, slippagePct: 0.1 };
+function normalizePlan(value = {}) {
+  const number = (v, fallback, min, max) => Number.isFinite(Number(v)) && v !== '' ? Math.min(max, Math.max(min, Number(v))) : fallback;
+  return {
+    horizon: [7,14,30].includes(Number(value.horizon)) ? Number(value.horizon) : 7,
+    targetPct: number(value.targetPct, 0.75, 0.1, 20),
+    feePct: number(value.feePct, 1, 0, 5),
+    slippagePct: number(value.slippagePct, 0.1, 0, 5)
+  };
+}
+function loadPlan() { try { return normalizePlan(JSON.parse(localStorage.getItem('profitSwapPlan') || '{}')); } catch { return {...DEFAULT_PLAN}; } }
+let accumulationPlan = loadPlan();
+let SWAP_FEE_RATE = accumulationPlan.feePct / 100;
+const marketCache = new Map();
+const marketPending = new Map();
+const priceTimes = {};
+function retention(plan = accumulationPlan) { return (1-plan.feePct/100)*(1-plan.slippagePct/100); }
+function roundTripGain(entryRatio, exitRatio, plan = accumulationPlan) {
+  return entryRatio > 0 && exitRatio > 0 ? (entryRatio / exitRatio * retention(plan)**2 - 1)*100 : null;
+}
+function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function coinAmount(value) { return Number.isFinite(value) ? value.toLocaleString(undefined,{maximumFractionDigits:8}) : '—'; }
+function signedPct(value) { return Number.isFinite(value) ? (value>=0?'+':'')+value.toFixed(2)+'%' : 'Unavailable'; }
+
+async function marketJSON(path, ttl = 60000) {
+  const cached = marketCache.get(path);
+  if(cached && Date.now()-cached.at < ttl) return cached.data;
+  if(marketPending.has(path)) return marketPending.get(path);
+  const request = (async()=>{
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(),12000);
+    try {
+      const response = await fetch('https://api.binance.com/api/v3'+path,{signal:controller.signal});
+      if(!response.ok) throw new Error('Market data unavailable ('+response.status+'). Retry shortly.');
+      const data = await response.json();
+      if(data?.code) throw new Error('This market is unavailable.');
+      marketCache.set(path,{at:Date.now(),data});
+      return data;
+    } finally { clearTimeout(timer); marketPending.delete(path); }
+  })();
+  marketPending.set(path,request);
+  return request;
+}
+async function fetchPrice(sym) {
+  const data = await marketJSON('/ticker/price?symbol='+encodeURIComponent(sym+'USDT'),15000);
+  const value = Number(data.price);
+  if(!Number.isFinite(value) || value<=0) throw new Error('Invalid price for '+sym);
+  priceTimes[sym]=Date.now();
+  return value;
+}
+async function fetchKlines(sym,limit=92) {
+  const data=await marketJSON('/klines?symbol='+encodeURIComponent(sym+'USDT')+'&interval=1d&limit='+Math.min(1000,limit),60000);
+  if(!Array.isArray(data)) throw new Error('Invalid candle data');
+  return data.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5],end:+k[6],live:+k[6]>=Date.now()}))
+    .filter(k=>[k.t,k.o,k.h,k.l,k.c,k.end].every(Number.isFinite)&&Math.min(k.o,k.h,k.l,k.c)>0);
+}
+function buildRatio(fk,tk) {
+  const byTime=new Map(tk.map(k=>[k.t,k]));
+  return fk.flatMap(a=>{
+    const b=byTime.get(a.t);
+    if(!b || !(a.c>0&&b.c>0&&a.o>0&&b.o>0)) return [];
+    const o=a.o/b.o,c=a.c/b.c;
+    // Daily leg extremes are not simultaneous. Show only observed open/close bounds.
+    return [{t:a.t,o,h:Math.max(o,c),l:Math.min(o,c),c,v:a.v||0,live:!!(a.live||b.live),synthetic:true}];
+  }).sort((a,b)=>a.t-b.t);
+}
+function completedRatio(fk,tk) {
+  const rows=buildRatio(fk,tk).filter(k=>!k.live);
+  if(rows.some((r,i)=>i>0&&r.t-rows[i-1].t!==DAY_MS)) throw new Error('Missing daily candles; signal paused.');
+  if(!rows.length || Date.now()-(rows.at(-1).t+DAY_MS)>2*DAY_MS) throw new Error('Daily market data is stale.');
+  return rows;
+}
+function mean(values) { return values.reduce((a,b)=>a+b,0)/values.length; }
+function halfLife(closes) {
+  const logs=closes.map(Math.log),x=logs.slice(0,-1),dy=logs.slice(1).map((v,i)=>v-logs[i]);
+  const mx=mean(x),my=mean(dy),den=x.reduce((s,v)=>s+(v-mx)**2,0);
+  if(!(den>1e-16)) return null;
+  const beta=x.reduce((s,v,i)=>s+(v-mx)*(dy[i]-my),0)/den,phi=1+beta;
+  return phi>0 && phi<1 ? -Math.log(2)/Math.log(phi) : null;
+}
+function computeQSS(closes,corr,plan=accumulationPlan,liveRatio=null) {
+  if(!closes || closes.length<60 || !closes.every(v=>Number.isFinite(v)&&v>0)) return null;
+  if(liveRatio!==null&&(!Number.isFinite(liveRatio)||liveRatio<=0))return null;
+  const current=liveRatio??closes.at(-1), log=closes.map(Math.log), window=plan.horizon===7?14:plan.horizon===14?30:60;
+  const recent=log.slice(-window), mu=mean(recent),sd=Math.sqrt(mean(recent.map(v=>(v-mu)**2)));
+  const z30=sd>1e-10?(Math.log(current)-mu)/sd:0, mean30=Math.exp(mu);
+  const lookback=log.slice(-60),center=mean(lookback);
+  let crossings=0;
+  for(let i=1;i<lookback.length;i++) if((lookback[i-1]-center)*(lookback[i]-center)<0) crossings++;
+  const hl=halfLife(closes.slice(-60));
+  const oscillationOk=crossings>=2 && hl!==null && hl<=45;
+  const expGain=Math.max(0,roundTripGain(current,mean30,plan));
+  const targetRatio=current*retention(plan)**2/(1+plan.targetPct/100);
+  const fraction=(Math.log(targetRatio)-mu)/(Math.log(current)-mu);
+  const holdDays=hl!==null&&fraction>0&&fraction<1 ? Math.max(1,Math.ceil(-hl*Math.log(fraction)/Math.log(2))) : null;
+  const depth=Math.round(Math.max(0,Math.min(100,(z30-0.2)/1.8*100)));
+  const corrQ=Math.max(0,Math.min(100,((Number.isFinite(corr)?corr:0)-0.2)/0.7*100));
+  const recovery=Math.min(100,crossings*20)*(hl!==null?1:0.25);
+  const reversionQ=Math.round(recovery*0.75+corrQ*0.25);
+  const vel1=liveRatio===null?log.at(-1)-log.at(-2):Math.log(current)-log.at(-1),vel2=liveRatio===null?log.at(-2)-log.at(-3):log.at(-1)-log.at(-2);
+  const mt=vel1<=vel2?1:0.88;
+  const qss=Math.round((depth*0.55+reversionQ*0.30+Math.min(100,expGain/plan.targetPct*50)*0.15)*mt);
+  const reasons=[];
+  if(z30<0.6) reasons.push('Starting coin is not sufficiently extended');
+  if(expGain<plan.targetPct) reasons.push('Mean-return scenario does not cover costs and your gain target');
+  if(!oscillationOk) reasons.push('Recovery pattern is weak or persistently trending');
+  if(holdDays===null || holdDays>plan.horizon) reasons.push('Model does not support the selected completion window');
+  if(qss<55) reasons.push('Setup strength is still building');
+  const rsi=rsiCalc(closes).at(-1), bp=Math.max(0,Math.min(100,(z30+2)/4*100));
+  return {qss,isGo:reasons.length===0,reasons,depth,se_q:depth,reversionQ,confirm:reversionQ,
+    z30,mean30,meanFmt:mean30.toPrecision(5),expGain,holdDays,window,targetRatio,
+    ouHL20:hl??999,crossings,oscillationOk,oscillationNote:oscillationOk?'':'Few recoveries or unstable recovery speed; a large move may persist.',
+    meetsZGate:z30>=0.6,corrQ,mt,bp,bollPos:bp,re:rsi,rsi,qf:recovery,ouFPct20:0,
+    cum30:(current/closes.at(-30)-1)*100,depthZ:depth,depthCum:0,frozenFrac:0,illiquidNote:'',
+    plan:{...plan},estimatedOnly:true,provisional:liveRatio!==null};
+}
+function opportunityRank(result) {
+  const q=result.qss;if(!q) return -1;
+  const h=q.history;
+  return (q.isGo?1000:0)+(h?Math.min(60,h.monthly*25)+(h.markedReturn>=0?15:-15):0)+q.qss+(q.holdDays ? Math.min(20,q.expGain/q.holdDays*5):0);
+}
+function opportunitySummary(q) {
+  if(!q) return 'Not enough reliable data';
+  const history=q.history?' · History: '+q.history.monthly.toFixed(2)+' cycles/month; '+signedPct(q.history.markedReturn)+' incl. open holdings':'';
+  return 'To mean: '+signedPct(q.expGain)+' net · '+(q.holdDays===null?'timing unknown':'model ~'+q.holdDays+'d')+' · not a forecast'+history;
+}
+
+function pairEvidence(rows,from,to,plan) {
+  if(rows.length<200)return null;
+  const tested=backtestCycles(rows,from,to,plan,Math.floor(rows.length*.7));
+  return {monthly:tested.monthly,count:tested.cycles.length,markedReturn:tested.markedReturn,openDays:tested.open?.days??null,drawdown:tested.maxDrawdown,days:tested.elapsed};
+}
+
+/* Actual received amounts include historical fees. Never deduct them a second time. */
+function trackerLedger(tr) {
+  const balances={[tr.assetA]:Number(tr.startAmount)||0};
+  let capital=Number(tr.startAmount)||0,cycleCost=0,cycleReturned=0,cycleStart=null;
+  const cycles=[];
+  for(const sw of tr.swaps||[]) {
+    const sent=Number(sw.fromAmt),received=Number(sw.toAmt);
+    if(!(sent>0&&received>0)) continue;
+    const available=balances[sw.fromAsset]||0;
+    if(sw.fromAsset===tr.assetA && sent>available+1e-8) capital+=sent-available;
+    balances[sw.fromAsset]=Math.max(0,available-sent);
+    balances[sw.toAsset]=(balances[sw.toAsset]||0)+received;
+    if(sw.fromAsset===tr.assetA) { cycleCost+=sent; cycleStart??=sw.date; }
+    if(sw.toAsset===tr.assetA) cycleReturned+=received;
+    const open=Object.entries(balances).some(([asset,amount])=>asset!==tr.assetA&&amount>1e-8);
+    if(!open&&cycleCost>0) {
+      cycles.push({start:cycleStart,end:sw.date,cost:cycleCost,returned:cycleReturned,profit:cycleReturned-cycleCost,days:Math.max(0,(new Date(sw.date)-new Date(cycleStart))/DAY_MS)});
+      cycleCost=0;cycleReturned=0;cycleStart=null;
+    }
+  }
+  return {balances,capital,cycles,cycleCost,cycleReturned,cycleStart};
+}
+function trackerCapital(tr) { return trackerLedger(tr).capital; }
+function currentHolding(tr) {
+  const ledger=trackerLedger(tr);
+  const open=Object.entries(ledger.balances).find(([asset,amount])=>asset!==tr.assetA&&amount>1e-8);
+  return open ? {asset:open[0],amount:open[1]} : {asset:tr.assetA,amount:ledger.balances[tr.assetA]||0};
+}
+function trackerValue(tr,net=true) {
+  const ledger=trackerLedger(tr);let total=0;
+  for(const [asset,amount] of Object.entries(ledger.balances)) {
+    if(amount<=1e-8) continue;
+    if(asset===tr.assetA) {total+=amount;continue;}
+    if(!priceCache[asset]||!priceCache[tr.assetA]||Date.now()-(priceTimes[asset]||0)>120000||Date.now()-(priceTimes[tr.assetA]||0)>120000) return null;
+    total+=amount*priceCache[asset]/priceCache[tr.assetA]*(net?retention():1);
+  }
+  return total;
+}
+function calcBaseAmount(tr) { return trackerValue(tr,false); }
+function calcNetBaseAmount(tr) { return trackerValue(tr,true); }
+function calcMonthlyAccumulation(tr) {
+  const cycles=trackerLedger(tr).cycles.filter(c=>new Date(c.end).getTime()>=Date.now()-30*DAY_MS);
+  return cycles.length ? cycles.reduce((s,c)=>s+c.profit,0) : null;
+}
+function exitDecision(tr,result) {
+  const ledger=trackerLedger(tr),net=calcNetBaseAmount(tr),capital=ledger.capital;
+  const cycleCost=ledger.cycleCost||capital;
+  const cycleValue=net===null?null:net-(ledger.balances[tr.assetA]||0)+ledger.cycleReturned;
+  const gain=cycleValue!==null&&cycleCost>0?(cycleValue/cycleCost-1)*100:null;
+  const spike=Number.isFinite(result?.trend1)&&result.trend1>6;
+  const target=gain!==null&&gain>=accumulationPlan.targetPct;
+  const profitable=gain!==null&&gain>0;
+  return {net,capital,gain,cycleCost,cycleValue,spike,target,profitable,ready:profitable&&(target||spike||result?.qss?.isGo===true)};
+}
+
+/* Chronological, non-overlapping paper cycles. Signals use past closes; entry is next open.
+   Target exits use subsequent daily closes, not fabricated ratio highs/lows. Never force a
+   losing exit at the horizon; report it as unresolved and keep that capital tied up. */
+function backtestCycles(rows,fromCloses,toCloses,plan=accumulationPlan,startIndex=90) {
+  let position=null,multiplier=1,maxDrawdown=0,peak=1;const cycles=[];
+  for(let i=Math.max(90,startIndex);i<rows.length;i++) {
+    if(position) {
+      const gain=roundTripGain(position.entry,rows[i].c,plan),age=(rows[i].t-position.t)/DAY_MS;
+      const marked=multiplier*(1+gain/100);peak=Math.max(peak,marked);maxDrawdown=Math.max(maxDrawdown,(peak-marked)/peak*100);
+      if(gain>=plan.targetPct) { cycles.push({...position,exit:rows[i].c,end:rows[i].t,days:age,gain});multiplier*=1+gain/100;position=null; }
+    }
+    if(!position&&i<rows.length-1) {
+      const closes=rows.slice(Math.max(0,i-89),i+1).map(r=>r.c);
+      const corr=calcCorrelation(fromCloses.slice(Math.max(0,i-89),i+1),toCloses.slice(Math.max(0,i-89),i+1));
+      const q=computeQSS(closes,corr,plan);
+      if(q?.isGo) position={entry:rows[i+1].o,t:rows[i+1].t,signal:rows[i].t,score:q.qss};
+    }
+  }
+  const open=position?{...position,days:(rows.at(-1).t-position.t)/DAY_MS,gain:roundTripGain(position.entry,rows.at(-1).c,plan)}:null;
+  const markedReturn=(multiplier*(open?1+open.gain/100:1)-1)*100;
+  const elapsed=rows.length>startIndex?(rows.at(-1).t-rows[startIndex].t)/DAY_MS:0;
+  return {cycles,open,markedReturn,realizedReturn:(multiplier-1)*100,maxDrawdown,elapsed,
+    monthly:elapsed>0?cycles.length/elapsed*30:0,weekly:elapsed>0?cycles.length/elapsed*7:0,
+    within7:cycles.filter(c=>c.days<=7).length,within30:cycles.filter(c=>c.days<=30).length};
+}
+
+function saveAccumulationPlan(event) {
+  event.preventDefault();
+  researchRun++;
+  document.getElementById('historyCheck').disabled=false;
+  accumulationPlan=normalizePlan(Object.fromEntries(new FormData(event.target)));
+  SWAP_FEE_RATE=accumulationPlan.feePct/100;
+  try{localStorage.setItem('profitSwapPlan',JSON.stringify(accumulationPlan));}catch{}
+  Object.keys(_scoreCache).forEach(k=>delete _scoreCache[k]);
+  _clearScore();
+  document.getElementById('planStatus').textContent='Saved. Scores and exit targets now use these costs.';
+  document.getElementById('researchResult').innerHTML='Select a pair and run a historical check with your new settings.';
+  document.getElementById('bsnResults').innerHTML='Plan changed. Scan again to refresh opportunities.';
+  if(activeTrackerId) renderDetailView();else renderTrackerList();
+  loadAndRender();
+}
+function initAccumulationUI() {
+  try{if(!localStorage.getItem('profitSwapBeforeAccumulation'))localStorage.setItem('profitSwapBeforeAccumulation',JSON.stringify({savedAt:Date.now(),trackers:localStorage.getItem('swapTrackers'),prefs:localStorage.getItem('swapPrefs')}));}catch{}
+  const form=document.getElementById('accumulationPlan');
+  for(const [key,value] of Object.entries(accumulationPlan)) form.elements[key].value=value;
+  form.addEventListener('submit',saveAccumulationPlan);
+  document.getElementById('historyCheck').onclick=runHistoricalCheck;
+  document.getElementById('quoteCheck').onclick=runQuoteCheck;
+  document.getElementById('paperRefresh').onclick=refreshPaperJournal;
+  renderPaperJournal();
+}
+let researchRun=0;
+async function runHistoricalCheck() {
+  const run=++researchRun,a=fromSym,b=toSym,plan={...accumulationPlan};
+  const out=document.getElementById('researchResult'),button=document.getElementById('historyCheck');
+  button.disabled=true;out.textContent='Checking completed daily candles for '+a+' → '+b+' → '+a+'…';
+  try {
+    const [fk,tk]=await Promise.all([fetchKlines(a,1000),fetchKlines(b,1000)]);
+    const rows=completedRatio(fk,tk),fa=new Map(fk.map(k=>[k.t,k.c])),tb=new Map(tk.map(k=>[k.t,k.c]));
+    if(rows.length<200) throw new Error('At least 200 matched daily candles are needed.');
+    const f=rows.map(r=>fa.get(r.t)),t=rows.map(r=>tb.get(r.t)),split=Math.max(90,Math.floor(rows.length*0.7));
+    const earlier=backtestCycles(rows.slice(0,split),f.slice(0,split),t.slice(0,split),plan);
+    const later=backtestCycles(rows,f,t,plan,split);
+    const stress=backtestCycles(rows,f,t,{...plan,slippagePct:Math.min(5,plan.slippagePct+0.2)},split);
+    if(run!==researchRun)return;
+    out.innerHTML=`<h3>${a} → ${b} → more ${a}?</h3><p>Fixed rules, ${rows.length} completed days. Entries at the next daily open; exits at a later daily close. No overlapping positions or forced exits at a loss.</p>
+      <div class="evidence-grid"><div><span>Recent 30% of history</span><strong>${later.cycles.length} completed</strong><small>${later.monthly.toFixed(2)} cycles / month · ${later.weekly.toFixed(2)} / week</small></div>
+      <div><span>Including any open position</span><strong>${signedPct(later.markedReturn)}</strong><small>Base-coin return vs holding ${a}</small></div>
+      <div><span>Largest base-coin drawdown</span><strong>${later.maxDrawdown.toFixed(2)}%</strong><small>Daily marks, after assumed costs</small></div></div>
+      <p>${later.within7} completed within 7 days; ${later.within30} within 30 days. ${later.open?`One unresolved position: ${later.open.days} days, ${signedPct(later.open.gain)} if returned to base at the last close.`:'No unresolved position at the end.'}</p>
+      <p>Earlier period: ${earlier.cycles.length} completions, ${signedPct(earlier.markedReturn)} including open holdings. Recent period with 0.2 percentage points more slippage per swap: ${stress.cycles.length} completions, ${signedPct(stress.markedReturn)}.</p>
+      <p class="muted">This is a reproducible historical simulation, not a forecast or independent validation. The recent period is reported separately; changing settings after viewing it is still tuning to history. Daily data can miss intraday exits. Unresolved capital remains unavailable for new cycles.</p>`;
+  }catch(e){if(run===researchRun)out.textContent=e.message;}finally{if(run===researchRun)button.disabled=false;}
+}
+async function runQuoteCheck() {
+  const a=fromSym,b=toSym,amount=Number(document.getElementById('quoteAmount').value),out=document.getElementById('quoteResult');
+  if(!(amount>0&&Number.isFinite(amount))){out.textContent='Enter a positive amount of the starting coin.';return;}
+  out.textContent='Checking current bid and ask prices…';
+  try {
+    const [f,t]=await Promise.all([marketJSON('/ticker/bookTicker?symbol='+a+'USDT',0),marketJSON('/ticker/bookTicker?symbol='+b+'USDT',0)]);
+    const rate=Number(f.bidPrice)/Number(t.askPrice),keep=retention();
+    if(!(Number.isFinite(rate)&&rate>0))throw new Error('Quote unavailable.');
+    const received=amount*rate*keep;
+    const required=(amount*(1+accumulationPlan.targetPct/100))/received/keep;
+    const fits=amount<=Number(f.bidQty)&&received/keep<=Number(t.askQty);
+    out.innerHTML=`<strong>${coinAmount(amount)} ${a} ≈ ${coinAmount(received)} ${b}</strong><p>To complete at +${accumulationPlan.targetPct}%: return quote must reach at least ${coinAmount(required)} ${a} per ${b}, before your return costs.</p><small>${fits?'Size fits the displayed top-of-book quantities.':'Size exceeds displayed top-of-book depth; this estimate is not sufficient for this order.'} Reference route uses the two USDT markets; no stablecoin holding is required by the tracker. Set costs for your actual provider and route. Two snapshots may move before execution. This is an estimate, not a guaranteed fill.</small>`;
+  }catch(e){out.textContent=e.message;}
+}
+
+async function buildLiveMonitor(tr,curAsset) {
+  const ledger=trackerLedger(tr),holding=currentHolding(tr),decision=exitDecision(tr,null),net=decision.net;
+  const held=ledger.cycleStart?Math.max(0,Math.floor((Date.now()-new Date(ledger.cycleStart))/DAY_MS)):0;
+  const cash=ledger.balances[tr.assetA]||0,target=cash+Math.max(0,ledger.cycleCost*(1+accumulationPlan.targetPct/100)-ledger.cycleReturned);
+  const required=holding.amount>0?Math.max(0,target-cash)/(holding.amount*retention()):null;
+  const recover=priceCache[curAsset]&&priceCache[tr.assetA]?Math.max(0,ledger.capital-cash)/(priceCache[curAsset]/priceCache[tr.assetA]*retention()):null;
+  return `<section class="position-panel"><div class="position-heading"><h3>Your return to ${escapeHtml(tr.assetA)}</h3><span>${held} days open</span></div>
+    <div class="cycle-path"><span>${coinAmount(ledger.capital)} ${tr.assetA}<small>Contributed</small></span><b>→</b><span>${coinAmount(holding.amount)} ${curAsset}<small>Held now${cash>0?' + '+coinAmount(cash)+' '+tr.assetA:' '}</small></span><b>→</b><span>${coinAmount(net)} ${tr.assetA}<small>Estimated return after costs</small></span></div>
+    <div class="evidence-grid"><div><span>Extra ${tr.assetA} in this cycle</span><strong>${net===null?'Unavailable':coinAmount(decision.cycleValue-decision.cycleCost)}</strong><small>${signedPct(decision.gain)} on deployed coins</small></div><div><span>Your completion target</span><strong>+${accumulationPlan.targetPct}%</strong><small>${coinAmount(target)} ${tr.assetA} total, including idle coins</small></div><div><span>Return rate needed</span><strong>${coinAmount(required)}</strong><small>${tr.assetA} per ${curAsset}, before exit costs</small></div></div>
+    <p>${net===null?'Fresh prices are unavailable. Profit signals are paused.':decision.target?'Your net target is available at reference prices. Verify the actual swap quote before recording your return.':decision.profitable?'A smaller net gain is available. You can finish the cycle now, or keep your target; a ratio peak is not required.':'The estimated return is below your contributed starting coins. No profitable completion signal yet.'}</p>
+    ${held>accumulationPlan.horizon?'<p class="review-note">This cycle is past your '+accumulationPlan.horizon+'-day preference. Review both coins and the original reason for entry. More waiting or adding capital does not guarantee recovery.</p>':''}
+    ${recover!==null&&recover>0&&recover<holding.amount?`<details><summary>Recover principal and keep a surplus</summary><p>At reference prices, returning approximately ${coinAmount(recover)} ${curAsset} would recover your contributed ${tr.assetA}, leaving about ${coinAmount(holding.amount-recover)} ${curAsset}. Record the actual partial swap; the remaining holding stays open and can still lose value.</p></details>`:''}
+    <small class="muted">Actual received amounts include past fees. Only unswapped holdings incur estimated future costs. Extra deposits are capital, not profit. No completion date is guaranteed.</small></section>`;
+}
+async function buildTrackerSignal(tr,curAsset,signalId) {
+  const el=document.getElementById(signalId);if(!el)return;
+  const holdingBase=curAsset===tr.assetA;
+  el.innerHTML='<div class="position-panel" role="status">Checking your position…</div>';
+  const res=await getScoreForPair(curAsset,holdingBase?tr.assetB:tr.assetA);
+  if(!el.isConnected)return;
+  if(holdingBase){
+    el.innerHTML=`<section class="position-panel"><h3>${res?.qss?.isGo?'Candidate for your next cycle':'Waiting for a cost-covered opportunity'}</h3><p>${tr.assetA} → ${tr.assetB} → ${tr.assetA}. ${opportunitySummary(res?.qss)}</p><p>${res?.qss?.reasons?.join('. ')||'Check the historical cycle results and actual quote before entry.'}</p><button class="btn" onclick="switchAnalyzerPair('${tr.assetA}','${tr.assetB}')">Review this pair</button></section>`;
+    return;
+  }
+  const decision=exitDecision(tr,res);
+  const title=decision.ready?'Profitable return available':decision.profitable?'A smaller gain is available':'No profitable return yet';
+  const banner=`<div class="return-banner ${decision.profitable?'positive':''}"><strong>${title}</strong><span>${signedPct(decision.gain)} on this cycle’s deployed ${tr.assetA}, after estimated costs</span>${decision.spike?'<small>The held coin rose sharply relative to your base. This alone does not predict a reversal.</small>':''}</div>`;
+  el.innerHTML=banner+await buildLiveMonitor(tr,curAsset);
+}
+
+function validateSwapHistory(tr) {
+  if(!Number.isFinite(tr.startAmount)||tr.startAmount<=0||tr.assetA===tr.assetB) return 'Invalid starting amount or pair.';
+  const balances={[tr.assetA]:tr.startAmount};
+  let previous='';
+  for(const sw of tr.swaps||[]) {
+    if(![tr.assetA,tr.assetB].includes(sw.fromAsset)||![tr.assetA,tr.assetB].includes(sw.toAsset)||sw.fromAsset===sw.toAsset) return 'Every swap must use this tracker’s two coins.';
+    if(!Number.isFinite(sw.fromAmt)||!Number.isFinite(sw.toAmt)||sw.fromAmt<=0||sw.toAmt<=0) return 'Swap amounts must be finite positive numbers.';
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(sw.date)||!Number.isFinite(new Date(sw.date).getTime())||sw.date<previous) return 'Swap dates must be valid and chronological.';
+    previous=sw.date;
+    const available=balances[sw.fromAsset]||0;
+    if(sw.fromAsset!==tr.assetA&&sw.fromAmt>available+Math.max(1e-8,available*1e-8)) return 'This return spends more coins than the recorded position holds. Check earlier swaps.';
+    balances[sw.fromAsset]=Math.max(0,available-sw.fromAmt);balances[sw.toAsset]=(balances[sw.toAsset]||0)+sw.toAmt;
+  }
+  return null;
+}
+function condLabel(condition) {return {go:'A cost-covered cycle candidate',gte75:'Score ≥ 75 (watchlist)',gte60:'Score ≥ 60 (watchlist)',lte25:'Score ≤ 25',lte40:'Score ≤ 40'}[condition]||'Unknown condition';}
+function condMet(condition,score,result) {
+  if(condition==='go')return result?.qss?.isGo===true;
+  const match=/^(gte|lte)(\d+)$/.exec(condition);return !!match&&(match[1]==='gte'?score>=Number(match[2]):score<=Number(match[2]));
+}
+function sendBrowserNotif(title,body) {
+  if(typeof Notification!=='undefined'&&Notification.permission==='granted') {try{new Notification(title,{body});}catch{}}
+}
+function showToast(icon,title,body,tone,duration=5000) {
+  const toast=document.createElement('div');toast.className='profit-toast';toast.setAttribute('role','status');
+  toast.textContent=title+' — '+body;toast.style.cssText='position:fixed;bottom:22px;right:22px;max-width:360px;padding:16px;background:#21354a;color:#eef3f8;border:1px solid #8cc6f3;border-radius:12px;z-index:100';document.body.appendChild(toast);setTimeout(()=>toast.remove(),duration);
+}
+function startAccumulationPolling() {
+  let busy=false;
+  const poll=async()=>{
+    if(busy||document.hidden)return;busy=true;
+    try{
+      const pairs=[...new Set([...loadAlerts().map(a=>a.from+'_'+a.to),...loadPaperJournal().filter(r=>!r.closedAt).map(r=>r.from+'_'+r.to)])];
+      for(const key of pairs){const [a,b]=key.split('_');const result=await getScoreForPair(a,b);if(result)await checkAlerts(key,result.score);}
+      if(activeTrackerId){const tr=loadTrackers().find(t=>t.id===activeTrackerId);if(tr){await fetchTrackerPrices(tr);renderDetailStats({...tr,_liveLoaded:true});}}
+    }finally{busy=false;}
+  };
+  setInterval(poll,5*60*1000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll();});
+}
+
+function loadPaperJournal(){try{const rows=JSON.parse(localStorage.getItem('profitSwapPaper')||'[]');return Array.isArray(rows)?rows:[];}catch{return[];}}
+function observePaperSignal(a,b,ratio,result){
+  if(!(ratio>0&&Number.isFinite(ratio)))return;
+  const rows=loadPaperJournal(),now=Date.now();
+  const open=rows.find(r=>r.from===a&&r.to===b&&!r.closedAt);
+  if(open){
+    open.lastAt=now;open.lastGain=roundTripGain(open.entry,ratio,open.plan);
+    if(open.lastGain>=open.plan.targetPct){open.closedAt=now;open.closedGain=open.lastGain;}
+  }else if(result.qss?.isGo&&!rows.some(r=>r.from===a&&r.to===b&&now-r.startedAt<DAY_MS)){
+    // Record only observed opportunities, never reconstruct an entry after seeing its outcome.
+    rows.push({from:a,to:b,entry:ratio,startedAt:now,lastAt:now,lastGain:roundTripGain(ratio,ratio),plan:{...accumulationPlan},version:ENGINE_VERSION});
+  }
+  // Preserve open observations; bound completed history for local storage.
+  const kept=[...rows.filter(r=>!r.closedAt),...rows.filter(r=>r.closedAt).slice(-200)].slice(-400);
+  try{localStorage.setItem('profitSwapPaper',JSON.stringify(kept));}catch{}
+  renderPaperJournal();
+}
+function renderPaperJournal(){
+  const el=document.getElementById('paperJournal');if(!el)return;
+  const rows=loadPaperJournal().sort((a,b)=>b.startedAt-a.startedAt);
+  if(!rows.length){el.textContent='Qualifying opportunities will be recorded here as you analyze or scan. Paper only: no coins are traded.';return;}
+  el.innerHTML='<p>'+rows.filter(r=>r.closedAt).length+' completed paper cycles · '+rows.filter(r=>!r.closedAt).length+' still open. Values use only prices observed while this app is running.</p><div class="paper-list">'+rows.slice(0,12).map(r=>'<div><strong>'+escapeHtml(r.from+' → '+r.to+' → '+r.from)+'</strong><span>'+signedPct(r.closedGain??r.lastGain)+'</span><small>'+(r.closedAt?'Completed':'Open')+' · '+Math.floor(((r.closedAt||Date.now())-r.startedAt)/DAY_MS)+'d · '+escapeHtml(new Date(r.lastAt).toLocaleString())+'</small></div>').join('')+'</div><small class="muted">Each observation keeps its original cost settings. Missing observations can miss an exit. Paper results are not actual fills or realized holdings. Showing the latest 12.</small>';
+}
+async function refreshPaperJournal(){
+  const btn=document.getElementById('paperRefresh');btn.disabled=true;
+  try{const pairs=loadPaperJournal().filter(r=>!r.closedAt);for(const r of pairs){delete _scoreCache[r.from+'_'+r.to];await getScoreForPair(r.from,r.to);}renderPaperJournal();}finally{btn.disabled=false;}
+}
+
+function setupSwapDirection(tr) {
+  const wrap=document.getElementById('swapDirection');if(!wrap)return;
+  const holding=currentHolding(tr);
+  if(holding.asset===tr.assetA){wrap.innerHTML='<p class="muted">Enter what you actually sent and received. You can use part of your balance; the rest remains in your starting coin.</p>';return;}
+  wrap.innerHTML='<button class="btn" type="button" data-direction="return">Return some or all to '+tr.assetA+'</button> <button class="btn" type="button" data-direction="add">Add '+tr.assetA+' to this position</button><p class="muted">Partial returns preserve the remaining holding. Base coins added beyond your available balance are recorded as new contributed capital, not profit.</p>';
+  wrap.querySelectorAll('button').forEach(button=>button.onclick=async()=>{
+    const adding=button.dataset.direction==='add',from=adding?tr.assetA:tr.assetB,to=adding?tr.assetB:tr.assetA;
+    populateAssetSelect('sf-from-asset',[from],from);populateAssetSelect('sf-to-asset',[to],to);
+    document.getElementById('sf-from-amt').value=adding?(trackerLedger(tr).balances[tr.assetA]||''):holding.amount;
+    document.getElementById('sf-to-amt').value='';document.getElementById('sf-score').value='';document.getElementById('sf-entry-z').value='';
+    const result=await getScoreForPair(from,to);
+    if(document.getElementById('sf-from-asset').value!==from)return;
+    if(result){document.getElementById('sf-score').value=result.score;document.getElementById('sf-entry-z').value=result.qss.z30.toFixed(4);}
+  });
+}
+
 /* ═══════════════════════
    STATE
 ═══════════════════════ */
@@ -1103,7 +1526,7 @@ const COINS=[
 function loadPrefs(){try{return JSON.parse(localStorage.getItem('swapPrefs')||'{}');}catch(e){return{};}}
 function savePrefs(){try{localStorage.setItem('swapPrefs',JSON.stringify({fromSym,toSym,activeTF,chartType,activeTab:_activeTab,activeTrackerId}));}catch(e){}}
 const _p=loadPrefs();
-let fromSym=_p.fromSym||'BTC',toSym=_p.toSym||'ETH',activeTF=_p.activeTF||90,chartType=_p.chartType||'candle';
+let fromSym=_p.fromSym||'BTC',toSym=_p.toSym||'ETH',activeTF=_p.activeTF||90,chartType=_p.chartType||'line';
 let _activeTab=_p.activeTab||'analyzer';
 let activeTrackerId=_p.activeTrackerId||null;
 let priceCache={},lastFetch=0,liveTimer=null,scoreTimer=null;
@@ -1115,24 +1538,9 @@ const BINANCE='https://api.binance.com/api/v3';
 /* ═══════════════════════
    API
 ═══════════════════════ */
-async function fetchPrice(sym){
-  const r=await fetch(`${BINANCE}/ticker/price?symbol=${sym}USDT`);
-  if(!r.ok)throw new Error(`${sym} (${r.status})`);
-  return parseFloat((await r.json()).price);
-}
-async function fetchKlines(sym,limit){
-  const r=await fetch(`${BINANCE}/klines?symbol=${sym}USDT&interval=1d&limit=${limit}`);
-  if(!r.ok)throw new Error(`klines ${sym} (${r.status})`);
-  return (await r.json()).map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5],live:k[11]===0}));
-}
-function buildRatio(fk,tk){
-  const n=Math.min(fk.length,tk.length);
-  return Array.from({length:n},(_,i)=>{
-    const fi=fk[fk.length-n+i],ti=tk[tk.length-n+i];
-    // Use FROM coin volume as proxy — high FROM volume on a ratio move = real news event
-    return{t:fi.t,o:fi.o/ti.o,h:fi.h/ti.h,l:fi.l/ti.l,c:fi.c/ti.c,v:fi.v||0,live:fi.live};
-  });
-}
+
+
+
 
 /* ═══════════════════════
    MATH
@@ -1174,11 +1582,11 @@ function getStats(series){
   // MACD histogram slope — did momentum accelerate or decelerate?
   const macdSlope=md.h.length>=3?(md.h[n-1]-md.h[n-3]):0;
 
-  const rArr=rsiCalc(closes),rVal=rArr[n-1]||50;
+  const rArr=rsiCalc(closes),rVal=rArr[n-1]??50;
   // RSI slope — is RSI rising or falling?
   const rsiSlope=rArr.length>=4?(rArr[n-1]-rArr[n-4]):0;
 
-  const sr=stochRsiCalc(closes)[n-1]||50;
+  const sr=stochRsiCalc(closes)[n-1]??50;
   const bl=bollCalc(closes),bc=bl[n-1];
   const bollPos=bc?((cur-bc.dn)/(bc.up-bc.dn))*100:50;
   // Bollinger bandwidth — how wide/tight are the bands?
@@ -1238,7 +1646,7 @@ function getStats(series){
   // which overstates real profit by ~2 points since the exit fee is still to come on every
   // open position. Floored at 0 so a move too small to clear fees reads as "nothing yet."
   // e.g. ratio currently 0.28, mean 0.20 → sell FROM now and get ~40% more back later, before fees
-  const expectedRevertGain=mean90>0?Math.max(0,((cur/mean90)-1)*100 - (1-(1-SWAP_FEE_RATE)*(1-SWAP_FEE_RATE))*100):0;
+  const expectedRevertGain=mean90>0?Math.max(0,roundTripGain(cur,mean90)):0;
 
   return{cur,trend1,trend3,trend7,trend14,volSpike,
     zScore,mean90,std90,range90Hi,range90Lo,swingPct,expectedRevertGain,
@@ -1714,7 +2122,7 @@ function renderMain(series){
   const tfBtns=['30','90','180','365'].map(t=>
     `<button class="tc-btn${activeTF===+t?' act':''}" data-tf="${t}">${t==='30'?'1M':t==='90'?'3M':t==='180'?'6M':'1Y'}</button>`
   ).join('');
-  const ctBtns=`<button class="tc-btn${chartType==='candle'?' act':''}" data-ct="candle">Candle</button>`+
+  const ctBtns=`<button class="tc-btn${chartType==='candle'?' act':''}" data-ct="candle">Open / close</button>`+
                `<button class="tc-btn${chartType==='line'?' act':''}" data-ct="line">Line</button>`;
   const sep='<div class="tc-sep"></div>';
 
@@ -1731,7 +2139,7 @@ function renderMain(series){
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span class="sp-badge">Score /100</span>
+          <span class="sp-badge">Setup strength · not probability</span>
           <button class="reanalyze-btn" id="reBtn">&#8635; Re-analyze</button>
         </div>
       </div>
@@ -1746,7 +2154,7 @@ function renderMain(series){
         <span style="color:#ef4444">0</span>
         <span>25 · hold</span>
         <span>45 · caution</span>
-        <span>60 · scalp zone</span>
+        <span>55+ · check costs &amp; recovery</span>
         <span style="color:#00c076">100</span>
       </div>
 
@@ -1765,15 +2173,16 @@ function renderMain(series){
       </div>
     </div>
 
-    <div class="metrics" id="metricsRow"></div>
+    <details class="technical-details"><summary>Explore the ratio and technical indicators</summary><p class="muted">Synthetic daily ratio: the line uses matched closes; open/close bars do not represent intraday highs and lows. The current day is provisional. These charts are context, not separate trade signals.</p><div class="metrics" id="metricsRow"></div>
 
     ${chartHTML('mainChart',320,`Ratio ${fromSym}/${toSym} · 1D`,ctBtns+sep+tfBtns+sep)}
     <div class="inds" id="indsRow"></div>
     ${chartHTML('rsiChart',130,'RSI (14) &amp; Stoch RSI','')}
-    ${chartHTML('macdChart',130,'MACD (12/26/9)','')}
+    ${chartHTML('macdChart',130,'MACD (12/26/9)','')}</details>
   `;
 
   renderMetrics(s);renderInds(s);
+  mc.querySelector('.technical-details').addEventListener('toggle',()=>{Object.values(CI).forEach(chart=>chart.resize());});
 
   setTimeout(()=>{
     const closes=series.map(r=>r.c);
@@ -1942,7 +2351,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='v17'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='accumulation1'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -1964,123 +2373,16 @@ function _syncScoreCache(a, b, score, qss){
   }
 }
 
-async function runAIScore(s, forceRefresh){
-  const panel=document.getElementById('scorePanel');if(!panel)return;
-
-  /* Use cache if fresh and not forced */
-  if(!forceRefresh){
-    const cached=_loadScore();
-    if(cached){
-      if(!currentStats&&s) currentStats=s;
-      renderScore(cached);
-      const btn=panel.querySelector('.reanalyze-btn');
-      if(btn)btn.disabled=false;
-      return;
-    }
-  }
-
-  panel.className='sp-box loading';
-  panel.querySelector('.sp-num').textContent='--';
-  panel.querySelector('.sp-verdict').textContent='Analyzing...';
-  panel.querySelector('.sp-sub').textContent='Fetching live market data...';
-  panel.querySelector('.sp-fill').style.width='0%';
-  panel.querySelector('.sp-needle').style.left='0%';
-  panel.querySelector('.sp-explain-body').textContent='Calculating...';
-  panel.querySelector('.sp-situation').textContent='';
-  panel.querySelector('.sp-pred').style.display='none';
-  const btn=panel.querySelector('.reanalyze-btn');if(btn)btn.disabled=true;
-
-  /* Fetch fresh klines — 90d for correlation, standard for score */
-  let freshS=s||currentStats;
-  let fromKlines90=[], toKlines90=[];
-  try{
-    const[fk,tk,fk90,tk90,fp2,tp2]=await Promise.all([
-      fetchKlines(fromSym,activeTF+2),
-      fetchKlines(toSym,activeTF+2),
-      fetch(`https://api.binance.com/api/v3/klines?symbol=${fromSym}USDT&interval=1d&limit=91`).then(r=>r.json()).catch(()=>[]),
-      fetch(`https://api.binance.com/api/v3/klines?symbol=${toSym}USDT&interval=1d&limit=91`).then(r=>r.json()).catch(()=>[]),
-      fetchPrice(fromSym),
-      fetchPrice(toSym)
-    ]);
-    priceCache[fromSym]=fp2; priceCache[toSym]=tp2;
-    fromKlines90=fk90; toKlines90=tk90;
-    const freshSeries=buildRatio(fk,tk);
-    const computed=getStats(freshSeries);
-    if(computed){ freshS=computed; currentStats=computed; }
-  }catch(e){ console.warn('klines fetch error',e); }
-
-  if(!freshS){ if(btn)btn.disabled=false; return; }
-
-  /* ── Compute risk metrics ── */
-  /* 90-day correlation */
-  let corr90=0;
-  try{
-    if(fromKlines90.length>=10&&toKlines90.length>=10){
-      const fc=fromKlines90.map(k=>+k[4]);
-      const tc=toKlines90.map(k=>+k[4]);
-      corr90=calcCorrelation(fc,tc);
-    }
-  }catch(e){}
-
-  // Convert raw Binance klines [t,o,h,l,c,...] to {t,o,h,l,c} objects for buildRatio,
-  // used below as the closes series QSS computes on.
-  const toObj=k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],live:false});
-  const fk90obj=fromKlines90.length?fromKlines90.map(toObj):[];
-  const tk90obj=toKlines90.length?toKlines90.map(toObj):[];
-  const ratioSeriesForQSS=fk90obj.length>5&&tk90obj.length>5?buildRatio(fk90obj,tk90obj):[];
-
-  const buildPlainExplanation=(score,s)=>{
-    const t=s.trend7;
-    const tTxt=t>2
-      ?`The ${fromSym}/${toSym} ratio rose ${t.toFixed(1)}% this week — ${fromSym} is gaining vs ${toSym}.`
-      :t<-2
-        ?`The ${fromSym}/${toSym} ratio dropped ${Math.abs(t).toFixed(1)}% this week — ${fromSym} is weakening vs ${toSym}.`
-        :`The ${fromSym}/${toSym} rate has been stable this week.`;
-    const mTxt=s.macdHist>0?'Momentum is positive.':'Momentum is negative.';
-    const rTxt=s.rsi<40?` RSI is oversold (${s.rsi.toFixed(0)}) — a bounce may be coming.`
-      :s.rsi>60?` RSI is high (${s.rsi.toFixed(0)}) — may slow soon.`:'';
-    const corrTxt=corr90<0.60
-      ?' ⚠️ Low correlation — consider picking a more correlated pair.'
-      :corr90<0.75?' ⚠️ Moderate correlation — higher risk of decoupling.'
-      :'';
-    const rkTxt=rankWarning?' '+rankWarning:'';
-    return tTxt+' '+mTxt+rTxt+corrTxt+rkTxt;
-  };
-
-  // Weak coin warning for explanation text
-  const rankWarning=_weakCoins.has(toSym)?`⚠️ ${toSym} is one of the 4 weakest coins this week — consider a stronger target.`:'';
-
-  const z=freshS.zScore||0;
-  const expGain=freshS.expectedRevertGain||0;
-  const swingPct=freshS.swingPct||0;
-  // Divergence warning: ratio extreme for too long without reverting
-  const divergenceWarn=Math.abs(z)>2&&freshS.streak&&Math.abs(freshS.streak)>=7&&Math.sign(freshS.streak)===Math.sign(z);
-
-  /* ── QSS — the one score in the app, computed synchronously (no async pipeline) ── */
-  const ratioClosesForQSS = ratioSeriesForQSS.length > 15 ? ratioSeriesForQSS.map(r=>r.c) : (_currentRatioS||[]).map(r=>r.c);
-  const q = computeQSS(ratioClosesForQSS, corr90);
-  const score = q ? q.qss : 0;
-
-  const verdictWord = q&&q.isGo ? 'SCALP NOW' : score>=45 ? 'WATCH' : 'HOLD';
-  const mathResult={
-    score,
-    qss:q,
-    corr:corr90,
-    simple_verdict: !q ? 'Not enough data yet for this pair.'
-      : q.isGo ? `${fromSym} is overextended vs ${toSym} — ${verdictWord}.`
-      : z30Msg(q),
-    plain_explanation: buildPlainExplanation(score, freshS),
-    market_situation:`${fromSym}/${toSym} ratio: ${freshS.cur>=1?freshS.cur.toFixed(4):freshS.cur.toFixed(7)} · Z-score ${z>=0?'+':''}${z.toFixed(2)} · ${freshS.trend7>=0?'▲ +':'▼ '}${freshS.trend7.toFixed(2)}% this week`,
-    prediction: '',
-    _stats:{cur:freshS.cur,trend7:freshS.trend7,trend1:freshS.trend1||0,zScore:z,expectedRevertGain:expGain,swingPct,mean90:freshS.mean90||0},
-    _divergenceWarn:divergenceWarn
-  };
-
-  renderScore(mathResult);
-  _syncScoreCache(fromSym, toSym, score, q);
-  _saveScore(mathResult);
-
-  if(btn)btn.disabled=false;
+let analysisRun=0;
+async function runAIScore(s,forceRefresh){
+  const run=++analysisRun,a=fromSym,b=toSym,panel=document.getElementById('scorePanel');if(!panel)return;
+  if(forceRefresh)delete _scoreCache[a+'_'+b];
+  const result=await getScoreForPair(a,b);
+  if(run!==analysisRun||a!==fromSym||b!==toSym||!panel.isConnected)return;
+  if(!result){panel.className='sp-box orange';panel.querySelector('.sp-verdict').textContent='Data unavailable';panel.querySelector('.sp-num').textContent='—';panel.querySelector('.sp-sub').textContent='No signal. Retry when fresh matched market data is available.';return;}
+  const q=result.qss;
+  renderScore({...result,simple_verdict:q.isGo?'Candidate for a '+accumulationPlan.horizon+'-day cycle; verify the quote.':q.reasons[0],plain_explanation:'Sell the relatively extended starting coin, then return when the held coin buys enough starting coins after costs. '+opportunitySummary(q),market_situation:'Recovery history uses completed daily candles. Current extension uses a live reference ratio and can change intraday. Historical tests use daily observations only.',_stats:s||currentStats,prediction:''});
+  const button=panel.querySelector('.reanalyze-btn');if(button)button.disabled=false;
 }
 
 function z30Msg(q){
@@ -2095,7 +2397,7 @@ function renderScore(j){
   const sc=Math.min(100,Math.max(0,j.score));
   const q=j.qss||null;
   // A trustworthy "go" needs the score AND a real Z-depth anomaly AND genuine oscillation history
-  const isG=q?q.isGo:sc>=60, isR=!isG&&sc<45, cls=isG?'green':isR?'red':'orange';
+  const isG=q?.isGo===true, isR=!isG&&sc<45, cls=isG?'green':isR?'red':'orange';
   p.className=`sp-box ${cls}`;
   p.querySelector('.sp-num').textContent=sc;
 
@@ -2111,10 +2413,8 @@ function renderScore(j){
   // Note: isGo is now a single clean qss>=60 condition (no external AND-gates), so this can no
   // longer "downgrade" a passing score. Instead it surfaces context on plausible-looking trades
   // (sc>=45) whose depth or reversion history is weaker than ideal — informational, not a veto.
-  if (q && sc>=45) {
-    const reasons=[];
-    if(q.z30 < 1.0) reasons.push(`Z only ${q.z30.toFixed(2)}σ — a shallower stretch than ideal`);
-    if(!q.oscillationOk && q.oscillationNote) reasons.push(q.oscillationNote);
+  if (q && !q.isGo) {
+    const reasons=[...(q.reasons||[])].slice(0,2);
     if (reasons.length) {
       trsTagInit.style.display='block';
       trsTagInit.innerHTML=`⚠️ ${reasons.join(' · ')}`;
@@ -2138,24 +2438,22 @@ function renderScore(j){
       if(explainEl) p.insertBefore(qssSec,explainEl); else p.appendChild(qssSec);
     }
     const bars=[
-      {lbl:'Z30',val:q.se_q,raw:q.z30.toFixed(2)+'σ'},
-      {lbl:'Boll',val:q.bp,raw:q.bollPos.toFixed(0)+'%'},
-      {lbl:'RSI',val:q.re,raw:q.rsi.toFixed(0)},
-      {lbl:'OU',val:q.qf,raw:q.ouFPct20.toFixed(1)+'%/d'},
-      {lbl:'Corr',val:q.corrQ,raw:(j.corr||0).toFixed(2)},
+      {lbl:'Stretch',val:q.depth,raw:q.z30.toFixed(2)+'σ'},
+      {lbl:'Recovery',val:q.reversionQ,raw:q.crossings+' crosses'},
+      {lbl:'Timing',val:q.holdDays?Math.max(0,100-q.holdDays*2):0,raw:q.holdDays?'~'+q.holdDays+'d':'Unknown'},
     ].map(b=>`<div style="display:flex;align-items:center;gap:6px;font-size:10px">
-        <span style="width:28px;color:var(--text3);font-family:monospace">${b.lbl}</span>
+        <span style="width:65px;color:var(--text3);font-family:inherit">${b.lbl}</span>
         <div style="flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden"><div style="height:100%;width:${b.val}%;background:${b.val>=60?'#00c076':b.val>=30?'#f5a623':'#ef4444'}"></div></div>
         <span style="width:44px;text-align:right;color:var(--text3);font-family:monospace">${b.raw}</span>
       </div>`).join('');
-    qssSec.innerHTML=`<div style="font-size:9px;font-family:monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">QSS breakdown · exp. gain +${q.expGain.toFixed(1)}% · ~${q.holdDays}d hold</div>${bars}`;
+    qssSec.innerHTML=`<div style="font-size:9px;font-family:monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">${opportunitySummary(q)}</div>${bars}`;
   } else if(qssSec){
     qssSec.remove();
   }
 
   /* Verdict */
   const verdictEmoji=isG?'✅':isR?'❌':'⏳';
-  p.querySelector('.sp-verdict').textContent=`${verdictEmoji} ${isG?'SWAP NOW':isR?'DO NOT SWAP':'WATCH'}`;
+  p.querySelector('.sp-verdict').textContent=`${verdictEmoji} ${isG?'CYCLE CANDIDATE':isR?'WAIT FOR A SETUP':'WATCHLIST'}`;
   p.querySelector('.sp-sub').textContent=j.simple_verdict||(isG?`Good time to swap ${fromSym} for ${toSym}`:isR?'Hold — wait for better conditions':'Not clear yet — keep monitoring');
 
   /* Score bar */
@@ -2178,83 +2476,6 @@ function renderScore(j){
 
   /* Explanation */
   p.querySelector('.sp-explain-body').textContent=j.plain_explanation||'';
-
-  /* ── Z-score + expected profit panel ── */
-  const st2b=currentStats||j._stats||null;
-  let zPanelEl=p.querySelector('.sp-zscore-panel');
-  if(!zPanelEl){
-    zPanelEl=document.createElement('div');
-    zPanelEl.className='sp-zscore-panel';
-    zPanelEl.style.cssText='margin-top:10px;display:flex;flex-direction:column;gap:6px;';
-    const explainEl=p.querySelector('.sp-explain-body');
-    if(explainEl&&explainEl.parentNode) explainEl.parentNode.insertBefore(zPanelEl,explainEl.nextSibling);
-  }
-  if(st2b&&(st2b.zScore!==undefined||j._stats?.zScore!==undefined)){
-    const z2=st2b.zScore??j._stats?.zScore??0;
-    const eg=st2b.expectedRevertGain??j._stats?.expectedRevertGain??0;
-    const sw=st2b.swingPct??j._stats?.swingPct??0;
-    const mn=st2b.mean90??j._stats?.mean90??0;
-    const divWarn=j._divergenceWarn;
-
-    const zCol2=z2>2?'#00c076':z2>1?'#f5a623':z2<-2?'#ef4444':z2<-1?'#f5a623':'var(--text3)';
-    const zBar=Math.min(100,Math.max(0,(z2+3)/6*100)); // map -3..+3 to 0..100%
-    const zLabel=(z2>2.5?'Extreme deviation — very high reversion probability':
-      z2>2?'Overbought — high reversion probability':
-      z2>1.5?'Above mean — good exit zone':
-      z2>1?'Slightly above mean':
-      z2>-1?'Neutral zone — near mean':
-      z2>-1.5?'Slightly below mean':
-      z2>-2?'Below mean — poor exit':
-      z2>-2.5?'Oversold — avoid selling':'Extremely oversold');
-
-    const egCol=eg>10?'#00c076':eg>3?'#f5a623':eg<-3?'#ef4444':'var(--text3)';
-    const egStr=eg>=0?'+'+eg.toFixed(1)+'%':eg.toFixed(1)+'%';
-
-    // Neutral zone warning
-    const neutralMsg=Math.abs(z2)<1?`<div style="background:rgba(59,143,255,0.08);border:1px solid rgba(59,143,255,0.25);border-radius:6px;padding:7px 10px;font-size:11px;color:var(--blue)">
-      ℹ️ <strong>Neutral zone</strong> — ratio near 90-day mean. Wait for Z&gt;1.5 before acting.
-    </div>`:'';
-
-    // Divergence warning
-    const divMsg=divWarn?`<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:7px 10px;font-size:11px;color:#ef4444">
-      ⚠️ <strong>Divergence warning</strong> — Z${z2>=0?'>':'<'}${z2>=0?'+2':'-2'} for 7+ days. May be a structural shift, not a spike. Reduce size.
-    </div>`:'';
-
-    zPanelEl.innerHTML=`
-      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <span style="font-size:10px;font-family:monospace;color:var(--text3);font-weight:700;letter-spacing:.05em">Z-SCORE <span style="opacity:.6">90d</span></span>
-          <span style="font-family:monospace;font-size:15px;font-weight:700;color:${zCol2}">${z2>=0?'+':''}${z2.toFixed(2)}</span>
-        </div>
-        <div style="height:6px;background:var(--border2);border-radius:3px;margin-bottom:5px;position:relative;">
-          <div style="position:absolute;left:50%;top:-2px;width:2px;height:10px;background:var(--text3);opacity:.3;"></div>
-          <div style="height:6px;border-radius:3px;width:${zBar}%;background:linear-gradient(90deg,#ef4444,#f5a623 40%,#00c076);"></div>
-          <div style="position:absolute;top:-3px;left:calc(${zBar}% - 5px);width:10px;height:10px;border-radius:50%;background:${zCol2};border:2px solid var(--bg);"></div>
-        </div>
-        <div style="font-size:10px;color:${zCol2};margin-bottom:8px;">${zLabel}</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:110px;">
-            <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:2px;">AT REVERSION</div>
-            <div style="font-size:16px;font-weight:700;color:${egCol};font-family:monospace;">${egStr}</div>
-            <div style="font-size:9px;color:var(--text3)">expected gain</div>
-          </div>
-          <div style="flex:1;min-width:110px;">
-            <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:2px;">SWING RANGE</div>
-            <div style="font-size:14px;font-weight:700;color:var(--text);font-family:monospace;">${sw.toFixed(1)}%</div>
-            <div style="font-size:9px;color:var(--text3)">90d oscillation</div>
-          </div>
-          <div style="flex:1;min-width:110px;">
-            <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:2px;">MEAN TARGET</div>
-            <div style="font-size:14px;font-weight:700;color:var(--text);font-family:monospace;">${mn>=1?mn.toFixed(4):mn.toFixed(7)}</div>
-            <div style="font-size:9px;color:var(--text3)">reversion level</div>
-          </div>
-        </div>
-      </div>
-      ${neutralMsg}${divMsg}
-    `;
-  } else {
-    zPanelEl.innerHTML='';
-  }
 
   /* Market situation */
   const sit=p.querySelector('.sp-situation');
@@ -2457,24 +2678,16 @@ function startLive(series){
 /* ═══════════════════════
    LOAD
 ═══════════════════════ */
+let marketViewRun=0;
 async function loadAndRender(){
-  if(liveTimer){clearInterval(liveTimer);liveTimer=null;}
-  if(scoreTimer){clearInterval(scoreTimer);scoreTimer=null;}
-  _clearScore(); // clear stale cache whenever pair/timeframe changes
-  Object.values(CI).forEach(ch=>{try{ch.destroy();}catch(e){}});
-  Object.keys(CI).forEach(k=>delete CI[k]);
-  const mc=document.getElementById('mainContent');
-  mc.innerHTML='<div class="loading"><div class="sp-anim"></div>Fetching live Binance data...</div>';
-  try{
-    const[fk,tk,fp,tp]=await Promise.all([fetchKlines(fromSym,activeTF+2),fetchKlines(toSym,activeTF+2),fetchPrice(fromSym),fetchPrice(toSym)]);
-    priceCache[fromSym]=fp;priceCache[toSym]=tp;
-    const series=buildRatio(fk,tk);
-    renderPairBar(series[series.length-1]?.c);
-    renderMain(series);
-    lastFetch=Date.now();
-  }catch(e){
-    document.getElementById('mainContent').innerHTML=`<div class="err"><strong>Failed:</strong> ${e.message}<br><br>Binance public API — no key needed.</div>`;
-  }
+  const run=++marketViewRun,a=fromSym,b=toSym,tf=activeTF;
+  if(liveTimer){clearInterval(liveTimer);liveTimer=null;}if(scoreTimer){clearInterval(scoreTimer);scoreTimer=null;}
+  Object.values(CI).forEach(c=>{try{c.destroy();}catch{}});Object.keys(CI).forEach(k=>delete CI[k]);
+  document.getElementById('mainContent').innerHTML='<div class="loading" role="status">Loading '+a+' / '+b+'…</div>';
+  try{const [fk,tk,fp,tp]=await Promise.all([fetchKlines(a,tf+2),fetchKlines(b,tf+2),fetchPrice(a),fetchPrice(b)]);
+    if(run!==marketViewRun)return;priceCache[a]=fp;priceCache[b]=tp;
+    const series=buildRatio(fk,tk);renderPairBar(fp/tp);renderMain(series);lastFetch=Date.now();
+  }catch(e){if(run===marketViewRun)document.getElementById('mainContent').innerHTML='<div class="err">'+escapeHtml(e.message)+' Use Refresh to retry. No signal is available.</div>';}
 }
 
 document.getElementById('flipBtn').onclick=()=>{const t=fromSym;fromSym=toSym;toSym=t;savePrefs();buildGrids();loadAndRender();};
@@ -2485,6 +2698,7 @@ document.getElementById('refreshBtn').onclick=()=>{
 };
 window.addEventListener('resize',()=>Object.values(CI).forEach(ch=>{try{ch.resize();}catch(e){}}));
 
+initAccumulationUI();
 buildGrids();
 initSearchFilters();
 initBestSwapNow();
@@ -2539,215 +2753,7 @@ function initTabs(){
    Completely separate from main OMEGA system.
 ══════════════════════════════════════════════════════════════ */
 
-function computeQSS(closes, corr) {
-  /* Quick Scalp Score (QSS) 0–100.
-     v3 restructure (this pass) — evidence-driven, not theoretical. After the depthCum fix,
-     live Binance data was pulled and run through this exact function for the real current
-     13-coin pool to find out precisely why SOL/XRP still weren't clearing isGo even though
-     they were confirmed overvalued vs the market:
-       - Across all 156 real pairs, only 9 ever hit TRAJECTORY's full 1.00× multiplier (the
-         narrow "moving up but just started slowing" instant, checked off the last 3 closes
-         only) — 24 pairs, SOL's and XRP's best candidates included, were "still accelerating"
-         and got cut to 0.60×. A pair with a genuinely strong DEPTH+REVERSION blend (e.g. real
-         SOL→BTC data: inner≈68, comfortably isGo-grade) was getting crushed to qss≈41 purely
-         because of which exact day it was checked — not because the setup was weak. Every
-         OTHER pillar in this function was already redesigned to nudge proportionally instead
-         of veto; TRAJECTORY was the one dimension still swinging hard enough (0.40–1.00) to
-         single-handedly decide isGo on its own.
-       - CONFIRM (RSI-14/Bollinger-20/OU-20) was reading near-zero (e.g. 4, 5, 19, 26) for
-         several of SOL's and XRP's real, genuinely-overextended pairs. It measures "hot RIGHT
-         NOW" over a short window — but a coin that made its big move earlier in the 30-day
-         window and has since been resting/consolidating (exactly the grinding shape DEPTH was
-         fixed to catch) reads as unremarkable on RSI/Bollinger even though it's still clearly
-         extended. Confirm was already flagged as informationally redundant with Depth when
-         this file's scoring was first rebuilt; live data now shows it actively fights the
-         cases this fix targets, so it's dropped from the score. It's still computed and
-         returned below so the UI's breakdown bars keep working — just no longer weighted in.
-     Verified against real live data before shipping (see the session record): the change
-     takes the market from "LINK monopolizes every isGo slot" to opportunities spread across
-     6+ different FROM coins (SOL included), while every wrong-direction pair (swapping FROM
-     a weak coin INTO a strong one) still scores depth=0 and stays nowhere near isGo — the
-     one rule that can never bend, since a reversed trade only loses him crypto. */
-  if (!closes || closes.length < 22) return null;
-  // Stress-tested against poisoned data (a bad exchange print showing $0, a momentary
-  // negative, or a dropped candle turning into NaN/Infinity somewhere upstream): reject
-  // outright rather than let garbage propagate into qss as NaN, which sorts/compares
-  // unpredictably and could hide a real opportunity behind a broken one.
-  if (!closes.every(v => Number.isFinite(v) && v > 0)) return null;
-  const n = closes.length;
 
-  /* ── DEPTH — is the ratio ACTUALLY stretched right now? Two independent ways to qualify,
-     not one:
-       (a) Z-SCORE — a sharp, recent move away from its own 30-day average. Catches spikes.
-       (b) CUMULATIVE 30D MOVE — the ratio's raw total change over the full 30-day window,
-           regardless of whether that happened suddenly or as a slow, steady grind.
-     Z-score alone is blind to (b): a ratio that's been quietly climbing all month can stay
-     close to its own rolling mean the whole time (the mean drifts along with the trend), so Z
-     stays low even while the pair has genuinely, meaningfully diverged. This is exactly why a
-     coin that's clearly overvalued on raw 30-day return (confirmed independently by the
-     Market Position Map) could still be invisible here — it was grinding, not spiking, and
-     grinding doesn't move Z. Taking the BETTER of the two (not requiring both) means either
-     kind of stretch qualifies a pair, instead of only the sudden-spike shape. */
-  const w30 = closes.slice(-30);
-  const mean30 = w30.reduce((a,b)=>a+b,0)/w30.length;
-  const std30  = Math.sqrt(w30.reduce((s,v)=>s+(v-mean30)**2,0)/w30.length) || 0.001;
-  const z30    = (closes[n-1] - mean30) / std30;
-
-  // Stress-tested against a thin/illiquid or exchange-outage pair: real market prices at
-  // typical float precision essentially never repeat exactly day-to-day, so a run of
-  // literal duplicate closes inside the window is a strong, near-zero-false-positive signal
-  // that some of those "days" never actually traded (stale/frozen data). Mixing frozen and
-  // real days in one window UNDERSTATES std30, so the moment real movement resumes it can
-  // look like a huge, confident Z-spike that's really just an artifact of thin data — not a
-  // genuine statistical anomaly. Cap depthZ's confidence proportionally to how much of the
-  // window was frozen, so a resurfacing dead pair can't masquerade as a strong signal.
-  let frozenDays = 0;
-  for (let i=1;i<w30.length;i++) if (w30[i] === w30[i-1]) frozenDays++;
-  const frozenFrac = frozenDays / (w30.length - 1);
-  const depthZ = Math.max(0, Math.min(100, Math.round((z30 - 0.5) / 1.3 * 100 * Math.max(0, 1 - frozenFrac*2))));
-
-  // Starts scoring at an 8% cumulative move, maxes at 35% — calibrated to the real gaps seen
-  // across this pool's actual coins (roughly 10-40 percentage points between the strongest
-  // and weakest performers at any given time), not an arbitrary round number.
-  const cum30    = (w30.length > 1 && w30[0] > 0) ? (closes[n-1]-w30[0])/w30[0]*100 : 0;
-  const depthCum = Math.max(0, Math.min(100, Math.round((cum30 - 8) / 27 * 100)));
-
-  const depth = Math.max(depthZ, depthCum);
-
-  /* ── CONFIRM — RSI-14 + Bollinger-20 + OU-force-20. Still computed (the UI's breakdown
-     bars display it as context), but no longer weighted into qss below — see the note at the
-     top of this function for why: it requires short-term momentum to be hot RIGHT NOW, which
-     structurally can't agree with a coin that already made its move and is now resting at an
-     extended level, exactly the shape this file's DEPTH pillar was fixed to catch. ── */
-  const w20    = closes.slice(-20);
-  const bMean  = w20.reduce((a,b)=>a+b,0)/20;
-  const bStd   = Math.sqrt(w20.reduce((s,v)=>s+(v-bMean)**2,0)/20) || 0.001;
-  const bUpper = bMean + 2*bStd;
-  const bLower = bMean - 2*bStd;
-  const bRange = bUpper - bLower;
-  const bollPos = bRange > 0 ? (closes[n-1]-bLower)/bRange*100 : 50;
-  const bp     = bollPos > 90 ? 100
-    : bollPos > 75 ? Math.round((bollPos-75)/15*70+30)
-    : bollPos > 60 ? Math.round((bollPos-60)/15*30)
-    : 0;
-
-  const rsiArr = rsiCalc(closes.slice(-40));
-  const rsi    = rsiArr.length ? rsiArr[rsiArr.length-1] : 50;
-  const re     = rsi > 78 ? 100
-    : rsi > 68 ? Math.round((rsi-68)/10*70+30)
-    : rsi > 58 ? Math.round((rsi-58)/10*30)
-    : 0;
-
-  const ouHL20  = ouHalfLifeET(closes.slice(-25));
-  const theta20 = ouHL20 <= 20 ? Math.log(2)/ouHL20 : 0;
-  const ouF20   = theta20 * (mean30 - closes[n-1]);
-  const ouFPct20 = std30 > 0 ? (ouF20/std30)*100 : 0;
-  const qf      = Math.max(0, Math.min(100, Math.round(-ouFPct20 * 2.2)));
-
-  const confirm = Math.round((bp + re + qf) / 3);
-
-  /* ── REVERSION-QUALITY — does this pair actually oscillate, or just trend? Was a hard
-     veto (oscillationOk) able to zero out an otherwise-good setup outright; now a continuous
-     score, so "somewhat oscillating" isn't treated the same as "purely trending," but still
-     pulls the total down proportionally. Correlation folds in here — reversion is only a
-     reasonable bet between two genuinely linked coins. ── */
-  let crossings45 = null, oscScore = 50, oscillationNote = '';
-  if (n >= 45) {
-    const w45 = closes.slice(-45);
-    const mean45 = w45.reduce((a,b)=>a+b,0)/45;
-    crossings45 = 0;
-    for (let i=1;i<w45.length;i++){
-      if ((w45[i-1]-mean45)*(w45[i]-mean45) < 0) crossings45++;
-    }
-    oscScore = Math.max(0, Math.min(100, crossings45 * 35)); // 0→0, 1→35, 2→70, 3+→100
-    if (crossings45 <= 1 && depth >= 85) {
-      // Stress-testing turned up a real blind spot here: a coin that permanently re-rates
-      // (hacked, depegged, delisted, or just genuinely re-priced by real news) produces the
-      // exact same shape as a great reversion setup — a big jump that hasn't meaningfully
-      // come back yet — and nothing in price data alone can tell the two apart. A monotonic
-      // move always crosses its own window mean once (that's just arithmetic, not a sign of
-      // reverting), so 0-or-1 crossings at this much depth is the specific case worth a plain
-      // heads-up, exactly where Denis's own "quick news check before swapping" rule matters
-      // most — rather than treating it as just an ordinary trending pair.
-      oscillationNote = `This is a big move (depth ${depth}) that hasn't really started reverting yet. That's consistent with a normal-but-early grind, but it's also exactly what a permanent re-rating looks like (a hack, a depeg, delisting risk, real news) — worth a quick check on the TO coin before swapping.`;
-    } else if (crossings45 < 2) {
-      oscillationNote = `This pair has crossed its own 45-day mean only ${crossings45} time${crossings45===1?'':'s'} recently — more trending than oscillating, so mean-reversion here is less reliable.`;
-    }
-  }
-  const corrQ     = Math.max(0, Math.min(100, Math.round(((corr||0) - 0.50) / 0.40 * 100)));
-  const reversionQ = Math.round(oscScore*0.6 + corrQ*0.4);
-
-  /* ── TRAJECTORY — momentum turn, compressed to a 0.75–1.00 NUDGE instead of a 0.40–1.00
-     swing. Catching a ratio while it's still accelerating is still a slightly worse entry
-     than catching it right as it turns — that's real and worth reflecting — but live data
-     showed the old 0.40/0.60 range could single-handedly veto a pair with a genuinely strong
-     Depth+Reversion blend just because of which exact day it happened to be checked (most
-     real pairs are "still accelerating" at any given moment during a live market move — that's
-     not a flaw in the pair, it's just where the move currently is). Every other pillar here
-     nudges proportionally instead of vetoing; this brings Trajectory in line with that. */
-  const vel1  = closes[n-1] - closes[n-2];
-  const vel2  = closes[n-2] - closes[n-3];
-  const acc   = vel1 - vel2;
-  let mt;
-  if (z30 < 0.5 && cum30 < 8) {
-    mt = 0.75; // not extended enough by either measure — depth itself already near-zero here
-  } else if (vel1 > 0 && acc > 0) {
-    mt = 0.85; // still accelerating — a fine entry, just not the single best moment
-  } else if (vel1 > 0 && acc <= 0) {
-    mt = 1.00; // moving up but slowing — perfect entry window
-  } else if (vel1 <= 0 && acc <= 0) {
-    mt = 1.00; // already turned — just as good an entry for a quick catch
-  } else {
-    mt = 0.90;
-  }
-
-  /* ── Final QSS — two scored pillars (Depth, Reversion-Quality), weighted, times trajectory.
-     Confirm is intentionally left out of this sum (see the CONFIRM comment above). */
-  const inner = depth*0.60 + reversionQ*0.40;
-  const qss   = Math.round(mt * inner);
-
-  // expGain is shown everywhere as "exp. gain" / "net gain" — it needs to answer the actual
-  // question ("will I end up with more crypto"), not just how far the ratio sits from its own
-  // mean. Stress-testing turned up that this number was GROSS: every swap pays the exit fee
-  // still to come on top of the entry fee already sunk, so a raw "+2.3%" reading was really
-  // netting close to zero once both legs of the round trip were paid. Subtracting the real
-  // round-trip cost here means every place that displays this number is honest by default —
-  // no per-screen fee math to keep in sync, and floored at 0 so a move too small to clear
-  // fees reads as "nothing here yet" instead of a small-but-misleading positive.
-  const grossGain = mean30 > 0 ? Math.abs((closes[n-1]/mean30 - 1)*100) : 0;
-  const roundTripFeePct = (1 - (1-SWAP_FEE_RATE)*(1-SWAP_FEE_RATE)) * 100;
-  const expGain = Math.max(0, grossGain - roundTripFeePct);
-  const holdDays = ouHL20 <= 20
-    ? Math.min(7, Math.max(1, Math.round(ouHL20 * 0.5)))
-    : z30 > 1.5 ? 4 : z30 > 1.0 ? 5 : z30 > 0.7 ? 6 : 7;
-  const meanFmt  = mean30 > 1 ? mean30.toFixed(4) : mean30.toFixed(7);
-
-  // Kept as informational fields only now (still shown in the UI as context/caution notes)
-  // — neither one can veto the score outright any more. See isGo below.
-  // meetsZGate now reflects the same OR as DEPTH/TRAJECTORY: extended via spike OR grind.
-  const meetsZGate   = z30 >= 0.5 || cum30 >= 8;
-  const oscillationOk = crossings45===null ? true : crossings45 >= 2;
-  const illiquidNote = frozenFrac > 0.3
-    ? `${Math.round(frozenFrac*100)}% of this pair's last 30 days showed literally no price change — that's a sign of thin trading or a data gap, not real calm. Depth has been damped to account for it, but double-check this pair actually trades before swapping.`
-    : '';
-
-  return {
-    qss, depth, reversionQ, confirm,
-    se_q:depth, bp, re, qf, corrQ, mt,   // se_q kept as an alias so the existing breakdown-bar UI needs no changes
-    z30, bollPos, rsi, ouFPct20,
-    depthZ, cum30, depthCum, frozenFrac, illiquidNote,   // exposed for transparency/debugging — which route (spike vs grind) qualified this pair, and whether thin data damped it
-    expGain, holdDays, mean30, meanFmt, ouHL20,
-    meetsZGate, oscillationOk, oscillationNote,
-    /* No external AND-gates, and no single pillar can veto outright. The one thing that
-       CANNOT be talked around: swapping FROM a coin that's actually the weaker one always
-       scores depth=0 (verified against real live data across the whole pool — every
-       wrong-direction pair stayed under 25, nowhere near isGo), because Depth is the only
-       pillar that encodes direction. Reversion-Quality and Trajectory can make a
-       correctly-directed swap look better or worse, but neither can flip a backwards trade
-       into a "go" — that's the one rule this score can never bend on. */
-    isGo: qss >= 60
-  };
-}
 
 
 /* ══════════════════════════════════════
@@ -2979,12 +2985,11 @@ function checkOpportunityBanner(){
   if(!tr){ banner.style.display='none'; return; }
 
   // Find what we're currently holding in this tracker
-  let curAsset=tr.assetA;
-  (tr.swaps||[]).forEach(sw=>{ if(sw.fromAsset===curAsset) curAsset=sw.toAsset; });
+  let curAsset=currentHolding(tr).asset;
 
   if(curAsset!==tr.assetA){
     // Holding a non-base coin (e.g. UNI) — only show if UNI is gaining vs base (good to swap back)
-    if(fromSym===curAsset&&toSym===tr.assetA&&isGo){
+    if(fromSym===curAsset&&toSym===tr.assetA&&exitDecision(tr,cached).ready){
       banner.style.display='flex';
       document.getElementById('stOppSub').textContent=
         'QSS '+score+'/100 — '+curAsset+' gaining vs '+tr.assetA+'. Good time to swap '+curAsset+'→'+tr.assetA;
@@ -3024,8 +3029,7 @@ function renderTrackerList(){
   trackers.forEach(tr=>{
     const swaps=tr.swaps||[];
     if(!swaps.length){ activeTrackers.push(tr); return; }
-    let curAsset=tr.assetA;
-    swaps.forEach(sw=>{ if(sw.fromAsset===curAsset) curAsset=sw.toAsset; });
+    let curAsset=currentHolding(tr).asset;
     // A tracker is "closed" if it's back to base AND has at least one completed round trip
     const hasRoundTrip=swaps.some(sw=>sw.toAsset===tr.assetA);
     if(curAsset===tr.assetA && hasRoundTrip) closedTrackers.push(tr);
@@ -3040,16 +3044,15 @@ function renderTrackerList(){
     const swaps=tr.swaps||[];
     const baseAmt=calcBaseAmount(tr);
     // Find current holding
-    let curAsset=tr.assetA;
-    swaps.forEach(sw=>{ if(sw.fromAsset===curAsset) curAsset=sw.toAsset; });
+    let curAsset=currentHolding(tr).asset;
 
     // Deduct exit fee from current value (entry fee already in amounts)
-    const baseAmtCard=baseAmt!==null?baseAmt*(1-SWAP_FEE_RATE):null;
-    const growth=baseAmtCard!==null&&tr.startAmount>0?((baseAmtCard-tr.startAmount)/tr.startAmount*100):null;
+    const baseAmtCard=calcNetBaseAmount(tr);
+    const growth=baseAmtCard!==null&&tr.startAmount>0?((baseAmtCard-trackerCapital(tr))/trackerCapital(tr)*100):null;
     const col=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
 
     // Profit badge
-    const profitAmtCard=baseAmtCard!==null?baseAmtCard-tr.startAmount:null;
+    const profitAmtCard=baseAmtCard!==null?baseAmtCard-trackerCapital(tr):null;
     const profitColCard=profitAmtCard===null?'var(--text2)':profitAmtCard>=0?'#00c076':'#ef4444';
     const profitBadge=profitAmtCard!==null
       ?`<span style="font-size:11px;font-family:monospace;color:${profitColCard};font-weight:700">${profitAmtCard>=0?'+':''}${profitAmtCard.toFixed(4)} ${tr.assetA}</span>`
@@ -3076,7 +3079,7 @@ function renderTrackerList(){
 
     card.innerHTML=`
       <div class="stc-left">
-        <div class="stc-name">${tr.name||tr.assetA+'↔'+tr.assetB}${closedBadge}${typeBadge}</div>
+        <div class="stc-name">${escapeHtml(tr.name)||tr.assetA+'↔'+tr.assetB}${closedBadge}${typeBadge}</div>
         <div class="stc-pair">${tr.assetA} ↔ ${tr.assetB} &nbsp;·&nbsp; ${holdingLabel}</div>
         <div class="stc-meta">${swaps.length} swap${swaps.length!==1?'s':''} &middot; started with ${tr.startAmount} ${tr.assetA}</div>
       </div>
@@ -3099,7 +3102,7 @@ function renderTrackerList(){
     if(curAsset!==tr.assetA){
       // Score curAsset/assetA — high QSS means curAsset is overvalued vs base = good time to swap back
       getScoreForPair(curAsset, tr.assetA).then(res=>{
-        const sc=res?res.score:0, isGo=res?.qss?.isGo;
+        const sc=res?res.score:0, isGo=exitDecision(tr,res).ready;
         const scoreEl=document.getElementById(scoreId);
         const cardEl=scoreEl?.closest('.st-tracker-card');
         if(!scoreEl||!cardEl) return;
@@ -3122,7 +3125,7 @@ function renderTrackerList(){
         const sc=res?res.score:0, isGo=res?.qss?.isGo;
         const scCol=isGo?'#00c076':sc>=45?'#f5a623':'#ef4444';
         const scBg=isGo?'rgba(0,192,118,0.12)':sc>=45?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
-        const scLabel=isGo?'⚡ SCALP NOW':sc>=45?'⏳ WATCH':'⛔ HOLD';
+        const scLabel=isGo?'⚡ CYCLE CANDIDATE':sc>=45?'⏳ WATCH':'⛔ HOLD';
         scoreEl2.innerHTML=`<span onclick="switchAnalyzerPair('${tr.assetA}','${tr.assetB}')" style="cursor:pointer;font-family:monospace;font-weight:700;font-size:12px;padding:2px 8px;border-radius:8px;background:${scBg};color:${scCol}">${scLabel} QSS ${sc}</span>`;
         cardEl.style.borderColor=isGo?'rgba(0,192,118,0.5)':sc>=45?'rgba(245,166,35,0.4)':'var(--border)';
         cardEl.style.background=isGo?'rgba(0,192,118,0.03)':'transparent';
@@ -3305,75 +3308,15 @@ function renderDetailView(){
 // an existing swap once the rate improves, rather than closing and reopening) accumulates onto
 // the current holding instead of being skipped — previously any such top-up after the first
 // swap was silently ignored, so only the very last tranche ever showed up anywhere.
-function currentHolding(tr){
-  let asset=tr.assetA, amount=tr.startAmount;
-  (tr.swaps||[]).forEach(sw=>{
-    if(sw.fromAsset===asset){ asset=sw.toAsset; amount=sw.toAmt; }
-    else if(sw.fromAsset===tr.assetA && sw.toAsset===asset){ amount+=sw.toAmt; }
-  });
-  return {asset, amount};
-}
 
-function calcBaseAmount(tr){
-  const swaps=tr.swaps||[];
-  if(!swaps.length) return null;
 
-  const {asset, amount}=currentHolding(tr);
 
-  // Exact: landed back on base
-  if(asset===tr.assetA) return amount;
-
-  // Best: use live prices from priceCache (fetched every 10s)
-  if(priceCache[asset]&&priceCache[tr.assetA]){
-    return amount*(priceCache[asset]/priceCache[tr.assetA]);
-  }
-
-  // Fallback: use historical swap rates
-  for(let k=swaps.length-1;k>=0;k--){
-    const s=swaps[k];
-    if(s.fromAsset===asset&&s.toAsset===tr.assetA) return amount*(s.toAmt/s.fromAmt);
-    if(s.toAsset===asset&&s.fromAsset===tr.assetA) return amount*(s.fromAmt/s.toAmt);
-  }
-  return null;
-}
 
 /* Monthly accumulation: sum profit from completed A→B→A cycles where the return-to-base
    swap happened in the last 30 days. Profit = final base amount - starting base amount for that cycle. */
-function calcMonthlyAccumulation(tr){
-  const swaps=tr.swaps||[];
-  if(!swaps.length) return null;
-  const cutoff=Date.now()-30*24*60*60*1000;
-  let total=0, found=false;
-  // Walk swap pairs: every time we return to assetA, check if that swap is recent
-  let i=0;
-  while(i<swaps.length){
-    // Find the start of a cycle (swap away from assetA)
-    if(swaps[i].fromAsset!==tr.assetA){i++;continue;}
-    const startAmt=swaps[i].fromAmt;
-    const startDate=new Date(swaps[i].date).getTime();
-    // Find the matching return swap (back to assetA)
-    let j=i+1;
-    let cur=swaps[i].toAsset;
-    while(j<swaps.length&&cur!==tr.assetA){
-      if(swaps[j].fromAsset===cur) cur=swaps[j].toAsset;
-      j++;
-    }
-    if(cur===tr.assetA&&j<=swaps.length){
-      const returnSwap=swaps[j-1];
-      const returnDate=new Date(returnSwap.date).getTime();
-      if(returnDate>=cutoff){
-        // This cycle closed in the last 30 days
-        const endAmt=returnSwap.toAmt;
-        total+=endAmt-startAmt;
-        found=true;
-      }
-    }
-    i=j; // advance past this cycle
-  }
-  return found?total:null;
-}
 
-const SWAP_FEE_RATE=0.01; // 1% exit fee deducted from all forward-looking numbers
+
+
 function calcTotalFees(tr){
   const swaps=tr.swaps||[];
   if(!swaps.length) return 0;
@@ -3431,9 +3374,9 @@ function renderDetailStats(tr){
   (tr.swaps||[]).forEach(sw=>{ if(sw.fromAsset===curAssetD) curAssetD=sw.toAsset; });
   // Single formula everywhere: deduct one exit fee (swap back) from current value
   // Entry fee is already in swap amounts; exit fee hasn't happened yet so we deduct it here
-  const baseAmtAfterFee=baseAmt!==null?baseAmt*(1-SWAP_FEE_RATE):null;
-  const profitAmt=baseAmtAfterFee!==null?baseAmtAfterFee-tr.startAmount:null;
-  const growth=baseAmtAfterFee!==null&&tr.startAmount>0?(profitAmt/tr.startAmount*100):null;
+  const baseAmtAfterFee=calcNetBaseAmount(tr);
+  const profitAmt=baseAmtAfterFee!==null?baseAmtAfterFee-trackerCapital(tr):null;
+  const growth=baseAmtAfterFee!==null&&tr.startAmount>0?(profitAmt/trackerCapital(tr)*100):null;
   const growthCol=growth===null?'var(--text2)':growth>=0?'#00c076':'#ef4444';
   const profitCol=profitAmt===null?'var(--text2)':profitAmt>=0?'#00c076':'#ef4444';
   const profitStr=profitAmt!==null?(profitAmt>=0?'+':'')+profitAmt.toFixed(4)+' '+tr.assetA:'—';
@@ -3451,9 +3394,10 @@ function renderDetailStats(tr){
       (t2.swaps||[]).forEach(sw=>{ if(sw.fromAsset===curA2) curA2=sw.toAsset; });
       if(baseAmt2===null) return;
       // Deduct exit fee — entry fee already in amounts, exit fee not happened yet
-      const baseAmt2AfterFee=baseAmt2*(1-SWAP_FEE_RATE);
-      const profit2=baseAmt2AfterFee-t2.startAmount;
-      const growth2=t2.startAmount>0?(profit2/t2.startAmount*100):null;
+      const baseAmt2AfterFee=calcNetBaseAmount(t2);
+      if(baseAmt2AfterFee===null)return;
+      const profit2=baseAmt2AfterFee-trackerCapital(t2);
+      const growth2=t2.startAmount>0?(profit2/trackerCapital(t2)*100):null;
       const col2=profit2>=0?'#00c076':'#ef4444';
       const gcol2=growth2!==null?(growth2>=0?'#00c076':'#ef4444'):'var(--text2)';
       const profStr2=`${profit2>=0?'+':''}${profit2.toFixed(4)} ${t2.assetA}`;
@@ -3465,6 +3409,7 @@ function renderDetailStats(tr){
         <div style="font-size:10px;color:${col2};font-family:monospace;margin-top:2px">${profStr2}</div>
         <div style="font-size:9px;color:var(--blue);margin-top:1px">● live</div>`;
       // Update monitor "RIGHT NOW" card to same number
+      buildTrackerSignal(t2,currentHolding(t2).asset,'sig_'+t2.id.replace(/[^a-z0-9]/gi,'_'));
       const monEl=document.getElementById(monitorNowIdD);
       if(monEl&&growth2!==null){
         monEl.style.color=gcol2;
@@ -3502,66 +3447,31 @@ function renderDetailStats(tr){
 /* Cache for pair scores so we don't re-fetch too often */
 const _scoreCache={};
 const _scoreCacheTime={};
-const SCORE_TTL=15*60*1000; // 15 minutes — daily candles don't change faster than this
+const SCORE_TTL=5*60*1000;
 
 // In-flight deduplication: if a fetch for this key is already running, return same promise
 const _scorePending={};
 
 async function getScoreForPair(a,b){
-  const key=a+'_'+b;
-  const now=Date.now();
-  if(_scoreCache[key]&&(now-_scoreCacheTime[key])<SCORE_TTL) return _scoreCache[key];
-  // Return existing in-flight promise instead of starting a duplicate fetch
+  const key=a+'_'+b,now=Date.now();
+  if(_scoreCache[key]&&now-_scoreCacheTime[key]<SCORE_TTL) return _scoreCache[key];
   if(_scorePending[key]) return _scorePending[key];
-  const _fetchJ=(url)=>Promise.race([
-    fetch(url).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }),
-    new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),12000))
-  ]);
-  _scorePending[key] = (async()=>{
-  try{
-    const[fk,tk,fp,tp]=await Promise.all([
-      _fetchJ(`https://api.binance.com/api/v3/klines?symbol=${a}USDT&interval=1d&limit=92`),
-      _fetchJ(`https://api.binance.com/api/v3/klines?symbol=${b}USDT&interval=1d&limit=92`),
-      _fetchJ(`https://api.binance.com/api/v3/ticker/price?symbol=${a}USDT`),
-      _fetchJ(`https://api.binance.com/api/v3/ticker/price?symbol=${b}USDT`),
-    ]);
-    const kA=fk.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
-    const kB=tk.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4]}));
-    const n=Math.min(kA.length,kB.length);
-    const ratioSeries=Array.from({length:n},(_,i)=>({
-      t:kA[kA.length-n+i].t,
-      o:kA[kA.length-n+i].o/kB[kB.length-n+i].o,
-      h:kA[kA.length-n+i].h/kB[kB.length-n+i].h,
-      l:kA[kA.length-n+i].l/kB[kB.length-n+i].l,
-      c:kA[kA.length-n+i].c/kB[kB.length-n+i].c
-    }));
-    const stats=getStats(ratioSeries);
-    const closes90A=kA.slice(-90).map(k=>k.c);
-    const closes90B=kB.slice(-90).map(k=>k.c);
-    const corr=calcCorrelation(closes90A,closes90B);
-
-    const trend7=stats?stats.trend7:0;
-    const plain_explanation=trend7>2
-      ?`The swap rate improved ${trend7.toFixed(1)}% this week.`
-      :trend7<-2?`The swap rate dropped ${Math.abs(trend7).toFixed(1)}% this week.`
-      :`The swap rate between ${a} and ${b} has been stable this week.`;
-
-    const trend1=stats?stats.trend1||0:0;
-    const zScore=stats?stats.zScore||0:0;
-    const expectedRevertGain=stats?stats.expectedRevertGain||0:0;
-    const swingPct=stats?stats.swingPct||0:0;
-    /* ── QSS — the one score in the app, computed on the ratio's own closes ── */
-    const rCloses = ratioSeries.map(r => r.c);
-    const q = computeQSS(rCloses, corr);
-    const score = q ? q.qss : 0;
-
-    const result={score, qss:q, from:a,to:b,trend1,zScore,expectedRevertGain,swingPct,plain_explanation,corr};
-    _scoreCache[key]=result; _scoreCacheTime[key]=Date.now();
-    return result;
-  }catch(e){ return null; }
-  finally{ delete _scorePending[key]; }
-  })();
-  return _scorePending[key];
+  const plan={...accumulationPlan};
+  const task=(async()=>{try{
+    const [fk,tk,fp,tp]=await Promise.all([fetchKlines(a,1000),fetchKlines(b,1000),fetchPrice(a),fetchPrice(b)]);
+    priceCache[a]=fp;priceCache[b]=tp;
+    const rows=completedRatio(fk,tk),f=new Map(fk.map(k=>[k.t,k.c])),t=new Map(tk.map(k=>[k.t,k.c]));
+    const from=rows.map(k=>f.get(k.t)),to=rows.map(k=>t.get(k.t));
+    const corr=calcCorrelation(from.slice(-90),to.slice(-90));
+    const q=computeQSS(rows.slice(-90).map(k=>k.c),corr,plan,fp/tp);
+    if(!q)return null;
+    q.history=pairEvidence(rows,from,to,plan);
+    const trend1=(fp/tp/rows.at(-1).c-1)*100;
+    const result={score:q.qss,qss:q,from:a,to:b,corr,trend1,zScore:q.z30,expectedRevertGain:q.expGain,swingPct:0,asOf:Date.now(),candleAt:rows.at(-1).t,plain_explanation:opportunitySummary(q)};
+    if(JSON.stringify(plan)!==JSON.stringify(accumulationPlan))return null;
+    _scoreCache[key]=result;_scoreCacheTime[key]=Date.now();observePaperSignal(a,b,fp/tp,result);return result;
+  }catch(e){console.warn('Pair unavailable',a,b,e.message);return null;}finally{delete _scorePending[key];}})();
+  _scorePending[key]=task;return task;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -3677,928 +3587,22 @@ async function getMomentumForPair(a,b){
    Fetches ratio history, identifies entry point, measures progress
    toward reversion. Shows smart recommendation for open positions.
 ══════════════════════════════════════════════════════════════ */
-async function buildLiveMonitor(tr, curAsset, liveGrowthPct) {
-  const swaps = tr.swaps || [];
-  // The current open position = every swap into curAsset since the last time this tracker
-  // held its base asset — not just the most recent one. Denis ladders in: if the rate keeps
-  // improving after his first swap, he adds more of the same swap rather than closing and
-  // reopening. Walking backward and stopping at the first swap that ISN'T into curAsset finds
-  // exactly that run, so a top-up blends into the one tracked position instead of the tracker
-  // only ever seeing the latest tranche and ignoring the ones before it.
-  const posSwaps = [];
-  for (let i = swaps.length - 1; i >= 0; i--) {
-    if (swaps[i].toAsset === curAsset) posSwaps.unshift(swaps[i]);
-    else break;
-  }
-  if (!posSwaps.length) return null;
-  const firstSwap = posSwaps[0];   // the original swap that opened this position
-  const lastSwap  = posSwaps[posSwaps.length - 1]; // most recent tranche (top-up or the only one)
-  const totalFromAmt = posSwaps.reduce((s, sw) => s + sw.fromAmt, 0);
-  const totalToAmt   = posSwaps.reduce((s, sw) => s + sw.toAmt, 0);
 
-  const entryDateMs = new Date(firstSwap.date).getTime(); // anchored to the FIRST tranche, not each top-up
-  const daysSinceEntry = Math.max(0, (Date.now() - entryDateMs) / 86400000);
-  const isScalp = true; // QSS is the only score now — every trade is monitored scalp-style
 
-  // Fetch ratio history
-  let ratioCloses = [], ratioTs = [];
-  let meanW = 0, stdW = 0.001, currentZ = 0, entryZ = 0, entryRatioHist = null;
-  let isTurning = false;
 
-  // Fetch with 10-second timeout — never hangs the UI
-  const fetchJ = (url) => Promise.race([
-    fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
-  ]);
-
-  try {
-    // limit=400 (not 92) — the 30/60-day windows below only ever look at the tail of this
-    // array, so raising it changes nothing about existing behavior. The extra depth exists so
-    // the Reversion Confidence Trend section (further down) can compute its statistical test
-    // both at entry AND now for positions that have been open a while, without truncation.
-    const [fk, tk] = await Promise.all([
-      fetchJ(`https://api.binance.com/api/v3/klines?symbol=${curAsset}USDT&interval=1d&limit=400`),
-      fetchJ(`https://api.binance.com/api/v3/klines?symbol=${tr.assetA}USDT&interval=1d&limit=400`)
-    ]);
-    // Validate — Binance returns an object with "code" on error, not an array
-    if (!Array.isArray(fk) || !Array.isArray(tk) || fk.length < 10 || tk.length < 10) throw new Error('bad data');
-    const fC = fk.map(k => +k[4]);
-    const tC = tk.map(k => +k[4]);
-    const fT = fk.map(k => +k[0]);
-    const n = Math.min(fC.length, tC.length);
-    ratioCloses = Array.from({length:n}, (_,i) => fC[fC.length-n+i] / tC[tC.length-n+i]);
-    ratioTs     = fT.slice(fT.length-n);
-
-    // Window: scalp uses 30d mean (short-term target), swing uses 60d
-    const window = isScalp ? 30 : 60;
-    const wSlice = ratioCloses.slice(-window);
-    meanW = wSlice.reduce((a,b)=>a+b,0) / wSlice.length;
-    stdW  = Math.sqrt(wSlice.reduce((s,v)=>s+(v-meanW)**2,0)/wSlice.length) || 0.001;
-
-    const currentRatio = ratioCloses[ratioCloses.length-1];
-    currentZ = (currentRatio - meanW) / stdW;
-
-    // Entry ratio/Z: blend every tranche's own entry point (value stored at swap time when
-    // available, else a historical candle lookup at that tranche's date), weighted by how much
-    // was put into it. With one swap this reduces to exactly the old single-swap calculation —
-    // the weighting is against that swap's own fromAmt, i.e. a no-op.
-    let ratioWeightSum = 0, zWeightSum = 0;
-    for (const sw of posSwaps) {
-      const swDateMs = new Date(sw.date).getTime();
-      const closestIdx = ratioTs.reduce((best, ts, i) =>
-        Math.abs(ts - swDateMs) < Math.abs(ratioTs[best] - swDateMs) ? i : best, 0);
-      const swRatio = ratioCloses[closestIdx];
-      const swZ = (sw.storedEntryZ && isFinite(sw.storedEntryZ)) ? sw.storedEntryZ : (swRatio - meanW) / stdW;
-      ratioWeightSum += swRatio * sw.fromAmt;
-      zWeightSum += swZ * sw.fromAmt;
-    }
-    entryRatioHist = ratioWeightSum / totalFromAmt;
-    entryZ = zWeightSum / totalFromAmt;
-
-    // Momentum turn signal (same idea as QSS's own MT gate): the recent daily move
-    // decelerating or reversing while still below mean = "turning around".
-    const rn = ratioCloses.length;
-    const velNow  = rn>=2 ? ratioCloses[rn-1]-ratioCloses[rn-2] : 0;
-    const velPrev = rn>=3 ? ratioCloses[rn-2]-ratioCloses[rn-3] : 0;
-    isTurning = currentZ < 0 && velNow > velPrev;
-  } catch(e) { return null; }
-
-  const currentRatioNow = ratioCloses[ratioCloses.length-1];
-
-  // Progress
-  const journeyTotal  = Math.abs(entryZ);
-  const journeyCovered = currentZ - entryZ;
-  const progressPct   = journeyTotal > 0 ? Math.max(0, Math.min(100, journeyCovered / journeyTotal * 100)) : 50;
-
-  // Gain — deduct one exit fee (0.5%) since you'll pay it when swapping back
-  const gainSoFar      = entryRatioHist > 0 ? ((currentRatioNow / entryRatioHist) * (1 - SWAP_FEE_RATE) - 1) * 100 : 0;
-  const remainingToMean = meanW > 0 ? ((meanW / currentRatioNow) * (1 - SWAP_FEE_RATE) - 1) * 100 : 0;
-
-  // ── Add-on opportunity — informational only, no automation, no urgency ──
-  // Deliberately measured on the RAW ratio move, with NO fee deduction — the displayed
-  // "gain so far" elsewhere already reads about -2% right after entry purely from the
-  // round-trip fee, so using that fee-inclusive number here would mean a real -5% raw move
-  // shows as a much scarier -7%, and would trigger this note on drag that was never a real
-  // price move at all. rawDropPct never mixes fees into the threshold check for that reason.
-  //
-  // Threshold picked from testing 12,000+ synthetic "good entry, keeps moving the wrong way"
-  // cases at several trigger points: 5% (the original guess) fires on 57% of ALL trades, but
-  // only 67% of those firings were even necessary (the rest reverted fine on their own) — a lot
-  // of noise for a "quiet" note. 7% cuts that to 48% of trades firing, 79% of which turn out to
-  // matter, while barely giving up any of the recovery benefit (never-recovered / avg-days-to-
-  // breakeven for the ones that do keep falling are nearly identical at 5% vs 7%). 7% is the
-  // balance point between "useful" and "noisy."
-  //
-  // Because this compares against the BLENDED entry (post any top-ups, see posSwaps above),
-  // this single check naturally re-fires as a position develops — first relative to the
-  // original entry, then again relative to the new blended entry after a top-up, and so on —
-  // without needing separate hardcoded "tranche 2" / "tranche 3" thresholds.
-  const rawDropPct = entryRatioHist > 0 ? ((currentRatioNow / entryRatioHist) - 1) * 100 : 0;
-  const addOnOpportunity = rawDropPct <= -7;
-  const remainingBudget = tr.startAmount > totalFromAmt ? tr.startAmount - totalFromAmt : 0;
-
-  // ── Reversion Confidence Trend — informational only, shown once a position has stalled ──
-  // Deliberately NOT a sell signal — there is no sell trigger anywhere in this app, on purpose
-  // (see the never-close-at-a-loss rule). What this answers instead: for a position that's
-  // been open a while without resolving, is the STATISTICAL case for it eventually reverting
-  // getting stronger or weaker over time? Recomputes adfStat (see its own comment for what it
-  // measures and the backtest behind it) twice — once using only the data that existed at
-  // entry, once using everything available now — and compares them. Gated on daysSinceEntry
-  // >= 30 because that's exactly the cohort this was tested against: positions still open
-  // past the point where most good entries have already resolved on their own.
-  let reversionTrend = null;
-  if (daysSinceEntry >= 30 && ratioTs.length) {
-    const entryIdx = ratioTs.reduce((best, ts, i) =>
-      Math.abs(ts - entryDateMs) < Math.abs(ratioTs[best] - entryDateMs) ? i : best, 0);
-    const adfAtEntry = entryIdx >= 19 ? adfStat(ratioCloses.slice(0, entryIdx + 1)) : null;
-    const adfNow     = adfStat(ratioCloses);
-    if (adfAtEntry !== null && adfNow !== null) {
-      const trendDelta = adfAtEntry - adfNow; // positive = adfNow more negative/significant = improving
-      reversionTrend = trendDelta >= 1  ? { label: 'improved a lot', tone: 'good',  resolvedPct: '66-76%' }
-        : trendDelta >= 0                ? { label: 'improved',       tone: 'good',  resolvedPct: '66-76%' }
-        : trendDelta >= -1               ? { label: 'weakened',       tone: 'watch', resolvedPct: '45-57%' }
-        :                                   { label: 'weakened a lot',tone: 'watch', resolvedPct: '45-57%' };
-    }
-  }
-
-  // Define exitThreshold here — used by estDays, status messages, progress bar, and exitLabel
-  const exitThreshold = 0.8;
-
-  // Scalp: 30-day window, exits at Z=0.8 — typically resolves in 2–7 days
-  const estDays = currentZ > 1.2 ? 0 : currentZ > 0.5 ? 1 : currentZ > -0.5 ? 2
-          : currentZ > -1.0 ? 3 : currentZ > -1.5 ? 5 : 7;
-
-  // ── Multi-signal trade health check ──
-  // Philosophy: any single metric can be noisy or normal. We require MULTIPLE independent
-  // signals pointing the same direction before warning. This makes false alarms near-impossible.
-  let exitWarning = null;
-  if (ratioCloses.length >= 30 && daysSinceEntry > 7 && currentZ < entryZ) {
-    const last14 = ratioCloses.slice(-14);
-    const last30 = ratioCloses.slice(-30);
-    const last7  = ratioCloses.slice(-7);
-
-    // Signal A — Mean drift: has the 14-day rolling average shifted 5%+ below the long-term mean?
-    // If yes, the mean ITSELF is moving away — this is structural, not a temporary dip.
-    const recentMean14 = last14.reduce((s,v) => s+v, 0) / 14;
-    const meanDriftPct = meanW > 0 ? (recentMean14 - meanW) / meanW * 100 : 0;
-    const signalMeanDrift = meanDriftPct < -5;
-
-    // Signal B — Consistent downslope over 14 days (normalized by mean price level)
-    // Distinguishes a structural trend from random noise bouncing around the mean.
-    const slope14 = meanW > 0 ? (last14[last14.length-1] - last14[0]) / (14 * meanW) : 0;
-    const signalDownslope = slope14 < -0.003; // >0.3% per day decline, consistently
-
-    // Signal C — No mean crossings in 30 days
-    // A healthy cycling pair crosses its mean regularly. Zero crossings in a month = stuck.
-    let crossings30 = 0;
-    for (let i = 1; i < last30.length; i++) {
-      if ((last30[i-1] - meanW) * (last30[i] - meanW) < 0) crossings30++;
-    }
-    const signalNoCrossings = crossings30 === 0 && daysSinceEntry > 14;
-
-    // Signal D — Accelerating away this week: Z got worse over last 7 days, not better.
-    // Mean reversion should show at least small improvement within a week of being this deep.
-    const zWeekAgo = last7.length >= 2 ? (last7[0] - meanW) / stdW : currentZ;
-    const signalAccelerating = currentZ < -1.5 && (currentZ - zWeekAgo) < -0.4;
-
-    const activeSignals = [
-      signalMeanDrift    ? 'the average price level has shifted structurally lower' : null,
-      signalDownslope    ? 'steady decline every day for 2 weeks' : null,
-      signalNoCrossings  ? 'no recovery attempt at all in 30 days' : null,
-      signalAccelerating ? 'position worsened further this week' : null
-    ].filter(Boolean);
-
-    const signalCount = activeSignals.length;
-
-    if (signalCount >= 3) {
-      // 3+ independent signals: near-impossible by coincidence — trade is genuinely broken
-      exitWarning = {
-        icon: '⚠️',
-        headline: 'Multiple warning signs — this trade may be broken',
-        detail: `${signalCount} independent signals all point against recovery: ${activeSignals.join(', ')}. Each one alone is normal — all together at once is very unusual. Review whether the original trade basis still holds.`,
-        severity: 'high'
-      };
-    } else if (signalCount >= 2 && currentZ < -2.2) {
-      // 2 signals + very deep = soft watch (not urgent, but worth knowing)
-      exitWarning = {
-        icon: '🔻',
-        headline: 'Trade showing unusual weakness — monitor closely',
-        detail: `Two warning signs detected: ${activeSignals.join(' and ')}. Not enough to recommend exiting, but worth checking daily. If the position continues worsening this week, consider a review.`,
-        severity: 'medium'
-      };
-    }
-  }
-
-  // Absolute backstop regardless of hold time: Z < -3.5 is a structural break.
-  // Statistically this is 1-in-1000 territory — almost impossible without a major event.
-  if (!exitWarning && currentZ < -3.5 && daysSinceEntry > 5) {
-    exitWarning = {
-      icon: '🚨',
-      headline: 'Extreme price move — check the news before holding further',
-      detail: `The ratio is ${Math.abs(currentZ).toFixed(1)}σ from normal. Moves this extreme almost never happen in healthy pairs and typically signal a major external event. Check what happened to both coins before deciding to hold or exit.`,
-      severity: 'high'
-    };
-  }
-
-  // ── Labels — defined here so status messages and progress bar can both use them ──
-  const exitLabel = currentZ > exitThreshold ? 'NOW'
-    : isScalp ? `~${estDays}d`
-    : estDays <= 10 ? `~${estDays}d`
-    : estDays <= 21 ? `~${Math.round(estDays/7)} wks`
-    : estDays <= 49 ? `~${Math.round(estDays/7)} wks`
-    : `~${Math.round(estDays/7)}+ wks`;
-  const exitSubLabel = currentZ > exitThreshold ? 'sell now'
-    : isScalp ? 'days'
-    : estDays <= 10 ? 'days' : 'weeks (est.)';
-
-  // ── Entry quality context — full analysis combining score + Z-depth ──
-  const entryScore = firstSwap.score || 0; // QSS at the swap that opened this position, not a later top-up
-  const scoreLabel = 'QSS';
-  const entryZDepth = Math.abs(entryZ); // how deep into the anomaly the entry was
-
-  // 4-level confidence: combines signal score AND Z-depth — both matter
-  // High score + deep Z = very reliable statistical edge
-  // Low score + shallow Z = weaker basis (but still a valid trade — they entered, so they believed)
-  const entryConfidence =
-    entryScore >= 68 && entryZDepth >= 1.2 ? 'strong'  // Best case: high score + deep anomaly
-    : entryScore >= 55 && entryZDepth >= 0.8 ? 'good'  // Solid signal
-    : entryScore >= 40 || entryZDepth >= 0.7 ? 'fair'  // Decent — one signal was good
-    : entryScore > 0 ? 'low'                            // Known weak entry
-    : 'unknown';                                        // Score not recorded (older swaps)
-
-  const weakEntry = entryConfidence === 'low'; // kept for backward compatibility with earlier branches
-  const slowPair  = estDays > 70; // > 10 weeks = this pair moves slowly
-
-  // One-line entry context for display (constructive, never alarming)
-  const entryContextLine =
-    entryConfidence === 'strong'  ? `${scoreLabel} ${entryScore} · Z ${entryZ.toFixed(2)} — strong signal, deep anomaly`
-    : entryConfidence === 'good'  ? `${scoreLabel} ${entryScore} · Z ${entryZ.toFixed(2)} — good entry conditions`
-    : entryConfidence === 'fair'  ? `${scoreLabel} ${entryScore} · Z ${entryZ.toFixed(2)} — moderate entry signal`
-    : entryConfidence === 'low'   ? `${scoreLabel} ${entryScore} · Z ${entryZ.toFixed(2)} — below ideal threshold (60+)`
-    :                               `Z ${entryZ.toFixed(2)} at entry — score not recorded`;
-
-  const entryNote = weakEntry
-    ? ` (entered at ${scoreLabel} ${entryScore} — below recommended threshold of 60)`
-    : '';
-
-  // Gain labels — needed by status messages below (also used in the progress bar later)
-  const displayGain = (typeof liveGrowthPct === 'number' && isFinite(liveGrowthPct))
-    ? liveGrowthPct : gainSoFar;
-  const targetLabel = '+' + (displayGain + (remainingToMean > 0 ? remainingToMean : 0)).toFixed(1) + '%';
-
-  // ── Trajectory metrics — computed here so entry context row + status messages both use them ──
-  // Progress: % of the entry→exit journey covered (0=at entry, 100=at exit, negative=went deeper)
-  const _journeySpan    = exitThreshold - entryZ;
-  const progressToExit  = _journeySpan > 0 ? (currentZ - entryZ) / _journeySpan * 100 : 0;
-
-  // Velocity: avg daily Z change — ONLY since entry, not pre-entry candles
-  // Pre-entry the ratio was falling (that's WHY the signal fired). Including those days
-  // makes velocity look negative even when the trade itself is improving.
-  const _maxVelDays = Math.max(2, Math.min(7, Math.ceil(daysSinceEntry) + 1));
-  const _velN     = Math.min(_maxVelDays, ratioCloses.length);
-  const _velSlice = ratioCloses.slice(-_velN).map(v => stdW > 0 ? (v - meanW) / stdW : 0);
-  const velocityZ = _velSlice.length >= 2
-    ? (_velSlice[_velSlice.length - 1] - _velSlice[0]) / (_velSlice.length - 1)
-    : 0;
-  // Consistency: fraction of those days that moved in the right direction
-  let _rightDays = 0;
-  for (let i = 1; i < _velSlice.length; i++) { if (_velSlice[i] > _velSlice[i-1]) _rightDays++; }
-  const consistency = _velSlice.length > 1 ? _rightDays / (_velSlice.length - 1) : 0.5;
-
-  // ── Plain-English status ──
-  let statusIcon, statusLine, statusDetail, statusColor, statusBg;
-
-  // Slow pair note — informational, not alarming. This pair just has a longer cycle.
-  if (!isScalp && slowPair && currentZ < 0) {
-    statusIcon = '🐢'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-    statusLine = entryConfidence === 'strong' || entryConfidence === 'good'
-      ? 'Patient pair — the signal was real, the journey is long'
-      : entryConfidence === 'fair'
-        ? 'Slow-moving pair — giving it the time it needs'
-        : 'Slow-moving pair — lower entry signal, longer timeline';
-    statusDetail = entryConfidence === 'strong' || entryConfidence === 'good'
-      ? `${scoreLabel} ${entryScore} at Z ${entryZ.toFixed(2)} — the entry signal was ${entryConfidence}. This pair has a long mean-reversion cycle (est. ${exitLabel}). Not broken — just measured. The statistical edge is real; it just plays out over weeks, not days.`
-      : entryConfidence === 'fair'
-        ? `Moderate entry signal (${scoreLabel} ${entryScore}) in a slow-moving pair. The pair is recovering — est. ${exitLabel}. These longer-cycle trades need patience. Only hold if comfortable with the timeline.`
-        : `Lower entry signal (${scoreLabel} ${entryScore}) combined with a slow pair means recovery will take time. Est. ${exitLabel}. The trade can still work — just be prepared for the longer hold.`;
-  } else if (currentZ > 1.5) {
-    statusIcon = '🎯'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.10)';
-    statusLine = isScalp ? 'Sell now — target reached!' : 'Time to sell — you are in the profit zone';
-    statusDetail = isScalp
-      ? `${curAsset} has hit the scalp target. Swap back to ${tr.assetA} and take your profit. Do not get greedy — scalps are quick in and out.`
-      : `${curAsset} has risen well above its average vs ${tr.assetA}. Swap back now to lock in your gains.`;
-  } else if (currentZ > 0.8) {
-    statusIcon = '✅'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.08)';
-    statusLine = isScalp ? 'Good — approaching sell zone' : 'Looking good — consider selling soon';
-    statusDetail = isScalp
-      ? `You are close to the scalp exit. ${estDays === 0 ? 'Consider selling now.' : `Est. ${estDays} more day${estDays>1?'s':''} to reach full target.`}`
-      : `${curAsset} is above average. You can exit now for a solid gain, or hold a few more days for the peak.`;
-  } else if (currentZ > 0.2) {
-    statusIcon = '📈'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.06)';
-    statusLine = 'Almost there — keep holding';
-    statusDetail = `${curAsset} is nearly back to its ${isScalp?'30-day':'normal'} average vs ${tr.assetA}. ${isScalp?'A day or two more.':'A little more patience and you will be in sell territory.'}`;
-  } else if (currentZ > -0.3) {
-    statusIcon = '⚖️'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-    statusLine = 'Back to normal — wait for the overshoot';
-    statusDetail = isScalp
-      ? `Price is at its 30-day average. For a scalp, wait for it to go slightly above average — that is your exit. Est. ${estDays} day${estDays>1?'s':''}.`
-      : `Price is back to average. Hold a bit longer — it usually overshoots above average before settling. That is your best exit.`;
-  } else if (isTurning) {
-    statusIcon = '🔄'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-    statusLine = 'Turning around — reversal signs appearing';
-    statusDetail = entryConfidence === 'strong' || entryConfidence === 'good'
-      ? `The ratio is slowing its descent and beginning to reverse — exactly what a ${scoreLabel} ${entryScore} entry (Z ${entryZ.toFixed(2)}) is designed to catch. ${isScalp ? `Quick scalps usually complete the recovery in ${estDays}–${estDays+2} days.` : `Est. ${exitLabel} to reach the sell zone.`}`
-      : entryConfidence === 'fair'
-        ? `Reversal signs are forming. Moderate entry signal (${scoreLabel} ${entryScore}) — recovery is underway. ${isScalp ? `Est. ${estDays}–${estDays+2} more days.` : `Est. ${exitLabel}.`}`
-        : `Reversal signs are forming${entryNote}. The pair is turning around. ${isScalp ? `Est. ${estDays}–${estDays+2} more days.` : `Est. ${exitLabel}.`}`;
-  } else {
-    // ══════════════════════════════════════════════════════════════════════
-    // SOPHISTICATED TRAJECTORY ANALYSIS
-    // Looks at: progress made, velocity, consistency, live vs ratio agreement
-    // ══════════════════════════════════════════════════════════════════════
-
-    // Trajectory metrics already computed above (progressToExit, velocityZ, consistency)
-    const velN = _velN;
-
-    // 4. ETA at current velocity — only meaningful when positive (actually moving toward exit)
-    const distToExitNow   = exitThreshold - currentZ;
-    const daysAtVelocity  = velocityZ > 0.03 ? Math.round(distToExitNow / velocityZ) : null;
-    const etaStr = daysAtVelocity
-      ? (daysAtVelocity <= 7 ? `~${daysAtVelocity} days at current pace`
-        : daysAtVelocity <= 21 ? `~${Math.round(daysAtVelocity/7)} wks at current pace`
-        : `~${Math.round(daysAtVelocity/7)}+ wks`)
-      : exitLabel;
-
-    // 5. Agreement check: do live prices and the ratio tell the same story?
-    const livePositive    = displayGain > 0.2;
-    const ratioRecovering = velocityZ > 0.04;
-    const signalsMixed    = livePositive && !ratioRecovering; // profit but ratio not confirmed
-
-    // 6. Time overrun: are we significantly past the expected window?
-    const timeOverrun = daysSinceEntry > estDays * 1.2 && estDays > 0;
-
-    // Human-readable velocity descriptor
-    const velDesc = velocityZ > 0.15  ? 'moving strongly toward exit'
-                  : velocityZ > 0.06  ? 'moving steadily toward exit'
-                  : velocityZ > 0.02  ? 'moving slowly toward exit'
-                  : velocityZ > -0.02 ? 'essentially flat — no movement yet'
-                  : velocityZ > -0.08 ? 'drifting slightly away from exit'
-                  :                     'drifting away from exit';
-
-    // Progress descriptor
-    const progDesc = progressToExit >= 60 ? 'more than halfway to the exit'
-                   : progressToExit >= 35 ? 'making solid progress toward exit'
-                   : progressToExit >= 15 ? 'some progress since entry'
-                   : progressToExit >= 0  ? 'barely moved from entry yet'
-                   :                        `${Math.abs(progressToExit).toFixed(0)}% deeper than entry`;
-
-    // ── DETERMINE STATUS CATEGORY ────────────────────────────────────────
-    // Philosophy: you entered with a statistical edge — this is a journey.
-    // We track WHERE you are on that journey, not whether you're "winning or losing."
-    // Alarm language only appears if genuinely broken (exit warning system handles that).
-
-    // Entry confidence context — used to adjust tone (not doom-and-gloom either way)
-    const confSuffix =
-      entryConfidence === 'strong' ? ` Your ${scoreLabel} ${entryScore} entry gives this strong statistical backing.`
-      : entryConfidence === 'good' ? ` Entry signal was solid (${scoreLabel} ${entryScore}).`
-      : entryConfidence === 'fair' ? ` Entry signal was moderate (${scoreLabel} ${entryScore}).`
-      : entryConfidence === 'low'  ? ` Entry signal was below ideal (${scoreLabel} ${entryScore} — aim for 60+).`
-      : '';
-
-    if (progressToExit >= 55 && velocityZ >= 0) {
-      // ── More than halfway, still moving right ────────────────────────
-      statusIcon = '🚀'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.09)';
-      statusLine = `${progressToExit.toFixed(0)}% of the journey covered — on track`;
-      statusDetail = `You have crossed ${progressToExit.toFixed(0)}% of the distance from entry (Z ${entryZ.toFixed(2)}) to the exit zone (Z ${exitThreshold}). ${livePositive ? `Gain so far: +${displayGain.toFixed(1)}%. ` : ''}Ratio is ${velDesc}. ${etaStr !== exitLabel ? `At current pace: ${etaStr}.` : `Est. ${exitLabel}.`}${confSuffix}`;
-
-    } else if (livePositive && ratioRecovering && progressToExit >= 15) {
-      // ── In profit + ratio moving + made real progress ─────────────────
-      statusIcon = '📈'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.08)';
-      statusLine = `Up ${displayGain.toFixed(1)}% — ratio recovering steadily`;
-      statusDetail = `Gain: +${displayGain.toFixed(1)}%. Ratio ${velDesc} (${(velocityZ*10).toFixed(2)} Z/10 days). Journey: ${progressToExit.toFixed(0)}% covered from entry Z ${entryZ.toFixed(2)} toward exit. ${etaStr !== exitLabel ? `At current pace: ${etaStr}.` : `Est. ${exitLabel}.`} Hold — the trade is working.`;
-
-    } else if (livePositive && ratioRecovering) {
-      // ── In profit + ratio just starting to move — early stage ─────────
-      statusIcon = '📈'; statusColor = '#00c076'; statusBg = 'rgba(0,192,118,0.07)';
-      statusLine = `Up ${displayGain.toFixed(1)}% — ratio starting to move`;
-      statusDetail = `Up ${displayGain.toFixed(1)}% after ${Math.floor(daysSinceEntry)} days. The ratio is ${velDesc} — early but correct direction. Progress toward exit: ${progressToExit > 0 ? progressToExit.toFixed(0)+'%' : 'just beginning'}. Consistency: ${(consistency*100).toFixed(0)}% of recent days moved the right way. ${etaStr !== exitLabel ? `ETA: ${etaStr}.` : `Est. ${exitLabel}.`}`;
-
-    } else if (livePositive && !ratioRecovering && velocityZ > -0.05) {
-      // ── In profit but ratio flat — market moved, pair not yet resolved ─
-      statusIcon = '⚖️'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.08)';
-      statusLine = `Up ${displayGain.toFixed(1)}% — waiting for the ratio to engage`;
-      statusDetail = `Live gain is +${displayGain.toFixed(1)}%, but the pair ratio is ${velDesc} — the mean-reversion hasn't fully engaged yet. The profit may partly reflect a general market move rather than the pair resolving. Hold and watch for the ratio to start climbing. Progress toward exit: ${progressToExit > 0 ? progressToExit.toFixed(0)+'%' : 'building'}. Est. ${exitLabel}.`;
-
-    } else if (livePositive && velocityZ < -0.05) {
-      // ── In profit but ratio pulling back — tone depends on entry confidence ──
-      const isStrongEntry = entryConfidence === 'strong' || entryConfidence === 'good';
-      statusIcon = isStrongEntry ? '📊' : '⚠️';
-      statusColor = isStrongEntry ? '#f5a623' : '#f5a623';
-      statusBg = 'rgba(245,166,35,0.08)';
-      statusLine = isStrongEntry
-        ? `Up ${displayGain.toFixed(1)}% — ratio pulling back slightly, normal for this pair`
-        : `Up ${displayGain.toFixed(1)}% — ratio pulling back, watch closely`;
-      statusDetail = isStrongEntry
-        ? `You are up ${displayGain.toFixed(1)}% and your entry was ${scoreLabel} ${entryScore} at Z ${entryZ.toFixed(2)} — a very strong position. The ratio pulled back ${(Math.abs(velocityZ)*velN).toFixed(1)} Z-points over ${velN} days, which is normal oscillation for pairs at this depth. You have covered ${progressToExit.toFixed(0)}% of the journey. Hold — this kind of pullback is expected before the main recovery move. Target: ${exitLabel}.`
-        : `Live gain +${displayGain.toFixed(1)}%, but the pair ratio has pulled back ${(Math.abs(velocityZ)*velN).toFixed(1)} Z-points over ${velN} days. Could compress if it continues. You can hold for the full target (${exitLabel}) or decide if the current gain meets your goal. Progress: ${progDesc}.`;
-
-    } else if (!livePositive && velocityZ > 0.12 && consistency >= 0.6) {
-      // ── Not yet in profit — but ratio bouncing hard and consistently ───
-      const zGained = (velocityZ * velN).toFixed(1);
-      statusIcon = '🔄'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-      statusLine = isScalp ? 'Not in profit zone yet — but bouncing strongly' : 'Not in profit zone yet — strong recovery underway';
-      statusDetail = `The ratio has gained +${zGained} Z-points in ${velN} days — a ${entryConfidence === 'strong' || entryConfidence === 'good' ? 'strong' : 'meaningful'} recovery pace. ${progressToExit > 0 ? `${progressToExit.toFixed(0)}% of the entry→exit journey covered. ` : ''}${consistency >= 0.7 ? `${(consistency*100).toFixed(0)}% of recent days moved the right direction — consistent momentum. ` : ''}${daysAtVelocity ? `At this pace, est. ${daysAtVelocity} more days to profit zone.` : `Est. ${exitLabel}.`}${confSuffix}`;
-
-    } else if (!livePositive && velocityZ > 0.03) {
-      // ── Not yet in profit — ratio slowly recovering — normal hold state ─
-      statusIcon = '⏳'; statusColor = '#f5a623'; statusBg = 'rgba(245,166,35,0.07)';
-      statusLine = isScalp ? 'Holding — ratio heading the right way' : 'Recovering — ratio trending toward the exit';
-      statusDetail = `Not in profit zone yet — ${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} in. Ratio is ${velDesc}. Progress since entry: ${progressToExit > 0 ? progressToExit.toFixed(0)+'%' : 'starting to move'}. ${(consistency*100).toFixed(0)}% of recent days moved correctly. ${etaStr !== exitLabel ? `At current pace: ${etaStr}.` : `Est. ${exitLabel}.`}${confSuffix}`;
-
-    } else if (!livePositive && Math.abs(velocityZ) <= 0.03) {
-      // ── Not in profit + flat — waiting for the move to begin ──────────
-      const isLate = isScalp ? daysSinceEntry > 5 : timeOverrun;
-      statusIcon = '⏳';
-      statusColor = isLate && entryConfidence === 'low' ? '#ef4444' : '#f5a623';
-      statusBg = isLate && entryConfidence === 'low' ? 'rgba(239,68,68,0.06)' : 'rgba(245,166,35,0.07)';
-      if (isLate) {
-        statusLine = isScalp ? 'Scalp taking longer than the window — watching closely' : 'Trade in a holding pattern — past estimated timeline';
-        statusDetail = isScalp
-          ? `Day ${Math.floor(daysSinceEntry)}: ratio ${velDesc}. Scalps typically resolve in 2–7 days. ${entryConfidence === 'strong' || entryConfidence === 'good' ? `Your ${scoreLabel} ${entryScore} entry gives a real edge — the move can still come.` : `Monitor daily.`} The exit warning system above will trigger if this becomes genuinely concerning.`
-          : `${Math.floor(daysSinceEntry)} days in, past the estimated ${Math.round(estDays)}-day window, but ratio is ${velDesc} — no clear deterioration. ${entryConfidence === 'strong' || entryConfidence === 'good' ? `Strong entry (${scoreLabel} ${entryScore}) — the thesis is intact, the pair just needs more time.` : `Consider whether to hold for the full recovery or redeploy.`} Est. ${exitLabel}.`;
-      } else {
-        statusLine = isScalp ? 'Holding — ratio flat, watching for the trigger' : 'Building — ratio setting up before the move';
-        statusDetail = `${Math.floor(daysSinceEntry)} day${daysSinceEntry>=2?'s':''} in. The ratio is ${velDesc} — the mean-reversion engine is loading, not failing. ${isScalp ? 'Scalps trigger fast once they move — 2–7 day window.' : 'Swing setups often have a flat consolidation phase before they break toward the exit.'} Progress toward exit: ${progressToExit > 0 ? progressToExit.toFixed(0)+'%' : 'building'}. Est. ${exitLabel}.${confSuffix}`;
-      }
-
-    } else {
-      // ── Not in profit + ratio drifting away — extended timeline only ──
-      // This is NOT a "you are losing" message. The trade extends — it doesn't break.
-      // Only the exit warning system (3+ independent signals) can flag a genuinely broken trade.
-      const deepening = progressToExit < -30;
-      statusIcon = deepening ? '⚠️' : '⏳';
-      statusColor = deepening && entryConfidence === 'low' ? '#ef4444' : '#f5a623';
-      statusBg = deepening && entryConfidence === 'low' ? 'rgba(239,68,68,0.07)' : 'rgba(245,166,35,0.07)';
-      statusLine = deepening
-        ? 'Ratio extended further — timeline lengthening'
-        : 'Ratio pulling back slightly — within normal swing variance';
-      statusDetail = deepening
-        ? `The pair ratio has moved ${Math.abs(progressToExit).toFixed(0)}% deeper than the entry point over the last ${velN} days. This extends the time to the exit, not the eventual outcome. ${entryConfidence === 'strong' || entryConfidence === 'good' ? `Your ${scoreLabel} ${entryScore} entry at Z ${entryZ.toFixed(2)} gives a real statistical edge — deeper Z just means a larger recovery when it comes. ` : `Monitor the exit warning system above for multi-signal alerts. `}Est. ${exitLabel}.`
-        : `Ratio drifted ${(Math.abs(velocityZ)*velN).toFixed(1)} Z-points in the wrong direction over ${velN} days — normal oscillation in swing trades. Current position: ${progDesc}. The exit warning system (3 independent signals) will alert you if this becomes structural. Est. ${exitLabel}.${confSuffix}`;
-    }
-  }
-
-  // ── Progress bar (the journey) ── exitThreshold already defined above
-  const rangeMin = -3, rangeMax = 2.5, rangeTotal = rangeMax - rangeMin;
-  const toPct = z => Math.max(1, Math.min(99, (z - rangeMin) / rangeTotal * 100));
-  const entryPct   = toPct(entryZ);
-  const currentPct = toPct(currentZ);
-  const meanPct    = toPct(0);
-  const exitPct    = toPct(exitThreshold);
-  // Filled segment: from entry up to current (shows how far we've traveled)
-  const fillLeft  = Math.min(entryPct, currentPct);
-  const fillWidth = Math.abs(currentPct - entryPct);
-  const dotColor  = currentZ > 0.3 ? '#00c076' : currentZ > -0.8 ? '#f5a623' : '#ef4444';
-
-  // displayGain and targetLabel already defined above (before status messages)
-  const nowLabel = (displayGain >= 0 ? '+' : '') + displayGain.toFixed(1) + '%';
-  const monitorNowId = 'monitor-now-' + tr.id.replace(/[^a-z0-9]/gi,'_');
-  const dayStr = daysSinceEntry < 1 ? 'today' : daysSinceEntry < 2 ? '1 day ago' : `${Math.floor(daysSinceEntry)} days ago`;
-  // exitLabel and exitSubLabel already defined above
-  const decFmt = v => v > 1 ? v.toFixed(4) : v.toFixed(7);
-
-  return `
-    <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:.75rem">
-
-      <!-- Header strip -->
-      <div style="background:var(--bg3);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.3px">📡 Trade Progress</div>
-          ${isScalp
-            ? `<span style="font-size:9px;font-family:monospace;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(245,166,35,0.15);color:#f5a623;border:1px solid rgba(245,166,35,0.4)">⚡ QUICK SCALP</span>`
-            : `<span style="font-size:9px;font-family:monospace;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(59,143,255,0.12);color:#3b8fff;border:1px solid rgba(59,143,255,0.4)">📊 SWING TRADE</span>`}
-        </div>
-        <div style="font-size:10px;color:var(--text3)">started ${dayStr}</div>
-      </div>
-
-      <div style="padding:16px">
-
-        <!-- Exit warning — only shown when trade is genuinely broken -->
-        ${exitWarning ? `
-        <div style="background:rgba(239,68,68,0.10);border:2px solid rgba(239,68,68,${exitWarning.severity==='high'?'0.6':'0.35'});border-radius:10px;padding:14px 16px;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:20px;line-height:1">${exitWarning.icon}</span>
-            <div style="font-size:13px;font-weight:700;color:#ef4444">${exitWarning.headline}</div>
-          </div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:8px">${exitWarning.detail}</div>
-          <div style="font-size:10px;font-family:monospace;color:rgba(239,68,68,0.7);border-top:1px solid rgba(239,68,68,0.2);padding-top:6px">
-            ℹ️ This alert is rare and only shown when the data is clearly against the trade. The final decision is always yours.
-          </div>
-        </div>` : ''}
-
-        <!-- Add-on opportunity — plain info, not an alert -->
-        ${addOnOpportunity ? `
-        <div style="background:rgba(59,143,255,0.08);border:1px solid rgba(59,143,255,0.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
-          <span style="font-size:18px;line-height:1">➕</span>
-          <div style="font-size:12px;color:var(--text2);line-height:1.6">
-            <span style="font-weight:700;color:#3b8fff">Rate improved for adding more</span> — ${tr.assetA} now buys ${Math.abs(rawDropPct).toFixed(1)}% more ${curAsset} than your ${posSwaps.length > 1 ? 'blended average entry' : 'entry'} (raw ratio move, fees not counted). If you have more ${tr.assetA} to put into this swap, this is a better rate than what you already got${posSwaps.length > 1 ? ' on average' : ''}${remainingBudget > 0 ? ` — about ${remainingBudget.toFixed(4)} ${tr.assetA} left of this tracker's planned ${tr.startAmount} ${tr.assetA} total` : ''}. Log it as another swap into ${curAsset} on this tracker and it'll blend into your average automatically.
-          </div>
-        </div>` : ''}
-
-        <!-- Reversion Confidence Trend — new, informational only, only for stalled positions -->
-        ${reversionTrend ? `
-        <div style="background:${reversionTrend.tone==='good' ? 'rgba(0,192,118,0.08)' : 'rgba(245,166,35,0.08)'};border:1px solid ${reversionTrend.tone==='good' ? 'rgba(0,192,118,0.3)' : 'rgba(245,166,35,0.3)'};border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
-          <span style="font-size:18px;line-height:1">${reversionTrend.tone==='good' ? '📶' : '📉'}</span>
-          <div style="font-size:12px;color:var(--text2);line-height:1.6">
-            <span style="font-weight:700;color:${reversionTrend.tone==='good' ? '#00c076' : '#f5a623'}">Reversion confidence has ${reversionTrend.label}</span> since you entered this stalled position — not a sell signal (this app never tells you to close at a loss), just an update on whether the statistical case for this pair eventually reverting is getting stronger or weaker the longer it sits open. In backtesting across this app's own coin pool, positions in this situation went on to resolve within 150 days about ${reversionTrend.resolvedPct} of the time when confidence had ${reversionTrend.label} like this one — worth knowing while you wait, not a reason to act on its own.
-          </div>
-        </div>` : ''}
-
-        <!-- Status message -->
-        <div style="background:${statusBg};border-radius:8px;padding:11px 14px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start">
-          <span style="font-size:20px;line-height:1">${statusIcon}</span>
-          <div>
-            <div style="font-size:14px;font-weight:700;color:${statusColor};margin-bottom:3px">${statusLine}</div>
-            <div style="font-size:12px;color:var(--text2);line-height:1.6">${statusDetail}</div>
-          </div>
-        </div>
-
-        <!-- ══ ENTRY CONTEXT — what was the signal quality when you entered ══ -->
-        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:14px;gap:8px;flex-wrap:wrap">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:11px;color:var(--text3);font-family:monospace">Entry signal</span>
-            ${entryScore > 0
-              ? `<span style="font-size:12px;font-family:monospace;font-weight:700;color:${entryConfidence==='strong'?'#00c076':entryConfidence==='good'?'#3b8fff':entryConfidence==='fair'?'#f5a623':'#ef4444'}">${scoreLabel} ${entryScore}</span>
-                 <span style="font-size:10px;font-family:monospace;padding:1px 6px;border-radius:4px;background:${entryConfidence==='strong'?'rgba(0,192,118,0.12)':entryConfidence==='good'?'rgba(59,143,255,0.10)':entryConfidence==='fair'?'rgba(245,166,35,0.10)':'rgba(239,68,68,0.10)'};color:${entryConfidence==='strong'?'#00c076':entryConfidence==='good'?'#3b8fff':entryConfidence==='fair'?'#f5a623':'#ef4444'};border:1px solid currentColor">${entryConfidence.toUpperCase()}</span>`
-              : `<span style="font-size:11px;font-family:monospace;color:var(--text3)">score not recorded</span>`}
-          </div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="text-align:right">
-              <div style="font-size:9px;color:var(--text3);letter-spacing:.3px">Z AT ENTRY</div>
-              <div style="font-size:12px;font-family:monospace;font-weight:700;color:${entryZ < -1.2 ? '#00c076' : entryZ < -0.7 ? '#f5a623' : 'var(--text2)'}">${entryZ.toFixed(2)}</div>
-            </div>
-            <div style="text-align:right">
-              <div style="font-size:9px;color:var(--text3);letter-spacing:.3px">JOURNEY</div>
-              <div style="font-size:12px;font-family:monospace;font-weight:700;color:${progressToExit > 40 ? '#00c076' : progressToExit > 10 ? '#f5a623' : 'var(--text2)'}">${Math.max(0,progressToExit).toFixed(0)}%</div>
-            </div>
-            <div style="text-align:right">
-              <div style="font-size:9px;color:var(--text3);letter-spacing:.3px">VELOCITY</div>
-              <div style="font-size:12px;font-family:monospace;font-weight:700;color:${velocityZ > 0.05 ? '#00c076' : velocityZ > -0.05 ? '#f5a623' : '#ef4444'}">${velocityZ >= 0 ? '+' : ''}${(velocityZ*10).toFixed(2)}<span style="font-size:8px;font-weight:400">/10d</span></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Blended-position note — only shown when this is more than one swap -->
-        ${posSwaps.length > 1 ? `
-        <div style="font-size:10px;color:var(--text3);font-family:monospace;margin:-8px 0 14px 2px">
-          ➕ built from ${posSwaps.length} swaps · ${totalFromAmt.toFixed(6).replace(/\.?0+$/,'')} ${tr.assetA} → ${totalToAmt.toFixed(6).replace(/\.?0+$/,'')} ${curAsset} · blended entry rate ${decFmt(totalToAmt/totalFromAmt)}
-        </div>` : ''}
-
-        <!-- ══ JOURNEY BAR ══ -->
-        <div style="margin-bottom:20px">
-
-          <!-- Step labels above bar -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;margin-bottom:8px;font-size:10px;font-family:monospace">
-            <div style="color:var(--text3)">① You entered here</div>
-            <div style="text-align:center;color:var(--text3)">② Halfway point</div>
-            <div style="text-align:right;color:#00c076">③ Sell here ✓</div>
-          </div>
-
-          <!-- The bar -->
-          <div style="position:relative;height:22px;background:rgba(255,255,255,0.05);border-radius:11px;overflow:visible">
-
-            <!-- Background gradient zones: left=danger, right=profit -->
-            <div style="position:absolute;inset:0;border-radius:11px;background:linear-gradient(to right,rgba(239,68,68,0.12) 0%,rgba(245,166,35,0.08) 45%,rgba(0,192,118,0.15) 75%,rgba(0,192,118,0.30) 100%);overflow:hidden"></div>
-
-            <!-- Traveled segment (entry → current) -->
-            <div style="position:absolute;top:3px;bottom:3px;left:${fillLeft}%;width:${fillWidth}%;background:${dotColor};opacity:0.4;border-radius:8px;transition:width .5s"></div>
-
-            <!-- Mean divider -->
-            <div style="position:absolute;left:${meanPct}%;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.20);border-radius:1px"></div>
-
-            <!-- Exit zone marker -->
-            <div style="position:absolute;left:${exitPct}%;top:0;bottom:0;width:3px;background:rgba(0,192,118,0.7);border-radius:2px"></div>
-
-            <!-- Entry dot (hollow) -->
-            <div style="position:absolute;left:${entryPct}%;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border:2px solid rgba(255,255,255,0.35);border-radius:50%;background:var(--bg2)"></div>
-
-            <!-- Current position (glowing dot) -->
-            <div style="position:absolute;left:${currentPct}%;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;background:${dotColor};border:3px solid var(--bg2);border-radius:50%;box-shadow:0 0 10px ${dotColor},0 0 20px ${dotColor}55;z-index:2"></div>
-
-          </div>
-
-          <!-- Labels below bar -->
-          <div style="position:relative;height:28px;margin-top:6px;font-size:10px;font-family:monospace">
-            <span style="position:absolute;left:${Math.max(0,entryPct-2)}%;transform:translateX(-${entryPct>80?100:0}%);color:rgba(255,255,255,0.35)">entered</span>
-            <span style="position:absolute;left:${meanPct}%;transform:translateX(-50%);color:var(--text3)">normal price</span>
-            <span style="position:absolute;left:${exitPct}%;transform:translateX(-50%);color:#00c076;font-weight:700">sell zone</span>
-            <!-- current value floating above dot -->
-            <span style="position:absolute;left:${currentPct}%;transform:translateX(-50%);top:0;color:${dotColor};font-weight:700;white-space:nowrap">${nowLabel} now</span>
-          </div>
-
-        </div>
-
-        <!-- 4 key numbers -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-          <div style="background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--border)">
-            <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Days held</div>
-            <div style="font-size:20px;font-weight:700;color:var(--text)">${Math.floor(daysSinceEntry)}</div>
-            <div style="font-size:9px;color:var(--text3)">days</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--border)">
-            <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Right now</div>
-            <div id="${monitorNowId}" style="font-size:20px;font-weight:700;color:${displayGain>=0?'#00c076':'#ef4444'}">${nowLabel}</div>
-            <div style="font-size:9px;color:var(--text3)">if you sold now</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--border)">
-            <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Potential gain</div>
-            <div style="font-size:20px;font-weight:700;color:#00c076">${targetLabel}</div>
-            <div style="font-size:9px;color:var(--text3)">if held to exit</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:8px;padding:10px 8px;text-align:center;border:1px solid var(--border)">
-            <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Est. sell in</div>
-            <div style="font-size:20px;font-weight:700;color:${currentZ>1.2?'#00c076':'var(--text)'}">${exitLabel}</div>
-            <div style="font-size:9px;color:var(--text3)">${exitSubLabel}</div>
-          </div>
-        </div>
-
-        <!-- Analyze link -->
-        <div style="margin-top:12px;text-align:right">
-          <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="font-family:monospace;font-size:10px;padding:4px 12px;border-radius:6px;border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text3)">Open full analysis →</button>
-        </div>
-
-      </div>
-    </div>`;
-}
-
-async function buildTrackerSignal(tr, curAsset, signalId, currentGrowth){
-  const sigEl=document.getElementById(signalId);
-  if(!sigEl) return;
-
-  const holdingBase=curAsset===tr.assetA;
-
-  // Two-coin tracker: only assetA ↔ assetB — no 3rd coins involved
-
-  if(!holdingBase){
-    // Show loading placeholder, then fill in async
-    sigEl.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:12px 16px;margin-bottom:.75rem">
-      <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:6px">📡 LIVE TRADE MONITOR</div>
-      <div style="font-size:11px;color:var(--text3)">⏳ Analysing your position...</div>
-    </div>`;
-
-    // Fetch live monitor + swap-back score in parallel
-    const [monitorHtml, res] = await Promise.all([
-      buildLiveMonitor(tr, curAsset, currentGrowth),
-      getScoreForPair(curAsset, tr.assetA)
-    ]);
-    if(!sigEl.isConnected) return;
-
-    const score  = res ? res.score : 0;
-    const isGo   = res?.qss?.isGo;
-    const profit = currentGrowth || 0;
-    const t1     = res ? Math.abs(res.trend1||0) : 0;
-    const isSpike= t1 > 6 && score >= 45;
-
-    // Spike banner (always shown if detected)
-    const spikeBannerHtml = isSpike
-      ? `<div style="background:rgba(245,166,35,0.1);border:2px solid rgba(245,166,35,0.5);border-radius:var(--rs);padding:8px 14px;margin-bottom:8px">
-          <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">⚡ SPIKE DETECTED — ${curAsset} moved ${t1.toFixed(1)}% in 24h</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:3px">News moves don't last — this may be your exit window. Act before it reverses.</div>
-         </div>` : '';
-
-    // Exit signal banner — shown on top of monitor when swap-back conditions met
-    let exitBannerHtml = '';
-    if (isSpike || isGo || (profit >= 1 && score <= 20)) {
-      const col    = '#00c076', bg = 'rgba(0,192,118,0.1)', border = 'rgba(0,192,118,0.4)';
-      const title  = isSpike ? '⚡ EXIT NOW — spike detected' : isGo
-        ? '✅ SWAP BACK NOW — confirmed by QSS' : '✅ CONSIDER SWAPPING BACK';
-      const body   = isSpike
-        ? `${curAsset} spiked ${t1.toFixed(1)}% in 24h. News moves don't last — lock in your +${profit.toFixed(2)}% profit now.`
-        : isGo
-          ? `${curAsset} is at a confirmed ratio peak vs ${tr.assetA}. QSS ${score}/100 — the overextension is real and confirmed. You have +${profit.toFixed(2)}% profit. Close this position.`
-          : `${curAsset} is weakening vs ${tr.assetA} (QSS ${score}). You have +${profit.toFixed(2)}% — consider closing before it gives back gains.`;
-      exitBannerHtml = `<div style="background:${bg};border:2px solid ${border};border-radius:var(--rs);padding:10px 14px;margin-bottom:8px">
-        <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:4px">🔔 EXIT SIGNAL TRIGGERED</div>
-        <div style="font-size:14px;font-weight:700;color:${col};margin-bottom:4px">${title}</div>
-        <div style="font-size:11px;color:var(--text2);line-height:1.5">${body}</div>
-        <button onclick="switchAnalyzerPair('${curAsset}','${tr.assetA}')" style="margin-top:8px;font-family:monospace;font-size:10px;padding:4px 10px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Confirm in analyzer →</button>
-      </div>`;
-    } else if (profit >= 1 && score >= 45) {
-      exitBannerHtml = `<div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.3);border-radius:var(--rs);padding:8px 14px;margin-bottom:8px">
-        <div style="font-size:10px;font-family:monospace;color:#f5a623;font-weight:700">💰 +${profit.toFixed(2)}% profit — watch for exit</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">Ratio is mixed (QSS ${score}). You're in profit. Check daily — exit when QSS confirms a real go signal.</div>
-      </div>`;
-    }
-
-    const monitorFallback = `
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:.75rem;text-align:center">
-        <div style="font-size:13px;color:var(--text3);margin-bottom:4px">📡 Trade Progress</div>
-        <div style="font-size:11px;color:var(--text3)">Chart data unavailable right now — score and signals above are still live.</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:4px">Try refreshing or check back in a minute.</div>
-      </div>`;
-    sigEl.innerHTML = spikeBannerHtml + exitBannerHtml + (monitorHtml || monitorFallback);
-    return;
-  }
-
-  // Holding base — check only assetB (two-coin tracker, no 3rd coins)
-  sigEl.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-    <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:4px">SWAP SIGNAL — ${tr.assetA} → ${tr.assetB}</div>
-    <div style="font-size:12px;color:var(--text2)">⏳ Fetching live score...</div>
-  </div>`;
-
-  const res = await getScoreForPair(tr.assetA, tr.assetB);
-  if(!sigEl.isConnected) return;
-
-  const score = res ? res.score : 0;
-  const isGo  = res?.qss?.isGo;
-  const col    = isGo?'#00c076':score>=45?'#f5a623':'#ef4444';
-  const bg     = isGo?'rgba(0,192,118,0.1)':score>=45?'rgba(245,166,35,0.08)':'rgba(239,68,68,0.06)';
-  const border = isGo?'rgba(0,192,118,0.45)':score>=45?'rgba(245,166,35,0.35)':'rgba(239,68,68,0.3)';
-  const verdict= isGo?'✅ SWAP NOW — signal confirmed'
-               : score>=45?'⚠️ APPROACHING — wait for a confirmed go'
-               : score>=25?'👁 WATCH — no signal yet'
-               : '⛔ HOLD — conditions not met';
-  const body   = isGo
-    ? `${tr.assetB} is overextended vs ${tr.assetA} (QSS ${score}/100). Good time to swap ${tr.assetA} → ${tr.assetB}.`
-    : score>=45
-    ? `Signal building (QSS ${score}/100). Not enough conviction yet — check again tomorrow.`
-    : `No swap signal for ${tr.assetA} → ${tr.assetB} right now (QSS ${score}/100). Stay in ${tr.assetA} and monitor daily.`;
-
-  if(!res){
-    sigEl.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-      <div style="color:var(--text3);font-size:12px">Could not fetch data. Check connection.</div>
-    </div>`;
-    return;
-  }
-
-  sigEl.innerHTML=`<div style="background:${bg};border:2px solid ${border};border-radius:var(--rs);padding:10px 14px;margin-bottom:.75rem">
-    <div style="font-size:10px;font-family:monospace;color:${col};font-weight:700;margin-bottom:6px">SWAP SIGNAL — holding ${tr.assetA}</div>
-    <div style="font-size:16px;font-weight:700;color:${col};margin-bottom:4px">${verdict}</div>
-    <div style="font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:8px">${body}</div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <span style="font-family:monospace;font-size:22px;font-weight:700;color:${col}">QSS ${score}<span style="font-size:12px;opacity:.6">/100</span></span>
-      <button onclick="switchAnalyzerPair('${tr.assetA}','${tr.assetB}')" style="font-family:monospace;font-size:10px;padding:4px 12px;border-radius:var(--rs);border:1px solid ${col};cursor:pointer;background:transparent;color:${col}">Analyze ${tr.assetA}→${tr.assetB} →</button>
-    </div>
-  </div>`;
-}
 
 /* ── Growth chart ── */
 function renderGrowthChart(tr){
-  const canvas=document.getElementById('stGrowthChart');
-  if(!canvas) return;
-  const wrap=canvas.parentElement;
-  const W=wrap.clientWidth||600, H=240;
-  const DPR=window.devicePixelRatio||1;
-  canvas.width=W*DPR; canvas.height=H*DPR;
-  canvas.style.width=W+'px'; canvas.style.height=H+'px';
-  const ctx=canvas.getContext('2d');
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.scale(DPR,DPR);
-  ctx.fillStyle='#12151f'; ctx.fillRect(0,0,W,H);
-
-  const swaps=tr.swaps||[];
-
-  // Build data points: start at 0% growth, each swap adds a point
-  // Y axis = % change from starting amount (in base asset)
-  const points=[{label:'Start',date:'',pct:0,amt:tr.startAmount,asset:tr.assetA}];
-  let curAsset=tr.assetA, curAmt=tr.startAmount;
-  swaps.forEach((sw,i)=>{
-    if(sw.fromAsset===curAsset){ curAmt=sw.toAmt; curAsset=sw.toAsset; }
-    else if(sw.fromAsset===tr.assetA && sw.toAsset===curAsset){ curAmt+=sw.toAmt; } // topping up
-    else return;
-    // estimate base equivalent from current holding
-    let baseEquiv=null;
-    if(curAsset===tr.assetA){
-      baseEquiv=curAmt; // exact
-    } else {
-      // Scan all swaps so far for a rate between curAsset and assetA
-      const doneSoFar=(tr.swaps||[]).slice(0,i+1);
-      for(let k=doneSoFar.length-1;k>=0;k--){
-        const s=doneSoFar[k];
-        if(s.fromAsset===curAsset&&s.toAsset===tr.assetA){baseEquiv=curAmt*(s.toAmt/s.fromAmt);break;}
-        if(s.toAsset===curAsset&&s.fromAsset===tr.assetA){baseEquiv=curAmt*(s.fromAmt/s.toAmt);break;}
-      }
-    }
-    if(baseEquiv===null) return; // can't estimate yet
-    const pct=((baseEquiv-tr.startAmount)/tr.startAmount)*100;
-    points.push({
-      label:'Swap '+(i+1),
-      date:sw.date?sw.date.slice(5):'',
-      pct:parseFloat(pct.toFixed(3)),
-      amt:curAmt,
-      asset:curAsset
-    });
-  });
-
-  if(points.length<2){
-    ctx.fillStyle='#454d66'; ctx.font='12px monospace'; ctx.textAlign='center';
-    ctx.fillText('Add swaps to see the growth chart',W/2,H/2-8);
-    ctx.fillStyle='#2a2e3e'; ctx.font='10px monospace';
-    ctx.fillText('Start: '+tr.startAmount+' '+tr.assetA,W/2,H/2+12);
-    return;
-  }
-
-  const pad={l:56,r:16,t:28,b:52};
-  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
-  const allPct=points.map(p=>p.pct);
-  const lo=Math.min(...allPct,0), hi=Math.max(...allPct,0);
-  const rng=Math.max(hi-lo,0.1);
-  const yMin=lo-rng*0.15, yMax=hi+rng*0.15;
-  const yRng=yMax-yMin;
-
-  function px(i){return pad.l+i/(points.length-1)*cW;}
-  function py(v){return pad.t+cH-(v-yMin)/yRng*cH;}
-
-  // Grid
-  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
-  for(let i=0;i<=5;i++){const y=pad.t+cH*i/5;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();}
-
-  // Y labels
-  ctx.fillStyle='#454d66'; ctx.font='10px monospace'; ctx.textAlign='right';
-  for(let i=0;i<=5;i++){
-    const v=yMax-(yMax-yMin)*i/5;
-    ctx.fillText((v>=0?'+':'')+v.toFixed(1)+'%',pad.l-5,pad.t+cH*i/5+4);
-  }
-
-  // Zero line
-  const z=py(0);
-  ctx.strokeStyle='rgba(122,128,153,0.4)'; ctx.lineWidth=1; ctx.setLineDash([5,3]);
-  ctx.beginPath();ctx.moveTo(pad.l,z);ctx.lineTo(W-pad.r,z);ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle='rgba(122,128,153,0.55)'; ctx.font='9px monospace'; ctx.textAlign='left';
-  ctx.fillText('0% (start: '+tr.startAmount+' '+tr.assetA+')',pad.l+4,z-4);
-
-  // Area fill
-  const lastPct=points[points.length-1].pct;
-  const grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
-  if(lastPct>=0){grad.addColorStop(0,'rgba(0,192,118,0.28)');grad.addColorStop(1,'rgba(0,192,118,0.02)');}
-  else{grad.addColorStop(0,'rgba(239,68,68,0.02)');grad.addColorStop(1,'rgba(239,68,68,0.22)');}
-  ctx.fillStyle=grad;
-  ctx.beginPath();
-  ctx.moveTo(px(0),py(0));
-  points.forEach((p,i)=>{
-    if(i===0) return;
-    const prev=points[i-1];
-    const cpx=(px(i-1)+px(i))/2;
-    ctx.bezierCurveTo(cpx,py(prev.pct),cpx,py(p.pct),px(i),py(p.pct));
-  });
-  ctx.lineTo(px(points.length-1),z);
-  ctx.lineTo(px(0),z);
-  ctx.closePath(); ctx.fill();
-
-  // Line segments — color by direction
-  for(let i=1;i<points.length;i++){
-    const prev=points[i-1],cur=points[i];
-    ctx.beginPath();
-    ctx.strokeStyle=cur.pct>=prev.pct?'#00c076':'#ef4444';
-    ctx.lineWidth=2.5; ctx.setLineDash([]);
-    const cpx=(px(i-1)+px(i))/2;
-    ctx.moveTo(px(i-1),py(prev.pct));
-    ctx.bezierCurveTo(cpx,py(prev.pct),cpx,py(cur.pct),px(i),py(cur.pct));
-    ctx.stroke();
-  }
-
-  // Dots + labels
-  points.forEach((p,i)=>{
-    const x=px(i),y=py(p.pct);
-    const col=p.pct>0?'#00c076':p.pct<0?'#ef4444':'#7a8099';
-
-    // Larger dot for last point
-    const isLast=i===points.length-1;
-    const dotR=isLast?7:5;
-    ctx.fillStyle=isLast?col:'rgba(0,0,0,0)';
-    if(isLast){ctx.beginPath();ctx.arc(x,y,dotR+3,0,Math.PI*2);ctx.fillStyle='rgba(0,192,118,0.15)';if(col==='#ef4444')ctx.fillStyle='rgba(239,68,68,0.15)';ctx.fill();}
-    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,y,dotR,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,dotR*0.45,0,Math.PI*2); ctx.fill();
-
-    if(i===0){
-      // Start label
-      ctx.fillStyle='#545c78'; ctx.font='9px monospace'; ctx.textAlign='center';
-      ctx.fillText('Start',x,H-pad.b+13);
-      ctx.fillText(tr.startAmount+' '+tr.assetA,x,H-pad.b+24);
-    } else {
-      // % label above dot
-      ctx.fillStyle=col; ctx.font='bold 10px monospace'; ctx.textAlign='center';
-      const above=p.pct>=0;
-      ctx.fillText((p.pct>=0?'+':'')+p.pct.toFixed(1)+'%',x,y-(above?15:-5));
-
-      // Show base-equiv amount if this is a return-to-base swap
-      if(p.asset===tr.assetA){
-        const profitAmt=p.amt-tr.startAmount;
-        ctx.fillStyle='#545c78'; ctx.font='9px monospace';
-        ctx.fillText(p.amt.toFixed(3)+' '+p.asset,x,y-(above?27:-17));
-      } else {
-        ctx.fillStyle='#545c78'; ctx.font='9px monospace';
-        ctx.fillText(p.amt.toFixed(3)+' '+p.asset,x,y-(above?27:-17));
-      }
-
-      // X axis label
-      ctx.fillStyle='#545c78'; ctx.font='9px monospace'; ctx.textAlign='center';
-      ctx.fillText(p.label,x,H-pad.b+13);
-      if(p.date) ctx.fillText(p.date,x,H-pad.b+24);
-    }
-  });
-
+  const canvas=document.getElementById('stGrowthChart');if(!canvas)return;
+  const width=canvas.parentElement.clientWidth||600,height=200,dpr=window.devicePixelRatio||1;
+  canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.height=height+'px';canvas.style.width='100%';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.font='12px Segoe UI';ctx.fillStyle='#bed0de';
+  const cycles=trackerLedger(tr).cycles;
+  if(!cycles.length){ctx.fillText('Completed-cycle gains will appear here. Open holdings are shown above.',16,80);return;}
+  let sum=0;const values=[0,...cycles.map(c=>(sum+=c.profit))],lo=Math.min(...values),hi=Math.max(...values),range=hi-lo||1;
+  const point=(v,i)=>[50+i/(values.length-1)*(width-75),150-(v-lo)/range*105];
+  ctx.strokeStyle='#72d9b3';ctx.lineWidth=2;ctx.beginPath();values.forEach((v,i)=>{const [x,y]=point(v,i);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+  ctx.fillText('Realized accumulation: '+coinAmount(sum)+' '+tr.assetA,16,22);ctx.fillText(cycles.length+' completed cycle(s); open holdings excluded',16,185);
 }
 
 /* ── Swap table ── */
@@ -4620,13 +3624,10 @@ function renderSwapTable(tr){
     // Growth in base asset:
     // if this swap returned to assetA, compare to starting amount
     let growthHtml='—';
-    if(sw.toAsset===tr.assetA){
-      const pct=((sw.toAmt-tr.startAmount)/tr.startAmount)*100;
-      const col=pct>=0?'#00c076':'#ef4444';
-      growthHtml=`<span style="font-family:monospace;font-weight:700;color:${col}">${pct>=0?'+':''}${pct.toFixed(2)}%<br><small style="font-weight:400;color:var(--text2)">${sw.toAmt.toFixed(4)} ${tr.assetA}</small></span>`;
-    } else {
-      growthHtml=`<span style="color:var(--text3);font-size:11px">open →${sw.toAsset}</span>`;
-    }
+    const partial=trackerLedger({...tr,swaps:swaps.slice(0,i+1)});
+    const stillOpen=Object.entries(partial.balances).some(([a,n])=>a!==tr.assetA&&n>1e-8);
+    if(!stillOpen){const profit=(partial.balances[tr.assetA]||0)-partial.capital;growthHtml=escapeHtml(coinAmount(profit)+' '+tr.assetA+' net');}
+    else growthHtml='<span class="muted">Position remains open</span>';
     const sc=sw.score||0;
     const scCol=sc>=70?'#00c076':sc<=30?'#ef4444':'#f5a623';
     // direction arrow color
@@ -4651,7 +3652,7 @@ function renderSwapTable(tr){
       </td>
       <td>${growthHtml}</td>
       <td style="font-family:monospace;font-weight:700;color:${scCol}">${sw.score||'—'}</td>
-      <td style="color:var(--text2);font-size:11px;max-width:120px">${sw.notes||''}</td>
+      <td style="color:var(--text2);font-size:11px;max-width:120px">${escapeHtml(sw.notes)}</td>
       <td style="white-space:nowrap">
         <button class="st-edit-btn" data-idx="${i}">&#9998;</button>
         <button class="st-del-btn" data-idx="${i}">&#10005;</button>
@@ -4667,6 +3668,7 @@ function renderSwapTable(tr){
       const t=trackers.find(x=>x.id===activeTrackerId);
       if(!t) return;
       t.swaps.splice(parseInt(btn.dataset.idx),1);
+      const issue=validateSwapHistory(t);if(issue){alert(issue);return;}
       saveTrackers(trackers);
       renderDetailView();
     };
@@ -4678,6 +3680,7 @@ function renderSwapTable(tr){
       const t=trackers.find(x=>x.id===activeTrackerId);
       if(!t) return;
       const sw=t.swaps[parseInt(btn.dataset.idx)];
+      document.getElementById('swapDirection').innerHTML='';
       /* Respect base-asset rules when editing */
       const editBase=sw.fromAsset===t.assetA;
       if(editBase){
@@ -4725,12 +3728,13 @@ function setSwapType(type){
 
 /* ── Swap form ── */
 function resetSwapForm(tr){
+  setupSwapDirection(tr);
   const form=document.getElementById('stSwapForm');
   document.getElementById('sf-date').value=new Date().toISOString().slice(0,10);
   // Pre-fill "amount sent" with what we currently hold
   const _swaps=tr?tr.swaps||[]:[];
   const _lastSwap=_swaps.length?_swaps[_swaps.length-1]:null;
-  const _prefill=_lastSwap?_lastSwap.toAmt:(tr?tr.startAmount:'');
+  const _prefill=tr?currentHolding(tr).amount:'';
   document.getElementById('sf-from-amt').value=_prefill||'';
   document.getElementById('sf-to-amt').value='';
   setSwapType('scalp'); // QSS is the only score now — every trade is scalp-style
@@ -4745,8 +3749,7 @@ function resetSwapForm(tr){
 
   // Figure out what asset we currently hold
   const swaps=tr.swaps||[];
-  let curAsset=tr.assetA;
-  swaps.forEach(sw=>{if(sw.fromAsset===curAsset) curAsset=sw.toAsset;});
+  let curAsset=currentHolding(tr).asset;
 
   const holdingBase=curAsset===tr.assetA;
   const _fromA=holdingBase?tr.assetA:curAsset;
@@ -4772,7 +3775,7 @@ function resetSwapForm(tr){
     const scoreEl=document.getElementById('sf-score');
     const zEl=document.getElementById('sf-entry-z');
     if(scoreEl) scoreEl.placeholder='e.g. 78';
-    if(!res) return;
+    if(!res || document.getElementById('sf-from-asset').value!==_fromA || document.getElementById('sf-to-asset').value!==_toA) return;
     if(scoreEl && !scoreEl.value) scoreEl.value=res.score;
     if(zEl && !zEl.value && res.qss) zEl.value=res.qss.z30.toFixed(4);
   }).catch(()=>{
@@ -4819,11 +3822,12 @@ function bindSwapForm(tr){
     const toAsset=document.getElementById('sf-to-asset').value;
     const toAmt=parseFloat(document.getElementById('sf-to-amt').value);
     const score=parseInt(document.getElementById('sf-score').value)||null;
-    const storedEntryZ=parseFloat(document.getElementById('sf-entry-z').value)||null;
+    const zInput=parseFloat(document.getElementById('sf-entry-z').value);
+    const storedEntryZ=Number.isFinite(zInput)?zInput:null;
     const notes=document.getElementById('sf-notes').value.trim();
     const tradeType=document.getElementById('sf-trade-type')?.value||'swing';
 
-    if(!date||!fromAsset||!toAsset||isNaN(fromAmt)||isNaN(toAmt)||fromAmt<=0||toAmt<=0){
+    if(!date||!fromAsset||!toAsset||!Number.isFinite(fromAmt)||!Number.isFinite(toAmt)||fromAmt<=0||toAmt<=0){
       alert('Please fill in date, assets, and amounts.');return;
     }
     if(fromAsset===toAsset){alert('From and To assets must be different.');return;}
@@ -4843,6 +3847,8 @@ function bindSwapForm(tr){
       t.swaps.push(swap);
       t.swaps.sort((a,b)=>a.date.localeCompare(b.date));
     }
+    const ledgerCheck=validateSwapHistory(t);
+    if(ledgerCheck){alert(ledgerCheck);return;}
     saveTrackers(trackers);
     document.getElementById('stSwapForm').style.display='none';
     newSave.textContent='Save swap';
@@ -4870,7 +3876,7 @@ function switchAnalyzerPair(assetA,assetB){
 }
 
 /* ══════════════════════════════════════
-   BEST SWAP NOW
+   BEST CYCLE CANDIDATE
 ══════════════════════════════════════ */
 function initBestSwapNow(){
   const grid=document.getElementById('bsnCoinGrid');
@@ -4884,9 +3890,10 @@ function initBestSwapNow(){
   // Shared by both scan modes (holdings-scoped and market-wide).
   // isGo is simply qss>=60 (no external AND-gates), so this just ranks by score
   // with a small nudge to keep go-signals grouped above near-misses of the same score.
-  const rank=r=>(r.qss?.isGo?1000:0)+r.score;
+  const rank=opportunityRank;
   const gateNote=r=>{
-    if(!r.qss || r.score<45 || r.qss.isGo) return '';
+    if(!r.qss || r.qss.isGo) return '';
+    return '<div class="muted">'+escapeHtml(r.qss.reasons.join(' · '))+'</div>'; 
     const reasons=[];
     if(r.qss.z30 < 1.0) reasons.push(`Z ${r.qss.z30.toFixed(2)}σ — shallow`);
     if(!r.qss.oscillationOk) reasons.push('trending, not oscillating');
@@ -5030,16 +4037,16 @@ function initBestSwapNow(){
     const topGo = topOverall.qss?.isGo;
     const bestCol = topGo?'#00c076':topOm>=45?'#f5a623':'#ef4444';
     const bestBg  = topGo?'rgba(0,192,118,0.09)':'rgba(245,166,35,0.07)';
-    const bestVerdict = topGo?'✅ SCALP NOW':topOm>=45?'⏳ WATCH':'🔴 HOLD';
+    const bestVerdict = topGo?'✅ CYCLE CANDIDATE':topOm>=45?'⏳ WATCH':'🔴 HOLD';
     const banner=document.createElement('div');
     banner.style.cssText=`background:${bestBg};border:2px solid ${bestCol};border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.8rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap`;
     banner.innerHTML=`
       <span style="font-size:28px">🏆</span>
       <div style="flex:1;min-width:160px">
-        <div style="font-size:11px;font-family:monospace;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Best QSS score across all your holdings</div>
+        <div style="font-size:11px;font-family:monospace;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Best fit for your accumulation plan</div>
         <div style="font-size:20px;font-weight:700;color:var(--text)">${topOverall.from} → ${topOverall.to}</div>
         <div style="font-size:11px;color:var(--text2)">${topOverall.fromName} → ${topOverall.toName}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:1px">Z: <strong style="color:${bestCol}">${topOverall.qss?.z30?.toFixed(2)||'—'}σ</strong> · exp. gain +${topOverall.qss?.expGain?.toFixed(1)||'0'}% · ~${topOverall.qss?.holdDays||'—'}d</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px">Z: <strong style="color:${bestCol}">${topOverall.qss?.z30?.toFixed(2)||'—'}σ</strong> · ${opportunitySummary(topOverall.qss)}</div>
         ${gateNote(topOverall)}
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -5074,7 +4081,7 @@ function initBestSwapNow(){
       const bOm = best.score || 0;
       const bGo = best.qss?.isGo;
       const col = bGo?'#00c076':bOm>=45?'#f5a623':'#ef4444';
-      const verdict = bGo?'✅ SCALP NOW':bOm>=45?'⏳ WATCH':'❌ HOLD';
+      const verdict = bGo?'✅ CYCLE CANDIDATE':bOm>=45?'⏳ WATCH':'❌ HOLD';
       const verdictBg = bGo?'rgba(0,192,118,0.12)':bOm>=45?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
 
       const card=document.createElement('div');
@@ -5164,7 +4171,7 @@ function initBestSwapNow(){
     const topOm=top.score||0, topGo=top.qss?.isGo;
     const bestCol=topGo?'#00c076':topOm>=45?'#f5a623':'#ef4444';
     const bestBg=topGo?'rgba(0,192,118,0.09)':'rgba(245,166,35,0.07)';
-    const bestVerdict=topGo?'✅ SCALP NOW':topOm>=45?'⏳ WATCH':'🔴 HOLD';
+    const bestVerdict=topGo?'✅ CYCLE CANDIDATE':topOm>=45?'⏳ WATCH':'🔴 HOLD';
     const banner=document.createElement('div');
     banner.style.cssText=`background:${bestBg};border:2px solid ${bestCol};border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.8rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap`;
     banner.innerHTML=`
@@ -5173,7 +4180,7 @@ function initBestSwapNow(){
         <div style="font-size:11px;font-family:monospace;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Best QSS setup — entire market</div>
         <div style="font-size:20px;font-weight:700;color:var(--text)">${top.from} → ${top.to}</div>
         <div style="font-size:11px;color:var(--text2)">${top.fromName} → ${top.toName}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:1px">Z: <strong style="color:${bestCol}">${top.qss?.z30?.toFixed(2)||'—'}σ</strong> · exp. gain +${top.qss?.expGain?.toFixed(1)||'0'}% · ~${top.qss?.holdDays||'—'}d</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px">Z: <strong style="color:${bestCol}">${top.qss?.z30?.toFixed(2)||'—'}σ</strong> · ${opportunitySummary(top.qss)}</div>
         ${gateNote(top)}
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -5195,7 +4202,7 @@ function initBestSwapNow(){
     scored.slice(0,10).forEach(item=>{
       const iOm=item.score||0, iGo=item.qss?.isGo;
       const col=iGo?'#00c076':iOm>=45?'#f5a623':'#ef4444';
-      const verdict=iGo?'✅ SCALP NOW':iOm>=45?'⏳ WATCH':'❌ HOLD';
+      const verdict=iGo?'✅ CYCLE CANDIDATE':iOm>=45?'⏳ WATCH':'❌ HOLD';
       const verdictBg=iGo?'rgba(0,192,118,0.12)':iOm>=45?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
       const card=document.createElement('div');
       card.className='bsn-result-item';
@@ -5232,49 +4239,73 @@ function initBestSwapNow(){
 }
 
 /* ══════════════════════════════════════
-   TREND RIDER TAB — scans the whole pool for fresh momentum starts.
+   TREND RIDER TAB — scans for fresh momentum starts.
    Unlike Best Swap Now, most scans will turn up FEW or ZERO results — a
    fresh-turn setup is a narrower, rarer thing than "the ratio is somewhere
    stretched" (which is nearly always true for SOME pair). Coming up empty
    is expected behavior, not a broken scan, so the empty state says so.
-══════════════════════════════════════ */
+
+   DIRECTION — this took a real fix after shipping v1: computeMomentumScore(a,b)
+   measures whether coin `a` has just started strengthening AGAINST coin `b`
+   (the ratio a/b turning up). The pair that's actually worth swapping is the
+   MIRROR of that — you'd swap OUT of `b` (the lagging coin) INTO `a` (the one
+   just starting to move), the same way you'd swap out of cash into a stock
+   that just started breaking out, not the other way round. v1 displayed
+   "a → b" here, copying the reversion tabs' labeling — backwards for this
+   tab specifically. Every render below swaps the two before display:
+   `strengthening` (from computeMomentumScore's `a`) is what you swap INTO,
+   `heldOrBase` (its `b`) is what you swap FROM. ── */
 function initTrendRider(){
   const scanBtn=document.getElementById('trendScanBtn');
+  const scanAllBtn=document.getElementById('trendScanAllBtn');
+  const clearBtn=document.getElementById('trendClearBtn');
+  const grid=document.getElementById('trendCoinGrid');
+  const countEl=document.getElementById('trendCount');
+  const searchEl=document.getElementById('trendSearch');
   const results=document.getElementById('trendResults');
-  if(!scanBtn||!results) return;
+  if(!scanBtn||!grid||!results) return;
 
-  scanBtn.onclick=async()=>{
-    Object.keys(_momentumCache).forEach(k=>{delete _momentumCache[k]; delete _momentumCacheTime[k];});
-    scanBtn.disabled=true;
-    scanBtn.textContent='⏳ Scanning...';
-    const tasks=[];
-    COINS.forEach(f=>COINS.forEach(t=>{ if(t.sym!==f.sym) tasks.push({from:f.sym,to:t.sym}); }));
-    results.innerHTML=`
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:1.2rem;text-align:center">
-        <div class="sp-anim" style="margin:0 auto 10px"></div>
-        <div style="font-size:13px;color:var(--text2);font-family:monospace">Scanning ${tasks.length} pairs for fresh trend starts...</div>
-      </div>`;
+  let selected=new Set();
+  function _saveSel(){try{localStorage.setItem('trendSel',JSON.stringify([...selected]));}catch(e){}}
+  try{ (JSON.parse(localStorage.getItem('trendSel')||'[]')).forEach(s=>selected.add(s)); }catch(e){}
 
-    const BATCH=10;
-    const scored=[];
-    for(let i=0;i<tasks.length;i+=BATCH){
-      const batch=tasks.slice(i,i+BATCH);
-      const batchRes=await Promise.all(batch.map(t=>getMomentumForPair(t.from,t.to).catch(()=>null)));
-      batchRes.forEach(r=>{ if(r && r.momentum && r.momentum.isFreshTurn) scored.push(r); });
-      const done=Math.min(i+BATCH,tasks.length);
-      scanBtn.textContent=`⏳ ${Math.round(done/tasks.length*100)}%`;
+  function renderCoins(){
+    grid.innerHTML='';
+    const q=(searchEl?searchEl.value:'').trim().toLowerCase();
+    const filtered=COINS.filter(c=>!q||c.sym.toLowerCase().includes(q)||c.name.toLowerCase().includes(q));
+    filtered.forEach(c=>{
+      const isSel=selected.has(c.sym);
+      const btn=document.createElement('button');
+      btn.className='bsn-coin'+(isSel?' selected':'');
+      btn.title=c.name;
+      btn.innerHTML=`<span class="bsn-coin-check">✓</span><span style="font-weight:700">${c.sym}</span><span style="font-size:9px;opacity:.55;margin-left:3px">${c.name}</span>`;
+      btn.onclick=()=>{
+        if(selected.has(c.sym)) selected.delete(c.sym); else selected.add(c.sym);
+        _saveSel(); results.innerHTML=''; renderCoins(); updateState();
+      };
+      grid.appendChild(btn);
+    });
+  }
+  function updateState(){
+    const n=selected.size;
+    scanBtn.disabled=n<1;
+    countEl.textContent = n===0 ? 'Select the coin(s) you currently hold' : `Holding: ${[...selected].join(', ')} · ${n} coin${n>1?'s':''}`;
+  }
+  if(searchEl) searchEl.addEventListener('input', renderCoins);
+  clearBtn.onclick=()=>{
+    selected.clear(); if(searchEl) searchEl.value=''; results.innerHTML='';
+    try{localStorage.removeItem('trendSel');}catch(e){}
+    renderCoins(); updateState();
+  };
+
+  function renderResults(list, emptyMsg, scanLabel){
+    if(!list.length){
+      results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1.2rem;text-align:center;line-height:1.6">${emptyMsg}</div>`;
+      return;
     }
-    scored.sort((a,b)=>b.score-a.score);
-
-    if(!scored.length){
-      results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1.2rem;text-align:center;line-height:1.6">No fresh trend starts anywhere in the pool right now.<br>This is a narrower signal than the main score on purpose — it only fires on a genuinely fresh turn, so coming up empty is normal. Try again later or tomorrow.</div>`;
-      scanBtn.disabled=false; scanBtn.textContent='🚀 Scan for fresh trends'; return;
-    }
-
     const scanTime=new Date().toLocaleTimeString();
-    results.innerHTML=`<div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:.8rem;text-align:right">Found ${scored.length} fresh trend setup${scored.length>1?'s':''} across the ${COINS.length}-coin pool · <span style="color:var(--amber)">⏱ ${scanTime}</span> — results expire in 15 min</div>`;
-
-    scored.slice(0,10).forEach(item=>{
+    results.innerHTML=`<div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:.8rem;text-align:right">Found ${list.length} fresh trend setup${list.length>1?'s':''} · <span style="color:var(--amber)">⏱ ${scanTime}</span> — results expire in 15 min</div>`;
+    list.slice(0,10).forEach(item=>{
       const m=item.momentum;
       const go=m.isGo;
       const col=go?'#00c076':m.momentumScore>=40?'#f5a623':'#ef4444';
@@ -5286,8 +4317,9 @@ function initTrendRider(){
       card.innerHTML=`
         <div style="display:flex;align-items:flex-start;gap:12px;width:100%;flex-wrap:wrap">
           <div style="flex:1;min-width:180px">
-            <div style="font-size:18px;font-weight:700;color:var(--text)">${item.from} → ${item.to}</div>
-            <div style="font-size:11px;color:var(--text3)">${item.fromName} → ${item.toName}</div>
+            <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:3px">Swap</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text)">${item.heldOrBase} → ${item.strengthening}</div>
+            <div style="font-size:11px;color:var(--text3)">${item.heldOrBaseName} → ${item.strengtheningName}</div>
             <div style="font-size:10px;color:var(--text3);margin-top:2px">Fresh move: <strong style="color:${col}">+${m.recentMovePct.toFixed(2)}%</strong> over the last 2 days · z: ${m.z30.toFixed(2)}σ</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -5298,14 +4330,72 @@ function initTrendRider(){
             <span style="font-size:10px;font-family:monospace;font-weight:700;padding:3px 10px;border-radius:10px;background:${verdictBg};color:${col}">${verdict}</span>
           </div>
         </div>
-        <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-top:6px;width:100%">Targets +2% (net of fees) within 7-14 days — real backtested odds on this pool: ~47% by day 7, ~61% by day 14.</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-top:6px;width:100%">Experimental momentum watchlist — historical completion rate has not been verified for your current settings.</div>
       `;
       results.appendChild(card);
     });
+  }
 
-    scanBtn.disabled=false;
-    scanBtn.textContent='🚀 Scan for fresh trends';
+  // ── Scan my holdings — for each coin you hold, check every OTHER coin as a
+  // candidate to swap into: is that other coin just starting to strengthen
+  // against the one you're holding right now?
+  scanBtn.onclick=async()=>{
+    if(selected.size<1) return;
+    Object.keys(_momentumCache).forEach(k=>{delete _momentumCache[k]; delete _momentumCacheTime[k];});
+    scanBtn.disabled=true; scanAllBtn.disabled=true;
+    scanBtn.textContent='⏳ Scanning...';
+    const tasks=[];
+    selected.forEach(held=>COINS.forEach(c=>{ if(c.sym!==held) tasks.push({strengthening:c.sym,heldOrBase:held}); }));
+    results.innerHTML=`
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:1.2rem;text-align:center">
+        <div class="sp-anim" style="margin:0 auto 10px"></div>
+        <div style="font-size:13px;color:var(--text2);font-family:monospace">Checking ${tasks.length} candidates against what you hold...</div>
+      </div>`;
+    const BATCH=10;
+    const scored=[];
+    for(let i=0;i<tasks.length;i+=BATCH){
+      const batch=tasks.slice(i,i+BATCH);
+      const batchRes=await Promise.all(batch.map(t=>getMomentumForPair(t.strengthening,t.heldOrBase).catch(()=>null)));
+      batchRes.forEach((r,j)=>{ if(r&&r.momentum&&r.momentum.isFreshTurn) scored.push({...batch[j], strengtheningName:r.fromName, heldOrBaseName:r.toName, momentum:r.momentum, score:r.score}); });
+      scanBtn.textContent=`⏳ ${Math.round(Math.min(i+BATCH,tasks.length)/tasks.length*100)}%`;
+    }
+    scored.sort((a,b)=>b.score-a.score);
+    renderResults(scored,
+      `No fresh trend starts against ${[...selected].join(', ')} right now.<br>This is a narrower signal than the main score on purpose — coming up empty is normal. Try again later.`);
+    scanBtn.disabled=selected.size<1; scanAllBtn.disabled=false;
+    scanBtn.textContent='🚀 Find a trend to swap my coin into';
   };
+
+  // ── Scan entire market — no specific holding, just the best fresh-turn setups
+  // anywhere in the pool right now.
+  scanAllBtn.onclick=async()=>{
+    Object.keys(_momentumCache).forEach(k=>{delete _momentumCache[k]; delete _momentumCacheTime[k];});
+    scanAllBtn.disabled=true; scanBtn.disabled=true;
+    scanAllBtn.textContent='⏳ Scanning...';
+    const tasks=[];
+    COINS.forEach(a=>COINS.forEach(b=>{ if(b.sym!==a.sym) tasks.push({strengthening:a.sym,heldOrBase:b.sym}); }));
+    results.innerHTML=`
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:1.2rem;text-align:center">
+        <div class="sp-anim" style="margin:0 auto 10px"></div>
+        <div style="font-size:13px;color:var(--text2);font-family:monospace">Scanning ${tasks.length} pairs for fresh trend starts...</div>
+      </div>`;
+    const BATCH=10;
+    const scored=[];
+    for(let i=0;i<tasks.length;i+=BATCH){
+      const batch=tasks.slice(i,i+BATCH);
+      const batchRes=await Promise.all(batch.map(t=>getMomentumForPair(t.strengthening,t.heldOrBase).catch(()=>null)));
+      batchRes.forEach((r,j)=>{ if(r&&r.momentum&&r.momentum.isFreshTurn) scored.push({...batch[j], strengtheningName:r.fromName, heldOrBaseName:r.toName, momentum:r.momentum, score:r.score}); });
+      scanAllBtn.textContent=`⏳ ${Math.round(Math.min(i+BATCH,tasks.length)/tasks.length*100)}%`;
+    }
+    scored.sort((a,b)=>b.score-a.score);
+    renderResults(scored,
+      `No fresh trend starts anywhere in the pool right now.<br>This is a narrower signal than the main score on purpose — coming up empty is normal. Try again later or tomorrow.`);
+    scanAllBtn.disabled=false; scanBtn.disabled=selected.size<1;
+    scanAllBtn.textContent='🌐 Scan entire market';
+  };
+
+  renderCoins();
+  updateState();
 }
 
 
@@ -5344,6 +4434,7 @@ function initExportImport(){
         const data=JSON.parse(ev.target.result);
         const trackers=data.trackers||data;
         if(!Array.isArray(trackers)) throw new Error('Invalid format');
+        for(const tr of trackers){if(typeof tr.id!=='string'||!/^[a-zA-Z0-9_-]+$/.test(tr.id)||!COINS_LIST.includes(tr.assetA)||!COINS_LIST.includes(tr.assetB)||!Array.isArray(tr.swaps))throw new Error('Invalid tracker');const issue=validateSwapHistory(tr);if(issue)throw new Error(issue);}
         if(!confirm(`Import ${trackers.length} tracker(s)? This will merge with existing trackers.`)) return;
         const existing=loadTrackers();
         // Merge: skip if same id already exists
@@ -5513,9 +4604,11 @@ async function checkAlerts(pair, score){
   for(const alert of alerts){
     const alertPair=alert.from+'_'+alert.to;
     if(alertPair!==pair) continue;
-    if(!condMet(alert.condition, score)) continue;
+    if(!condMet(alert.condition,score,_scoreCache[pair])) {
+      if(alert.lastFired){alert.lastFired=null;saveAlerts(alerts);}continue;
+    }
     // Don't re-fire within 30 minutes
-    if(alert.lastFired && Date.now()-alert.lastFired < 30*60*1000) continue;
+    if(alert.lastFired) continue;
     await fireAlert(alert, score);
   }
 }
@@ -5606,13 +4699,14 @@ function initAlerts(){
     const el=document.getElementById('alertNotifStatus');
     const btn=document.getElementById('alertEnableNotif');
     if(!el||!btn) return;
-    const perm=Notification.permission;
+    const perm=typeof Notification==='undefined'?'unsupported':Notification.permission;
     el.className='alert-notif-status '+perm;
     el.textContent=perm==='granted'?'✅ Notifications ON':perm==='denied'?'❌ Blocked in browser':'⚠️ Not enabled';
     btn.style.display=perm==='granted'?'none':'inline-block';
   }
 
   document.getElementById('alertEnableNotif').onclick=async()=>{
+    if(typeof Notification==='undefined')return;
     const p=await Notification.requestPermission();
     updateNotifStatus();
     if(p==='granted') sendBrowserNotif('SwapAnalyzer alerts ON','You will be notified when your swap conditions are met!');
@@ -5666,4 +4760,6 @@ function initAlerts(){
   updateAlertBadge();
 }
 
+
+startAccumulationPolling();
 </script>
