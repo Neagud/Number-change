@@ -712,7 +712,7 @@ button,input,select{font:inherit}button{touch-action:manipulation}button:focus-v
 </div>
 
 <section class="accumulation-intro"><div><h1>Make the round trip count.</h1><p>Find a relative-price opportunity. Swap into another coin. Return with more of the coin you started with.</p></div><div class="hero-cycle" aria-label="Starting coin to paired coin to more starting coins"><div><strong>Your coin</strong><span>Start with what you hold</span></div><b>→</b><div><strong>Swap</strong><span>Let the ratio work</span></div><b>→</b><div class="cycle-result"><strong>More coins</strong><span>Complete after costs</span></div></div></section>
-<section class="plan-panel"><h2>Your accumulation plan</h2><p>Look for smaller, repeatable cycles. The time window is a preference, not a promised weekly or monthly profit. Costs must match your swap provider and route.</p><form id="accumulationPlan"><div class="plan-fields"><label>Preferred cycle<select name="horizon"><option value="7">Within a week</option><option value="14">Within two weeks</option><option value="30">Within a month</option></select></label><label>Net gain target (%)<input name="targetPct" type="number" min="0.1" max="20" step="0.05" required></label><label>Total fee per swap (%)<input name="feePct" type="number" min="0" max="5" step="0.01" required></label><label>Slippage buffer (%)<input name="slippagePct" type="number" min="0" max="5" step="0.01" required></label><button class="primary-action" type="submit">Apply plan</button></div><div id="planStatus" role="status" aria-live="polite"></div></form></section>
+<section class="plan-panel"><h2>Your accumulation plan</h2><p>Look for smaller, repeatable cycles. The time window is a preference, not a promised weekly or monthly profit. Costs must match your swap provider and route.</p><form id="accumulationPlan"><div class="plan-fields"><label>Preferred cycle<select name="horizon"><option value="7">Within a week</option><option value="14">Within two weeks</option><option value="30">Within a month</option></select></label><label>Net gain target (%)<input name="targetPct" type="number" min="0.1" max="20" step="0.05" required></label><label>Total round-trip fee (%)<input name="feePct" type="number" min="0" max="5" step="0.01" required></label><label>Slippage per direction (%)<input name="slippagePct" type="number" min="0" max="5" step="0.01" required></label><button class="primary-action" type="submit">Apply plan</button></div><div id="planStatus" role="status" aria-live="polite"></div></form></section>
 <div class="tab-bar">
   <button class="tab-btn active" data-tab="analyzer">Opportunities</button>
   <button class="tab-btn" data-tab="trendrider">Momentum watch</button>
@@ -786,7 +786,7 @@ button,input,select{font:inherit}button{touch-action:manipulation}button:focus-v
     </div>
   </div>
 
-  <section class="research-panel"><h2>Check a pair before committing coins</h2><p>Use the pair selected above. See how often the current rules completed a profitable cycle, including times your coins stayed stuck.</p><div class="research-actions"><button id="historyCheck" class="primary-action">Check historical cycles</button><span class="muted">Up to 1,000 daily candles · actual net costs</span></div><details class="paper-details"><summary>Signal notebook · paper cycles</summary><p class="muted">Track future opportunities without committing coins. One open paper cycle per pair. This is not a shared-capital portfolio.</p><button class="btn" id="paperRefresh" type="button">Refresh observations</button><div id="paperJournal" class="research-result" aria-live="polite"></div></details><div id="researchResult" class="research-result" aria-live="polite">Choose a pair, then run a historical check. No success rate is assumed.</div><details><summary>Estimate your swap and required return rate</summary><div class="quote-row"><label>Amount of your starting coin<input id="quoteAmount" class="quote-input" type="number" min="0" step="any" value="1"></label><button id="quoteCheck" class="btn">Check reference quote</button></div><div id="quoteResult" class="research-result" aria-live="polite">Uses current bid and ask prices and your cost settings.</div></details></section>
+  <section class="research-panel" aria-label="Strategy test results"><h2>What the strategy has actually shown</h2><p>Experimental rules. The monthly profit goal has not been demonstrated. These fixed-setting results cover 2025-08-10 to 2026-09-29; changing your plan does not change this benchmark.</p><div class="evidence-grid"><div><span>Median across 13 starting coins</span><strong>+5.22%</strong><small>Includes open losses; not annualized</small></div><div><span>Worst starting-coin result</span><strong>-46.57%</strong><small>3 portfolios still waiting to recover</small></div><div><span>Median completed cycles</span><strong>0.14 / month</strong><small>Below your one-per-month goal</small></div></div><details><summary>How the score and gain estimate work</summary><p>The score ranks a 10-day ratio extension and confirmed daily turn. It is not a probability. The percentage is the result if the ratio returns to its recent mean, after a 1% total round-trip fee and 0.1% slippage each way. It can be negative.</p><p>A physics-based mean-reversion model estimates half-life. Twelve versions did not improve the validation objective, so this diagnostic does not raise the score. Its half-life is not a promised waiting time.</p><p>204 initial rules tested; later data previously viewed. Current-coin universe, daily reference fills and repeated model selection limit reliability. Profit-only exits can wait indefinitely. Run a pair check below for your current settings.</p></details></section><section class="research-panel"><h2>Check a pair before committing coins</h2><p>Use the pair selected above. See how often the current rules completed a profitable cycle, including times your coins stayed stuck.</p><div class="research-actions"><button id="historyCheck" class="primary-action">Check historical cycles</button><span class="muted">Up to 1,000 daily candles · actual net costs</span></div><details class="paper-details"><summary>Signal notebook · paper cycles</summary><p class="muted">Track future opportunities without committing coins. One open paper cycle per pair. This is not a shared-capital portfolio.</p><button class="btn" id="paperRefresh" type="button">Refresh observations</button><div id="paperJournal" class="research-result" aria-live="polite"></div></details><div id="researchResult" class="research-result" aria-live="polite">Choose a pair, then run a historical check. No success rate is assumed.</div><details><summary>Estimate your swap and required return rate</summary><div class="quote-row"><label>Amount of your starting coin<input id="quoteAmount" class="quote-input" type="number" min="0" step="any" value="1"></label><button id="quoteCheck" class="btn">Check reference quote</button></div><div id="quoteResult" class="research-result" aria-live="polite">Uses current bid and ask prices and your cost settings.</div></details></section>
 
 </div>
 
@@ -1103,26 +1103,79 @@ button,input,select{font:inherit}button{touch-action:manipulation}button:focus-v
 
 
 <script>
+/* Discrete Ornstein–Uhlenbeck fit: log(R[t+1]) = intercept + phi*log(R[t]) + noise.
+   A conditional model diagnostic, never a probability of hitting a profit target. */
+function fitRatioRecovery(closes, horizon=30) {
+  if(closes.length<40||!closes.every(x=>Number.isFinite(x)&&x>0))return null;
+  const y=closes.map(Math.log),x=y.slice(0,-1),next=y.slice(1),n=x.length;
+  const mx=x.reduce((s,v)=>s+v,0)/n,my=next.reduce((s,v)=>s+v,0)/n;
+  const sxx=x.reduce((s,v)=>s+(v-mx)**2,0);
+  if(sxx<1e-14)return null;
+  const phi=x.reduce((s,v,i)=>s+(v-mx)*(next[i]-my),0)/sxx;
+  if(!(phi>0&&phi<1))return {stable:false,phi};
+  const intercept=my-phi*mx,equilibrium=intercept/(1-phi);
+  const variance=x.reduce((s,v,i)=>s+(next[i]-intercept-phi*v)**2,0)/(n-2);
+  const slopeSE=Math.sqrt(variance/sxx),halfLife=-Math.log(2)/Math.log(phi);
+  const terminalMean=equilibrium+phi**horizon*(y.at(-1)-equilibrium);
+  const terminalSD=Math.sqrt(variance*(1-phi**(2*horizon))/(1-phi**2));
+  return {stable:true,phi,halfLife,equilibrium:Math.exp(equilibrium),terminalRatio:Math.exp(terminalMean),
+    adverseRatio:Math.exp(terminalMean+1.645*terminalSD),slopeSE,
+    supported:phi+1.96*slopeSE<1};
+}
+if(typeof module!=='undefined'&&module.exports)module.exports={fitRatioRecovery};
+
+/* Selected from the documented historical search; experimental, not a profit guarantee. */
+const TESTED_RULES=Object.freeze({window:10,z:1.75,target:0.5,regime:'turn',maxTargetDays:30});
+function evaluateRatioEntry(closes,plan,liveRatio=null){
+  if(!Array.isArray(closes)||closes.length<60||!closes.every(v=>Number.isFinite(v)&&v>0))return null;
+  if(liveRatio!==null&&!(Number.isFinite(liveRatio)&&liveRatio>0))return null;
+  const logs=closes.map(Math.log),recent=logs.slice(-TESTED_RULES.window);
+  const mu=recent.reduce((s,v)=>s+v,0)/recent.length;
+  const sd=Math.sqrt(recent.reduce((s,v)=>s+(v-mu)**2,0)/recent.length);
+  const closed=closes.at(-1),current=liveRatio??closed;
+  const z=sd>1e-10?(logs.at(-1)-mu)/sd:0;
+  const r1=logs.at(-1)-logs.at(-2),previous=logs.at(-2)-logs.at(-3);
+  const turning=r1<=0&&r1<previous;
+  const cost=(1-plan.feePct/100)*(1-plan.slippagePct/100)**2;
+  const mean=Math.exp(mu),closedGain=(closed/mean*cost-1)*100,liveGain=(current/mean*cost-1)*100;
+  const reasons=[];
+  if(z<TESTED_RULES.z)reasons.push('Wait for a larger short-term ratio extension');
+  if(!turning)reasons.push('Wait for a completed daily turn, rather than selling into acceleration');
+  if(Math.min(closedGain,liveGain)<plan.targetPct)reasons.push('Return-to-mean scenario does not cover the total fee and net target');
+  const rank=Math.min(4,z)+Math.min(.3,logs.at(-1)-mu)*3;
+  return {isGo:reasons.length===0,reasons,z,mean,turning,r1,previous,rank,headroom:liveGain,
+    score:reasons.length===0?Math.round(Math.min(100,60+Math.max(0,rank-TESTED_RULES.z)/3.15*40)):Math.round(Math.max(0,Math.min(59,rank*12+(turning?15:0)))),cost,current,window:TESTED_RULES.window};
+}
+if(typeof module!=='undefined'&&module.exports)module.exports={TESTED_RULES,evaluateRatioEntry};
+
 /* ProfitSwap accumulation engine. Amounts and returns are always in the starting coin. */
-const ENGINE_VERSION = 'accumulation-1';
+const ENGINE_VERSION = 'researched-turn-2';
 const DAY_MS = 86400000;
-const DEFAULT_PLAN = { horizon: 7, targetPct: 0.75, feePct: 1, slippagePct: 0.1 };
+const DEFAULT_PLAN = { horizon: 30, targetPct: 0.5, feePct: 1, slippagePct: 0.1, costModel:2 };
 function normalizePlan(value = {}) {
   const number = (v, fallback, min, max) => Number.isFinite(Number(v)) && v !== '' ? Math.min(max, Math.max(min, Number(v))) : fallback;
   return {
-    horizon: [7,14,30].includes(Number(value.horizon)) ? Number(value.horizon) : 7,
-    targetPct: number(value.targetPct, 0.75, 0.1, 20),
+    horizon: [7,14,30].includes(Number(value.horizon)) ? Number(value.horizon) : 30,
+    targetPct: number(value.targetPct, 0.5, 0.1, 20),
     feePct: number(value.feePct, 1, 0, 5),
-    slippagePct: number(value.slippagePct, 0.1, 0, 5)
+    slippagePct: number(value.slippagePct, 0.1, 0, 5),costModel:2
   };
 }
-function loadPlan() { try { return normalizePlan(JSON.parse(localStorage.getItem('profitSwapPlan') || '{}')); } catch { return {...DEFAULT_PLAN}; } }
+function loadPlan() { try {
+  const old=JSON.parse(localStorage.getItem('profitSwapPlan')||'null');
+  if(old&&old.costModel!==2){localStorage.setItem('profitSwapPreviousFeePlan',JSON.stringify(old));localStorage.setItem('profitSwapPlan',JSON.stringify(DEFAULT_PLAN));return {...DEFAULT_PLAN};}
+  return normalizePlan(old||DEFAULT_PLAN);
+}catch{return {...DEFAULT_PLAN};} }
 let accumulationPlan = loadPlan();
-let SWAP_FEE_RATE = accumulationPlan.feePct / 100;
+let SWAP_FEE_RATE = 1-Math.sqrt(1-accumulationPlan.feePct/100);
 const marketCache = new Map();
 const marketPending = new Map();
 const priceTimes = {};
-function retention(plan = accumulationPlan) { return (1-plan.feePct/100)*(1-plan.slippagePct/100); }
+function retention(plan = accumulationPlan) {
+  // Old paper observations keep the costs that were frozen when they were recorded.
+  const feeKeep=plan.costModel===1 ? 1-plan.feePct/100 : Math.sqrt(1-plan.feePct/100);
+  return feeKeep*(1-plan.slippagePct/100);
+}
 function roundTripGain(entryRatio, exitRatio, plan = accumulationPlan) {
   return entryRatio > 0 && exitRatio > 0 ? (entryRatio / exitRatio * retention(plan)**2 - 1)*100 : null;
 }
@@ -1187,6 +1240,19 @@ function halfLife(closes) {
   return phi>0 && phi<1 ? -Math.log(2)/Math.log(phi) : null;
 }
 function computeQSS(closes,corr,plan=accumulationPlan,liveRatio=null) {
+  const e=evaluateRatioEntry(closes,plan,liveRatio);if(!e)return null;
+  const depth=Math.max(0,Math.min(100,e.z/TESTED_RULES.z*100));
+  const hl=halfLife(closes.slice(-60));
+  return {qss:e.score,isGo:e.isGo,reasons:e.reasons,depth,se_q:depth,reversionQ:e.turning?100:0,confirm:e.turning?100:0,
+    z30:e.z,mean30:e.mean,meanFmt:e.mean.toPrecision(5),expGain:e.headroom,holdDays:null,window:e.window,
+    targetRatio:e.current*retention(plan)**2/(1+plan.targetPct/100),ouHL20:hl??999,crossings:0,
+    oscillationOk:e.turning,oscillationNote:e.turning?'':'No completed daily turn yet.',meetsZGate:e.z>=TESTED_RULES.z,
+    corrQ:Math.max(0,Math.min(100,(corr||0)*100)),mt:e.turning?1:0,bp:depth,bollPos:depth,re:50,rsi:50,qf:0,ouFPct20:0,
+    cum30:(e.current/closes.at(-30)-1)*100,depthZ:depth,depthCum:0,frozenFrac:0,illiquidNote:'',
+    rank:e.rank,turning:e.turning,science:fitRatioRecovery(closes.slice(-60),plan.horizon),plan:{...plan},estimatedOnly:true,provisional:liveRatio!==null,experimental:true};
+}
+// Preserved only as a research reference; no longer drives live signals.
+function previousComputeQSS(closes,corr,plan=accumulationPlan,liveRatio=null) {
   if(!closes || closes.length<60 || !closes.every(v=>Number.isFinite(v)&&v>0)) return null;
   if(liveRatio!==null&&(!Number.isFinite(liveRatio)||liveRatio<=0))return null;
   const current=liveRatio??closes.at(-1), log=closes.map(Math.log), window=plan.horizon===7?14:plan.horizon===14?30:60;
@@ -1224,13 +1290,12 @@ function computeQSS(closes,corr,plan=accumulationPlan,liveRatio=null) {
 }
 function opportunityRank(result) {
   const q=result.qss;if(!q) return -1;
-  const h=q.history;
-  return (q.isGo?1000:0)+(h?Math.min(60,h.monthly*25)+(h.markedReturn>=0?15:-15):0)+q.qss+(q.holdDays ? Math.min(20,q.expGain/q.holdDays*5):0);
+  return (q.isGo?1000:0)+(q.rank??q.qss/20);
 }
 function opportunitySummary(q) {
   if(!q) return 'Not enough reliable data';
-  const history=q.history?' · History: '+q.history.monthly.toFixed(2)+' cycles/month; '+signedPct(q.history.markedReturn)+' incl. open holdings':'';
-  return 'To mean: '+signedPct(q.expGain)+' net · '+(q.holdDays===null?'timing unknown':'model ~'+q.holdDays+'d')+' · not a forecast'+history;
+  const history=q.history?' · Pair history: '+q.history.monthly.toFixed(2)+' completions/month; '+signedPct(q.history.markedReturn)+' including open holdings':'';
+  return 'Mean-return scenario: '+signedPct(q.expGain)+' net · '+accumulationPlan.horizon+'-day goal, not deadline'+history;
 }
 
 function pairEvidence(rows,from,to,plan) {
@@ -1291,21 +1356,23 @@ function exitDecision(tr,result) {
   const spike=Number.isFinite(result?.trend1)&&result.trend1>6;
   const target=gain!==null&&gain>=accumulationPlan.targetPct;
   const profitable=gain!==null&&gain>0;
-  return {net,capital,gain,cycleCost,cycleValue,spike,target,profitable,ready:profitable&&(target||spike||result?.qss?.isGo===true)};
+  return {net,capital,gain,cycleCost,cycleValue,spike,target,profitable,ready:profitable&&target};
 }
 
 /* Chronological, non-overlapping paper cycles. Signals use past closes; entry is next open.
-   Target exits use subsequent daily closes, not fabricated ratio highs/lows. Never force a
+   Target exits use subsequent daily opens, not fabricated ratio highs/lows. Never force a
    losing exit at the horizon; report it as unresolved and keep that capital tied up. */
 function backtestCycles(rows,fromCloses,toCloses,plan=accumulationPlan,startIndex=90) {
   let position=null,multiplier=1,maxDrawdown=0,peak=1;const cycles=[];
   for(let i=Math.max(90,startIndex);i<rows.length;i++) {
     if(position) {
-      const gain=roundTripGain(position.entry,rows[i].c,plan),age=(rows[i].t-position.t)/DAY_MS;
-      const marked=multiplier*(1+gain/100);peak=Math.max(peak,marked);maxDrawdown=Math.max(maxDrawdown,(peak-marked)/peak*100);
-      if(gain>=plan.targetPct) { cycles.push({...position,exit:rows[i].c,end:rows[i].t,days:age,gain});multiplier*=1+gain/100;position=null; }
+      const openMarked=multiplier*(1+roundTripGain(position.entry,rows[i].o,plan)/100);
+      peak=Math.max(peak,openMarked);maxDrawdown=Math.max(maxDrawdown,(peak-openMarked)/peak*100);
+      const gain=roundTripGain(position.entry,rows[i].o,plan),age=(rows[i].t-position.t)/DAY_MS;
+      if(gain>=plan.targetPct) { cycles.push({...position,exit:rows[i].o,end:rows[i].t,days:age,gain});multiplier*=1+gain/100;position=null; }
     }
-    if(!position&&i<rows.length-1) {
+    const marked=multiplier*(position?1+roundTripGain(position.entry,rows[i].c,plan)/100:1);peak=Math.max(peak,marked);maxDrawdown=Math.max(maxDrawdown,(peak-marked)/peak*100);
+    if(!position&&i<rows.length-31) {
       const closes=rows.slice(Math.max(0,i-89),i+1).map(r=>r.c);
       const corr=calcCorrelation(fromCloses.slice(Math.max(0,i-89),i+1),toCloses.slice(Math.max(0,i-89),i+1));
       const q=computeQSS(closes,corr,plan);
@@ -1325,7 +1392,7 @@ function saveAccumulationPlan(event) {
   researchRun++;
   document.getElementById('historyCheck').disabled=false;
   accumulationPlan=normalizePlan(Object.fromEntries(new FormData(event.target)));
-  SWAP_FEE_RATE=accumulationPlan.feePct/100;
+  SWAP_FEE_RATE=1-Math.sqrt(1-accumulationPlan.feePct/100);
   try{localStorage.setItem('profitSwapPlan',JSON.stringify(accumulationPlan));}catch{}
   Object.keys(_scoreCache).forEach(k=>delete _scoreCache[k]);
   _clearScore();
@@ -1338,7 +1405,7 @@ function saveAccumulationPlan(event) {
 function initAccumulationUI() {
   try{if(!localStorage.getItem('profitSwapBeforeAccumulation'))localStorage.setItem('profitSwapBeforeAccumulation',JSON.stringify({savedAt:Date.now(),trackers:localStorage.getItem('swapTrackers'),prefs:localStorage.getItem('swapPrefs')}));}catch{}
   const form=document.getElementById('accumulationPlan');
-  for(const [key,value] of Object.entries(accumulationPlan)) form.elements[key].value=value;
+  for(const [key,value] of Object.entries(accumulationPlan)) if(form.elements[key])form.elements[key].value=value;
   form.addEventListener('submit',saveAccumulationPlan);
   document.getElementById('historyCheck').onclick=runHistoricalCheck;
   document.getElementById('quoteCheck').onclick=runQuoteCheck;
@@ -1359,11 +1426,13 @@ async function runHistoricalCheck() {
     const later=backtestCycles(rows,f,t,plan,split);
     const stress=backtestCycles(rows,f,t,{...plan,slippagePct:Math.min(5,plan.slippagePct+0.2)},split);
     if(run!==researchRun)return;
-    out.innerHTML=`<h3>${a} → ${b} → more ${a}?</h3><p>Fixed rules, ${rows.length} completed days. Entries at the next daily open; exits at a later daily close. No overlapping positions or forced exits at a loss.</p>
+    const attempts=later.cycles.length+(later.open?1:0);
+    out.innerHTML=`<h3>${a} → ${b} → more ${a}?</h3><p>Fixed rules, ${rows.length} completed days. Entries at the next daily open; exits at a later daily open. No new entries in the final 30 days. No overlapping positions or forced exits at a loss.</p>
       <div class="evidence-grid"><div><span>Recent 30% of history</span><strong>${later.cycles.length} completed</strong><small>${later.monthly.toFixed(2)} cycles / month · ${later.weekly.toFixed(2)} / week</small></div>
       <div><span>Including any open position</span><strong>${signedPct(later.markedReturn)}</strong><small>Base-coin return vs holding ${a}</small></div>
       <div><span>Largest base-coin drawdown</span><strong>${later.maxDrawdown.toFixed(2)}%</strong><small>Daily marks, after assumed costs</small></div></div>
       <p>${later.within7} completed within 7 days; ${later.within30} within 30 days. ${later.open?`One unresolved position: ${later.open.days} days, ${signedPct(later.open.gain)} if returned to base at the last close.`:'No unresolved position at the end.'}</p>
+      <p>30-day completions: ${later.within30} / ${attempts} entries${attempts?' ('+(100*later.within30/attempts).toFixed(0)+'%)':''}. ${attempts<20?'Small sample; no reliable success probability.':'Historical frequency, not a future probability.'} A profitable-only exit rule can wait indefinitely.</p>
       <p>Earlier period: ${earlier.cycles.length} completions, ${signedPct(earlier.markedReturn)} including open holdings. Recent period with 0.2 percentage points more slippage per swap: ${stress.cycles.length} completions, ${signedPct(stress.markedReturn)}.</p>
       <p class="muted">This is a reproducible historical simulation, not a forecast or independent validation. The recent period is reported separately; changing settings after viewing it is still tuning to history. Daily data can miss intraday exits. Unresolved capital remains unavailable for new cycles.</p>`;
   }catch(e){if(run===researchRun)out.textContent=e.message;}finally{if(run===researchRun)button.disabled=false;}
@@ -1454,7 +1523,7 @@ function startAccumulationPolling() {
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll();});
 }
 
-function loadPaperJournal(){try{const rows=JSON.parse(localStorage.getItem('profitSwapPaper')||'[]');return Array.isArray(rows)?rows:[];}catch{return[];}}
+function loadPaperJournal(){try{const rows=JSON.parse(localStorage.getItem('profitSwapPaper')||'[]');return Array.isArray(rows)?rows.map(r=>r.version==='accumulation-1'&&!r.plan?.costModel?{...r,plan:{...r.plan,costModel:1}}:r):[];}catch{return[];}}
 function observePaperSignal(a,b,ratio,result){
   if(!(ratio>0&&Number.isFinite(ratio)))return;
   const rows=loadPaperJournal(),now=Date.now();
@@ -2154,7 +2223,7 @@ function renderMain(series){
         <span style="color:#ef4444">0</span>
         <span>25 · hold</span>
         <span>45 · caution</span>
-        <span>55+ · check costs &amp; recovery</span>
+        <span>60+ · experimental candidate</span>
         <span style="color:#00c076">100</span>
       </div>
 
@@ -2182,7 +2251,6 @@ function renderMain(series){
   `;
 
   renderMetrics(s);renderInds(s);
-
 
   setTimeout(()=>{
     const closes=series.map(r=>r.c);
@@ -2265,7 +2333,7 @@ function renderMetrics(s){
   const z=s.zScore||0;
   const zCol=z>2?'#00c076':z>1?'#f5a623':z<-2?'#ef4444':z<-1?'#f5a623':'var(--text3)';
   const zLbl=z>2?'Overbought':z>1?'Above mean':z<-2?'Oversold':z<-1?'Below mean':'Near mean';
-  const expGain=s.expectedRevertGain||0;
+  const expGain=s.mean90>0?(s.cur/s.mean90-1)*100:0;
   const expGainStr=expGain>0?'+'+expGain.toFixed(1)+'%':expGain.toFixed(1)+'%';
   const expCol=expGain>5?'#00c076':expGain<-5?'#ef4444':'var(--text3)';
   document.getElementById('metricsRow').innerHTML=`
@@ -2351,7 +2419,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='accumulation1'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='researched-turn-2'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2381,7 +2449,7 @@ async function runAIScore(s,forceRefresh){
   if(run!==analysisRun||a!==fromSym||b!==toSym||!panel.isConnected)return;
   if(!result){panel.className='sp-box orange';panel.querySelector('.sp-verdict').textContent='Data unavailable';panel.querySelector('.sp-num').textContent='—';panel.querySelector('.sp-sub').textContent='No signal. Retry when fresh matched market data is available.';return;}
   const q=result.qss;
-  renderScore({...result,simple_verdict:q.isGo?'Candidate for a '+accumulationPlan.horizon+'-day cycle; verify the quote.':q.reasons[0],plain_explanation:'Sell the relatively extended starting coin, then return when the held coin buys enough starting coins after costs. '+opportunitySummary(q),market_situation:'Recovery history uses completed daily candles. Current extension uses a live reference ratio and can change intraday. Historical tests use daily observations only.',_stats:s||currentStats,prediction:''});
+  renderScore({...result,simple_verdict:q.isGo?'Experimental candidate; monthly completion is unproven.':q.reasons[0],plain_explanation:'Sell the relatively extended starting coin, then return when the held coin buys enough starting coins after costs. '+opportunitySummary(q),market_situation:'Signal strength uses completed daily candles. The live ratio checks whether costs are still covered. OU half-life is a model diagnostic, not a completion forecast.',_stats:s||currentStats,prediction:''});
   const button=panel.querySelector('.reanalyze-btn');if(button)button.disabled=false;
 }
 
@@ -2439,8 +2507,8 @@ function renderScore(j){
     }
     const bars=[
       {lbl:'Stretch',val:q.depth,raw:q.z30.toFixed(2)+'σ'},
-      {lbl:'Recovery',val:q.reversionQ,raw:q.crossings+' crosses'},
-      {lbl:'Timing',val:q.holdDays?Math.max(0,100-q.holdDays*2):0,raw:q.holdDays?'~'+q.holdDays+'d':'Unknown'},
+      {lbl:'Daily turn',val:q.reversionQ,raw:q.turning?'Confirmed':'Waiting'},
+      {lbl:'OU half-life',val:0,raw:q.science?.stable?q.science.halfLife.toFixed(1)+'d (model)':'Unstable'},
     ].map(b=>`<div style="display:flex;align-items:center;gap:6px;font-size:10px">
         <span style="width:65px;color:var(--text3);font-family:inherit">${b.lbl}</span>
         <div style="flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden"><div style="height:100%;width:${b.val}%;background:${b.val>=60?'#00c076':b.val>=30?'#f5a623':'#ef4444'}"></div></div>
@@ -4043,7 +4111,7 @@ function initBestSwapNow(){
     banner.innerHTML=`
       <span style="font-size:28px">🏆</span>
       <div style="flex:1;min-width:160px">
-        <div style="font-size:11px;font-family:monospace;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Best fit for your accumulation plan</div>
+        <div style="font-size:11px;font-family:monospace;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Highest-ranked pair among your holdings</div>
         <div style="font-size:20px;font-weight:700;color:var(--text)">${topOverall.from} → ${topOverall.to}</div>
         <div style="font-size:11px;color:var(--text2)">${topOverall.fromName} → ${topOverall.toName}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:1px">Z: <strong style="color:${bestCol}">${topOverall.qss?.z30?.toFixed(2)||'—'}σ</strong> · ${opportunitySummary(topOverall.qss)}</div>
@@ -4177,7 +4245,7 @@ function initBestSwapNow(){
     banner.innerHTML=`
       <span style="font-size:28px">🏆</span>
       <div style="flex:1;min-width:160px">
-        <div style="font-size:11px;font-family:monospace;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Best QSS setup — entire market</div>
+        <div style="font-size:11px;font-family:monospace;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Highest-ranked pair · check entry status</div>
         <div style="font-size:20px;font-weight:700;color:var(--text)">${top.from} → ${top.to}</div>
         <div style="font-size:11px;color:var(--text2)">${top.fromName} → ${top.toName}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:1px">Z: <strong style="color:${bestCol}">${top.qss?.z30?.toFixed(2)||'—'}σ</strong> · ${opportunitySummary(top.qss)}</div>
@@ -4196,7 +4264,7 @@ function initBestSwapNow(){
 
     const heading=document.createElement('div');
     heading.style.cssText='font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;margin-top:.3rem';
-    heading.textContent='Top opportunities right now, market-wide';
+    heading.textContent='Ranked pairs · a ranking is not an entry signal';
     results.appendChild(heading);
 
     scored.slice(0,10).forEach(item=>{
