@@ -1526,7 +1526,7 @@ const COINS=[
 function loadPrefs(){try{return JSON.parse(localStorage.getItem('swapPrefs')||'{}');}catch(e){return{};}}
 function savePrefs(){try{localStorage.setItem('swapPrefs',JSON.stringify({fromSym,toSym,activeTF,chartType,activeTab:_activeTab,activeTrackerId}));}catch(e){}}
 const _p=loadPrefs();
-let fromSym=_p.fromSym||'BTC',toSym=_p.toSym||'ETH',activeTF=_p.activeTF||90,chartType=_p.chartType||'line';
+let fromSym=_p.fromSym||'BTC',toSym=_p.toSym||'ETH',activeTF=_p.activeTF||90,chartType=_p.chartType||'candle';
 let _activeTab=_p.activeTab||'analyzer';
 let activeTrackerId=_p.activeTrackerId||null;
 let priceCache={},lastFetch=0,liveTimer=null,scoreTimer=null;
@@ -2173,16 +2173,16 @@ function renderMain(series){
       </div>
     </div>
 
-    <details class="technical-details"><summary>Explore the ratio and technical indicators</summary><p class="muted">Synthetic daily ratio: the line uses matched closes; open/close bars do not represent intraday highs and lows. The current day is provisional. These charts are context, not separate trade signals.</p><div class="metrics" id="metricsRow"></div>
+    <div class="metrics" id="metricsRow"></div>
 
     ${chartHTML('mainChart',320,`Ratio ${fromSym}/${toSym} · 1D`,ctBtns+sep+tfBtns+sep)}
     <div class="inds" id="indsRow"></div>
     ${chartHTML('rsiChart',130,'RSI (14) &amp; Stoch RSI','')}
-    ${chartHTML('macdChart',130,'MACD (12/26/9)','')}</details>
+    ${chartHTML('macdChart',130,'MACD (12/26/9)','')}
   `;
 
   renderMetrics(s);renderInds(s);
-  mc.querySelector('.technical-details').addEventListener('toggle',()=>{Object.values(CI).forEach(chart=>chart.resize());});
+
 
   setTimeout(()=>{
     const closes=series.map(r=>r.c);
