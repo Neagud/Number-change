@@ -1157,9 +1157,10 @@ const RECOVERY_TABLE={"made":"2026-10-01T19:22:20.956Z","target":2,"events":6840
 /* Swap signal, chosen by the research in research/ml (see research/REPORT.md).
    A gradient-boosted model estimates the chance that a 100% swap reaches +2% after costs within 30 days.
    SWAP needs: a basic setup (your coin stretched and turning, with room to cover costs), a model chance of at
-   least 84.5%, the coin bought above its 200-day average price, and live prices that still cover the user's own
-   costs and target. Historically about 9 in 10 such swaps won within 30 days; it is not a guarantee. */
-const TESTED_RULES=Object.freeze({window:10,z:1,target:2,regime:'turn',healthyDays:200,minChance:.845,trackWindow:900,maxTargetDays:30});
+   least 60%, the coin bought above its 200-day average price, and live prices that still cover the user's own
+   costs and target. Chosen for frequency (research/bar60-test.cjs): about 4-5 swaps per coin per year, roughly
+   3 in 4 reaching the target within 30 days. Not a guarantee. */
+const TESTED_RULES=Object.freeze({window:10,z:1,target:2,regime:'turn',healthyDays:200,minChance:.6,trackWindow:900,maxTargetDays:30});
 const MODEL_COST=.99*.999**2; // costs the model was trained with: 1% round trip and 0.1% slippage each way
 function signalLib(){return typeof signalFeatures!=='undefined'?{signalFeatures,signalProbability,SIGNAL_HISTORY}:require('./signal-model.js');}
 function swapModel(){return typeof SIGNAL_MODEL!=='undefined'?SIGNAL_MODEL:require('../research/ml/model.json');}
@@ -1212,14 +1213,14 @@ function evaluateSwapSignal(series,inputs,plan,liveRatio=null,i=series.closes.le
   if(!s.turning)reasons.push('Wait for a completed daily turn, rather than selling into acceleration');
   if(s.room<TESTED_RULES.target||Math.min(closedRoom,liveRoom)<plan.targetPct)reasons.push('Return-to-mean scenario does not cover the total fee and net target');
   if(s.ok&&chance===null)reasons.push('Not enough price history to judge this swap');
-  if(s.ok&&chance!==null&&chance<TESTED_RULES.minChance)reasons.push('Similar swaps won too rarely: '+Math.round(chance*100)+'% within 30 days, 85% needed');
+  if(s.ok&&chance!==null&&chance<TESTED_RULES.minChance)reasons.push('Similar swaps won too rarely: '+Math.round(chance*100)+'% within 30 days, '+Math.round(TESTED_RULES.minChance*100)+'% needed');
   if(!health)reasons.push('Not enough price history for the coin you would buy');
   else if(!health.healthy)reasons.push('The coin you would buy has been falling for months');
   const isGo=reasons.length===0;
-  // 0 = your coin is not up against this coin; 1-49 building; 50-59 stretched, waiting for the turn or room;
-  // 60-84 a full setup scored by the model; 85+ swap.
-  const score=isGo?Math.max(85,Math.round(chance*100))
-    :s.ok&&chance!==null?Math.max(60,Math.min(84,Math.round(chance*100)))
+  // 0 = your coin is not up against this coin; 1-49 building; 50-59 stretched, waiting for the turn or room,
+  // or a full setup that is not good enough; 60+ swap (the model's win chance).
+  const score=isGo?Math.max(60,Math.round(chance*100))
+    :s.ok&&chance!==null?Math.min(59,Math.round(chance*100))
     :s.z>=TESTED_RULES.z?50+Math.round(Math.min(1,s.z-TESTED_RULES.z)*9)
     :Math.max(0,Math.round(s.z/TESTED_RULES.z*50));
   const rank=score+Math.min(4,Math.max(0,s.z))/10; // the scanner orders pairs by the score shown
@@ -1593,7 +1594,7 @@ function cycleStatus(gain,target,days,hist,odds,held,base) {
 /* Today's model view of the held coin against the base coin (score of swapping back). */
 function signalLine(held,base,res) {
   const s=res.score;
-  const what=s>=85?`${held} looks temporarily high against ${base}, a good moment to swap back if you are in profit`
+  const what=res.qss?.isGo?`${held} looks temporarily high against ${base}, a good moment to swap back if you are in profit`
     :s>=50?`${held} has jumped against ${base} recently, which is good for you`
     :s>0?`${held} is gaining a little on ${base}`:`${held} is not gaining on ${base} right now`;
   return `<strong>${held} vs ${base} today:</strong> ${what} (score ${s}).`;
@@ -1650,7 +1651,7 @@ async function buildTrackerSignal(tr,curAsset,signalId) {
   if(!el.isConnected)return;
   if(holdingBase){
     const go=res?.qss?.isGo===true;
-    el.innerHTML=`<section class="cycle-panel"><div class="cycle-status ${go?'good':'wait'}"><div class="cycle-status-head"><span class="cycle-icon" aria-hidden="true">${go?'✅':'⏳'}</span><h3>${go?`Swap now: ${tr.assetA} → ${tr.assetB}`:`Holding ${tr.assetA}: waiting for a good swap into ${tr.assetB}`}</h3></div><p>${go?`Score ${res.score}. After swapping, swap back when you are +${accumulationPlan.targetPct}% up after costs.`:`Score ${res?res.score:'—'} of 85 needed. ${escapeHtml(res?.qss?.reasons?.[0]||'No market data right now.')}`}</p></div><p><button class="btn" onclick="switchAnalyzerPair('${tr.assetA}','${tr.assetB}')">Open ${tr.assetA} → ${tr.assetB} in Opportunities</button></p></section>`;
+    el.innerHTML=`<section class="cycle-panel"><div class="cycle-status ${go?'good':'wait'}"><div class="cycle-status-head"><span class="cycle-icon" aria-hidden="true">${go?'✅':'⏳'}</span><h3>${go?`Swap now: ${tr.assetA} → ${tr.assetB}`:`Holding ${tr.assetA}: waiting for a good swap into ${tr.assetB}`}</h3></div><p>${go?`Score ${res.score}. After swapping, swap back when you are +${accumulationPlan.targetPct}% up after costs.`:`Score ${res?res.score:'—'}; 60 or more means swap.${escapeHtml(res?.qss?.reasons?.[0]||'No market data right now.')}`}</p></div><p><button class="btn" onclick="switchAnalyzerPair('${tr.assetA}','${tr.assetB}')">Open ${tr.assetA} → ${tr.assetB} in Opportunities</button></p></section>`;
     return;
   }
   const decision=exitDecision(tr,res);
@@ -2415,8 +2416,8 @@ function renderMain(series){
       <div class="sp-labels" id="spLabels">
         <span style="color:#ef4444">0</span>
         
-        <span>below 85 · don’t swap</span>
-        <span>85+ · swap</span>
+        <span>below 60 · don’t swap</span>
+        <span>60+ · swap</span>
         <span style="color:#00c076">100</span>
       </div>
 
