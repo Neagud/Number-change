@@ -715,7 +715,6 @@ button,input,select{font:inherit}button{touch-action:manipulation}button:focus-v
 <section class="plan-panel"><h2>Your accumulation plan</h2><p>Look for smaller, repeatable cycles. The time window is a preference, not a promised weekly or monthly profit. Costs must match your swap provider and route.</p><form id="accumulationPlan"><div class="plan-fields"><label>Preferred cycle<select name="horizon"><option value="7">Within a week</option><option value="14">Within two weeks</option><option value="30">Within a month</option></select></label><label>Net gain target (%)<input name="targetPct" type="number" min="0.1" max="20" step="0.05" required></label><label>Total round-trip fee (%)<input name="feePct" type="number" min="0" max="5" step="0.01" required></label><label>Slippage per direction (%)<input name="slippagePct" type="number" min="0" max="5" step="0.01" required></label><button class="primary-action" type="submit">Apply plan</button></div><div id="planStatus" role="status" aria-live="polite"></div></form></section>
 <div class="tab-bar">
   <button class="tab-btn active" data-tab="analyzer">Opportunities</button>
-  <button class="tab-btn" data-tab="trendrider">Momentum watch</button>
   <button class="tab-btn" data-tab="tracker">My cycles</button>
   <button class="tab-btn" data-tab="alerts">Alerts <span id="alertBadge" style="display:none;background:#ef4444;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:3px;font-family:monospace">0</span></button>
 </div>
@@ -786,33 +785,8 @@ button,input,select{font:inherit}button{touch-action:manipulation}button:focus-v
     </div>
   </div>
 
-  <section class="research-panel" aria-label="Strategy test results"><h2>What the strategy has actually shown</h2><p>Experimental rules. The monthly profit goal has not been demonstrated. These fixed-setting results cover 2025-08-10 to 2026-09-29; changing your plan does not change this benchmark.</p><div class="evidence-grid"><div><span>Median across 13 starting coins</span><strong>+5.22%</strong><small>Includes open losses; not annualized</small></div><div><span>Worst starting-coin result</span><strong>-46.57%</strong><small>3 portfolios still waiting to recover</small></div><div><span>Median completed cycles</span><strong>0.14 / month</strong><small>Below your one-per-month goal</small></div></div><details><summary>How the score and gain estimate work</summary><p>The score ranks a 10-day ratio extension and confirmed daily turn. It is not a probability. The percentage is the result if the ratio returns to its recent mean, after a 1% total round-trip fee and 0.1% slippage each way. It can be negative.</p><p>A physics-based mean-reversion model estimates half-life. Twelve versions did not improve the validation objective, so this diagnostic does not raise the score. Its half-life is not a promised waiting time.</p><p>204 initial rules tested; later data previously viewed. Current-coin universe, daily reference fills and repeated model selection limit reliability. Profit-only exits can wait indefinitely. Run a pair check below for your current settings.</p></details></section><section class="research-panel"><h2>Check a pair before committing coins</h2><p>Use the pair selected above. See how often the current rules completed a profitable cycle, including times your coins stayed stuck.</p><div class="research-actions"><button id="historyCheck" class="primary-action">Check historical cycles</button><span class="muted">Up to 1,000 daily candles · actual net costs</span></div><details class="paper-details"><summary>Signal notebook · paper cycles</summary><p class="muted">Track future opportunities without committing coins. One open paper cycle per pair. This is not a shared-capital portfolio.</p><button class="btn" id="paperRefresh" type="button">Refresh observations</button><div id="paperJournal" class="research-result" aria-live="polite"></div></details><div id="researchResult" class="research-result" aria-live="polite">Choose a pair, then run a historical check. No success rate is assumed.</div><details><summary>Estimate your swap and required return rate</summary><div class="quote-row"><label>Amount of your starting coin<input id="quoteAmount" class="quote-input" type="number" min="0" step="any" value="1"></label><button id="quoteCheck" class="btn">Check reference quote</button></div><div id="quoteResult" class="research-result" aria-live="polite">Uses current bid and ask prices and your cost settings.</div></details></section>
+  <section class="research-panel"><h2>Check a pair before committing coins</h2><p>Use the pair selected above. See how often the current rules completed a profitable cycle, including times your coins stayed stuck.</p><div class="research-actions"><button id="historyCheck" class="primary-action">Check historical cycles</button><span class="muted">Up to 1,000 daily candles · actual net costs</span></div><details class="paper-details"><summary>Signal notebook · paper cycles</summary><p class="muted">Track future opportunities without committing coins. One open paper cycle per pair. This is not a shared-capital portfolio.</p><button class="btn" id="paperRefresh" type="button">Refresh observations</button><div id="paperJournal" class="research-result" aria-live="polite"></div></details><div id="researchResult" class="research-result" aria-live="polite">Choose a pair, then run a historical check. No success rate is assumed.</div><details><summary>Estimate your swap and required return rate</summary><div class="quote-row"><label>Amount of your starting coin<input id="quoteAmount" class="quote-input" type="number" min="0" step="any" value="1"></label><button id="quoteCheck" class="btn">Check reference quote</button></div><div id="quoteResult" class="research-result" aria-live="polite">Uses current bid and ask prices and your cost settings.</div></details></section>
 
-</div>
-
-<!-- Trend Rider tab — short-horizon MOMENTUM scanner (7-14 day quick gains).
-     Independent from the Analyzer/QSS score: instead of waiting for a stretched
-     ratio to revert, this looks for one that just started moving and bets it
-     continues a little further. Real backtested numbers on this pool, stated
-     honestly rather than oversold — see initTrendRider/computeMomentumScore. -->
-<div class="tab-pane" id="tab-trendrider">
-  <div class="bsn-card">
-    <div class="bsn-title">🚀 Trend Rider — short-term momentum (independent from the reversion score)</div>
-    <p style="font-size:12px;color:var(--text2);line-height:1.6;margin:.4rem 0 .8rem">
-      A different idea from the rest of the app: instead of waiting for an extended ratio to revert, this looks for a coin that was flat or falling against another coin and just turned upward in the last day or two — then bets that move keeps going a little further, aiming for +2% (net of fees) within 7-14 days. Works from any starting level, weak or strong — it only cares that the turn is fresh. Historical success rates from earlier versions are unverified. This is an experimental watchlist; the cycle checks in Opportunities apply to the reversion strategy only. This tab never overrides the golden rule used everywhere else in the app.
-    </p>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:.7rem">
-      <input class="bsn-search-input" id="trendSearch" placeholder="🔎 Search coin..." autocomplete="off" style="flex:1;min-width:140px;max-width:220px">
-    </div>
-    <div class="bsn-coin-grid" id="trendCoinGrid"></div>
-    <div class="bsn-actions">
-      <button class="bsn-scan-btn" id="trendScanBtn" disabled>🚀 Find a trend to swap my coin into</button>
-      <button class="bsn-scan-btn secondary" id="trendScanAllBtn">🌐 Scan entire market</button>
-      <button class="bsn-clear-btn" id="trendClearBtn">✕ Clear</button>
-      <span class="bsn-selected-count" id="trendCount">Select the coin(s) you currently hold</span>
-    </div>
-    <div class="bsn-results" id="trendResults"></div>
-  </div>
 </div>
 
 <!-- Alerts tab -->
@@ -1124,46 +1098,138 @@ function fitRatioRecovery(closes, horizon=30) {
 }
 if(typeof module!=='undefined'&&module.exports)module.exports={fitRatioRecovery};
 
-/* Selected from the documented historical search; experimental, not a profit guarantee. */
-const TESTED_RULES=Object.freeze({window:10,z:1.75,target:0.5,regime:'turn',maxTargetDays:30});
-function evaluateRatioEntry(closes,plan,liveRatio=null){
-  if(!Array.isArray(closes)||closes.length<60||!closes.every(v=>Number.isFinite(v)&&v>0))return null;
-  if(liveRatio!==null&&!(Number.isFinite(liveRatio)&&liveRatio>0))return null;
-  const logs=closes.map(Math.log),recent=logs.slice(-TESTED_RULES.window);
-  const mu=recent.reduce((s,v)=>s+v,0)/recent.length;
-  const sd=Math.sqrt(recent.reduce((s,v)=>s+(v-mu)**2,0)/recent.length);
-  const closed=closes.at(-1),current=liveRatio??closed;
-  const z=sd>1e-10?(logs.at(-1)-mu)/sd:0;
-  const r1=logs.at(-1)-logs.at(-2),previous=logs.at(-2)-logs.at(-3);
-  const turning=r1<=0&&r1<previous;
-  const cost=(1-plan.feePct/100)*(1-plan.slippagePct/100)**2;
-  const mean=Math.exp(mu),closedGain=(closed/mean*cost-1)*100,liveGain=(current/mean*cost-1)*100;
-  const reasons=[];
-  if(z<TESTED_RULES.z)reasons.push('Wait for a larger short-term ratio extension');
-  if(!turning)reasons.push('Wait for a completed daily turn, rather than selling into acceleration');
-  if(Math.min(closedGain,liveGain)<plan.targetPct)reasons.push('Return-to-mean scenario does not cover the total fee and net target');
-  const rank=Math.min(4,z)+Math.min(.3,logs.at(-1)-mu)*3;
-  return {isGo:reasons.length===0,reasons,z,mean,turning,r1,previous,rank,headroom:liveGain,
-    score:reasons.length===0?Math.round(Math.min(100,60+Math.max(0,rank-TESTED_RULES.z)/3.15*40)):Math.round(Math.max(0,Math.min(59,rank*12+(turning?15:0)))),cost,current,window:TESTED_RULES.window};
+/* Measurements describing one swap opportunity (FROM coin a -> TO coin b) on a completed daily candle.
+   Shared by the research (research/ml) and the app, so both compute exactly the same numbers.
+   Inputs are aligned daily arrays, oldest -> newest, ending on the signal day: USD closes of a, b and BTC,
+   and USD quote volumes of a and b. At least SIGNAL_HISTORY days are required. */
+const SIGNAL_HISTORY=260;
+const FEATURE_NAMES=['z10','z20','z30','z60','z90','ext10','r1','r2','turn','r3','r10','r30','r90','fromPeak10','daysSincePeak10',
+  'vol10','vol60','volRatio','rsi14','aRet7','aRet30','bRet7','bRet30','aSma50','aSma200','bSma50','bSma200','volA','volB',
+  'corr30','corr90','betaRatio','btcRet7','btcRet30','btcSma200','trackRate','trackN'];
+function sigMean(x,from,to){let s=0;for(let k=from;k<=to;k++)s+=x[k];return s/(to-from+1);}
+function sigSd(x,from,to){const m=sigMean(x,from,to);let v=0;for(let k=from;k<=to;k++)v+=(x[k]-m)**2;return Math.sqrt(v/(to-from+1));}
+function sigCorr(x,y,from,to){const mx=sigMean(x,from,to),my=sigMean(y,from,to);let c=0,vx=0,vy=0;
+  for(let k=from;k<=to;k++){c+=(x[k]-mx)*(y[k]-my);vx+=(x[k]-mx)**2;vy+=(y[k]-my)**2;}return vx>0&&vy>0?c/Math.sqrt(vx*vy):0;}
+function signalFeatures(a,b,btc,vA,vB,track){
+  const n=a.length;
+  if(n<SIGNAL_HISTORY||b.length!==n||btc.length!==n||vA.length!==n||vB.length!==n)return null;
+  for(let k=n-SIGNAL_HISTORY;k<n;k++)if(!(a[k]>0&&b[k]>0&&btc[k]>0&&vA[k]>=0&&vB[k]>=0))return null;
+  const t=n-1,l=new Float64Array(n),ra=new Float64Array(n),rb=new Float64Array(n),dl=new Float64Array(n);
+  for(let k=n-SIGNAL_HISTORY;k<n;k++){l[k]=Math.log(a[k]/b[k]);if(k>n-SIGNAL_HISTORY){ra[k]=Math.log(a[k]/a[k-1]);rb[k]=Math.log(b[k]/b[k-1]);dl[k]=l[k]-l[k-1];}}
+  const z=w=>{const m=sigMean(l,t-w+1,t),sd=sigSd(l,t-w+1,t);return sd>1e-10?(l[t]-m)/sd:0;};
+  let peak=-Infinity,peakAt=t;for(let k=t-9;k<=t;k++)if(l[k]>peak){peak=l[k];peakAt=k;}
+  let gain=0,loss=0;for(let k=t-13;k<=t;k++){const d=Math.log(a[k]/b[k])-Math.log(a[k-1]/b[k-1]);if(d>0)gain+=d;else loss-=d;}
+  const vol10=sigSd(dl,t-9,t),vol60=sigSd(dl,t-59,t);
+  const f={z10:z(10),z20:z(20),z30:z(30),z60:z(60),z90:z(90),ext10:l[t]-sigMean(l,t-9,t),
+    r1:l[t]-l[t-1],r2:l[t-1]-l[t-2],turn:(l[t-1]-l[t-2])-(l[t]-l[t-1]),r3:l[t]-l[t-3],r10:l[t]-l[t-10],r30:l[t]-l[t-30],r90:l[t]-l[t-90],
+    fromPeak10:l[t]-peak,daysSincePeak10:t-peakAt,vol10,vol60,volRatio:vol60>0?vol10/vol60:1,
+    rsi14:gain+loss>0?100*gain/(gain+loss):50,
+    aRet7:Math.log(a[t]/a[t-7]),aRet30:Math.log(a[t]/a[t-30]),bRet7:Math.log(b[t]/b[t-7]),bRet30:Math.log(b[t]/b[t-30]),
+    aSma50:a[t]/sigMean(a,t-49,t)-1,aSma200:a[t]/sigMean(a,t-199,t)-1,bSma50:b[t]/sigMean(b,t-49,t)-1,bSma200:b[t]/sigMean(b,t-199,t)-1,
+    volA:sigMean(vA,t-62,t-3)>0?sigMean(vA,t-2,t)/sigMean(vA,t-62,t-3):1,volB:sigMean(vB,t-62,t-3)>0?sigMean(vB,t-2,t)/sigMean(vB,t-62,t-3):1,
+    corr30:sigCorr(ra,rb,t-29,t),corr90:sigCorr(ra,rb,t-89,t),betaRatio:sigSd(rb,t-59,t)>0?sigSd(ra,t-59,t)/sigSd(rb,t-59,t):1,
+    btcRet7:Math.log(btc[t]/btc[t-7]),btcRet30:Math.log(btc[t]/btc[t-30]),btcSma200:btc[t]/sigMean(btc,t-199,t)-1,
+    trackRate:track&&track.n>=3?track.rate:NaN,trackN:track?track.n:0};
+  return FEATURE_NAMES.map(k=>f[k]);
 }
-if(typeof module!=='undefined'&&module.exports)module.exports={TESTED_RULES,evaluateRatioEntry};
+/* Gradient-boosted trees exported from research/ml/train.cjs. Returns the estimated chance (0-1) that the swap
+   reaches the target within 30 days. Missing values use the training medians stored in the model. */
+function signalProbability(model,x){
+  if(!model||!x)return null;
+  let s=model.base;
+  for(const tree of model.trees){let node=tree;while(node.f!==undefined){const v=Number.isFinite(x[node.f])?x[node.f]:model.medians[node.f];node=v<=node.t?node.l:node.r;}s+=node.v;}
+  return 1/(1+Math.exp(-s));
+}
+if(typeof module!=='undefined'&&module.exports)module.exports={SIGNAL_HISTORY,FEATURE_NAMES,signalFeatures,signalProbability};
+
+const SIGNAL_MODEL={"base":1.416879212678809,"trees":[{"f":19,"t":0.106768,"l":{"f":16,"t":0.0454159,"l":{"f":34,"t":-0.0701413,"l":{"v":-0.014736313125383009},"r":{"v":-0.0019239013806121026}},"r":{"f":33,"t":0.12129,"l":{"v":0.005838888008360701},"r":{"v":-0.013947526845016725}}},"r":{"f":19,"t":0.572081,"l":{"f":19,"t":0.175851,"l":{"v":0.0027653129418010805},"r":{"v":0.010874014492416031}},"r":{"f":17,"t":1.88265,"l":{"v":-0.03045831050298251},"r":{"v":0.003938112217791407}}}},{"f":19,"t":0.0749574,"l":{"f":21,"t":-0.250118,"l":{"f":25,"t":-0.295059,"l":{"v":0.01241581189972877},"r":{"v":-0.0015537406779357204}},"r":{"f":36,"t":18,"l":{"v":-0.0012557968869314443},"r":{"v":-0.01275052472816998}}},"r":{"f":25,"t":-0.0175302,"l":{"f":12,"t":-0.205042,"l":{"v":-0.002227690260131488},"r":{"v":0.014777595141965397}},"r":{"f":32,"t":0.0518244,"l":{"v":0.006445426119052029},"r":{"v":-0.005056119633689107}}}},{"f":31,"t":1.2166,"l":{"f":33,"t":-0.291108,"l":{"f":25,"t":-0.130187,"l":{"v":0.012118572691732507},"r":{"v":-0.010781032086128023}},"r":{"f":19,"t":0.116502,"l":{"v":-0.00959804239922667},"r":{"v":0.0010316565847376408}}},"r":{"f":25,"t":-0.0175302,"l":{"f":5,"t":0.0554449,"l":{"v":0.004093470431167508},"r":{"v":0.019331680080258044}},"r":{"f":9,"t":0.359408,"l":{"v":0.005830316826747787},"r":{"v":-0.020022907809113064}}}},{"f":19,"t":0.0749574,"l":{"f":25,"t":-0.254633,"l":{"f":26,"t":-0.457407,"l":{"v":-0.0052779377311791545},"r":{"v":0.015357248057297986}},"r":{"f":34,"t":-0.175652,"l":{"v":-0.01650732962740331},"r":{"v":-0.002887056383380391}}},"r":{"f":25,"t":0.00609976,"l":{"f":12,"t":-0.317054,"l":{"v":-0.007191104052468654},"r":{"v":0.01262507452916314}},"r":{"f":19,"t":0.572081,"l":{"v":0.0008906622017564447},"r":{"v":-0.027136929815532302}}}},{"f":31,"t":0.974475,"l":{"f":34,"t":-0.0701413,"l":{"f":25,"t":-0.211333,"l":{"v":0.000815955273642466},"r":{"v":-0.020325465425584548}},"r":{"f":32,"t":-0.12213,"l":{"v":0.01832816906987382},"r":{"v":-0.0018467921925329031}}},"r":{"f":16,"t":0.0436492,"l":{"f":19,"t":0.175851,"l":{"v":-0.003306488972021884},"r":{"v":0.008051576577013615}},"r":{"f":33,"t":0.107417,"l":{"v":0.015268072978518196},"r":{"v":0.0013495873916599716}}}},{"f":31,"t":1.2166,"l":{"f":33,"t":-0.178166,"l":{"f":3,"t":0.737313,"l":{"v":-0.00039635294282605116},"r":{"v":0.009597762555343782}},"r":{"f":34,"t":-0.247974,"l":{"v":-0.017349024312876337},"r":{"v":-0.001979546162986633}}},"r":{"f":34,"t":0.0950684,"l":{"f":23,"t":-0.0806896,"l":{"v":0.004589662841044035},"r":{"v":0.018567284802953075}},"r":{"f":20,"t":0.024827,"l":{"v":0.020638439711142473},"r":{"v":-0.0058666716348407125}}}},{"f":31,"t":0.961117,"l":{"f":16,"t":0.058397,"l":{"f":31,"t":0.658462,"l":{"v":-0.026568875870437235},"r":{"v":-0.007060180561843375}},"r":{"f":35,"t":0.692308,"l":{"v":-0.011147458839080143},"r":{"v":0.005975343995487906}}},"r":{"f":16,"t":0.0313712,"l":{"f":21,"t":-0.116481,"l":{"v":-0.01993383355224267},"r":{"v":-0.004642730029675334}},"r":{"f":34,"t":0.0950684,"l":{"v":0.011618390748150848},"r":{"v":-0.0012413160439663645}}}},{"f":31,"t":0.961117,"l":{"f":25,"t":-0.254633,"l":{"f":29,"t":0.843367,"l":{"v":0.013352724303350948},"r":{"v":-0.0016472207751205335}},"r":{"f":34,"t":-0.164007,"l":{"v":-0.02118039346994098},"r":{"v":-0.0024742481182632916}}},"r":{"f":16,"t":0.0313712,"l":{"f":29,"t":0.760294,"l":{"v":0.003954519142761456},"r":{"v":-0.010940350869559487}},"r":{"f":34,"t":0.342726,"l":{"v":0.010047431660508617},"r":{"v":-0.0015630540113810338}}}},{"f":31,"t":0.862303,"l":{"f":16,"t":0.058397,"l":{"f":25,"t":-0.254633,"l":{"v":0.0016642699960558946},"r":{"v":-0.016453689712035473}},"r":{"f":35,"t":0.692308,"l":{"v":-0.013849117372005232},"r":{"v":0.005432451638268873}}},"r":{"f":16,"t":0.0313712,"l":{"f":19,"t":-0.0349911,"l":{"v":-0.019140029292027762},"r":{"v":-0.004944216072733255}},"r":{"f":34,"t":0.0950684,"l":{"v":0.009795174198030726},"r":{"v":-0.0014425607556719617}}}},{"f":31,"t":0.890932,"l":{"f":16,"t":0.0533485,"l":{"f":25,"t":-0.225229,"l":{"v":0.00201195932450726},"r":{"v":-0.016569362800445304}},"r":{"f":27,"t":0.355594,"l":{"v":-0.029932236295350516},"r":{"v":0.0028984490103704207}}},"r":{"f":16,"t":0.0313712,"l":{"f":19,"t":-0.0349911,"l":{"v":-0.021737986138320658},"r":{"v":-0.004977937752766433}},"r":{"f":34,"t":0.342726,"l":{"v":0.008432768686575255},"r":{"v":-0.004243140634838907}}}},{"f":19,"t":0.116502,"l":{"f":25,"t":-0.254633,"l":{"f":13,"t":-0.020682,"l":{"v":0.014955913462383761},"r":{"v":-0.00014752614832210564}},"r":{"f":34,"t":-0.206635,"l":{"v":-0.01362195792134004},"r":{"v":-0.0024367307130588266}}},"r":{"f":19,"t":0.572081,"l":{"f":25,"t":-0.0175302,"l":{"v":0.012393554563316853},"r":{"v":0.003198039115521585}},"r":{"f":36,"t":15,"l":{"v":-0.0011321380858179827},"r":{"v":-0.028513939114475962}}}},{"f":31,"t":1.17231,"l":{"f":16,"t":0.0501967,"l":{"f":19,"t":0.175851,"l":{"v":-0.009079176302779528},"r":{"v":0.00457512765832577}},"r":{"f":36,"t":29,"l":{"v":0.005646696604250183},"r":{"v":-0.0077721059104869155}}},"r":{"f":34,"t":0.0950684,"l":{"f":23,"t":-0.134251,"l":{"v":-0.0005960535597731921},"r":{"v":0.01740149199084546}},"r":{"f":20,"t":0.024827,"l":{"v":0.0214245796701315},"r":{"v":-0.004703394631416111}}}},{"f":19,"t":0.175851,"l":{"f":25,"t":-0.225229,"l":{"f":26,"t":-0.417009,"l":{"v":-0.0032873189247746393},"r":{"v":0.011922068586850661}},"r":{"f":34,"t":-0.164007,"l":{"v":-0.011091583614539071},"r":{"v":-0.0016279690890357093}}},"r":{"f":19,"t":0.572081,"l":{"f":32,"t":0.0645035,"l":{"v":0.014599279687579413},"r":{"v":0.002166620343617567}},"r":{"f":17,"t":1.88265,"l":{"v":-0.03154362070854726},"r":{"v":0.004135225263291878}}}},{"f":31,"t":0.974475,"l":{"f":25,"t":-0.295059,"l":{"f":32,"t":-0.0135872,"l":{"v":0.011159794867602412},"r":{"v":-0.010362171367654611}},"r":{"f":34,"t":-0.164007,"l":{"v":-0.016528784075427627},"r":{"v":-0.0027227278382277696}}},"r":{"f":16,"t":0.0313712,"l":{"f":29,"t":0.738908,"l":{"v":0.0044404229157148775},"r":{"v":-0.011537151996428227}},"r":{"f":34,"t":0.0950684,"l":{"v":0.01030349558897475},"r":{"v":0.00027649378490696304}}}},{"f":31,"t":0.814123,"l":{"f":30,"t":0.492471,"l":{"f":32,"t":-0.00431031,"l":{"v":0.013664489864497096},"r":{"v":-0.0020398786612344888}},"r":{"f":26,"t":-0.606215,"l":{"v":0.013269979686488473},"r":{"v":-0.013073102492422816}}},"r":{"f":16,"t":0.0313712,"l":{"f":21,"t":-0.107793,"l":{"v":-0.017207750231723978},"r":{"v":-0.0036164972431775447}},"r":{"f":33,"t":0.167284,"l":{"v":0.007249496553050916},"r":{"v":-0.002731789337438489}}}},{"f":31,"t":0.961117,"l":{"f":16,"t":0.0533485,"l":{"f":33,"t":0.259234,"l":{"v":-0.010968566622669283},"r":{"v":0.009799218492578156}},"r":{"f":36,"t":37,"l":{"v":0.004343372379500161},"r":{"v":-0.023483099129293333}}},"r":{"f":33,"t":0.107417,"l":{"f":9,"t":0.102095,"l":{"v":0.003616421454326432},"r":{"v":0.015756220262193962}},"r":{"f":19,"t":0.572081,"l":{"v":0.0001831128266197911},"r":{"v":-0.020655331998463314}}}},{"f":31,"t":1.2166,"l":{"f":33,"t":-0.291108,"l":{"f":25,"t":-0.130187,"l":{"v":0.011473707861496292},"r":{"v":-0.011744546118506333}},"r":{"f":34,"t":-0.225189,"l":{"v":-0.011051800119858611},"r":{"v":-0.0011395596735692282}}},"r":{"f":34,"t":0.0950684,"l":{"f":4,"t":0.992137,"l":{"v":0.006696881688073934},"r":{"v":0.018353501179356052}},"r":{"f":3,"t":1.49914,"l":{"v":0.010516088060855569},"r":{"v":-0.008429878735027561}}}},{"f":19,"t":0.0749574,"l":{"f":36,"t":18,"l":{"f":16,"t":0.0557668,"l":{"v":-0.001377386718911848},"r":{"v":0.01085339522126075}},"r":{"f":25,"t":-0.415863,"l":{"v":0.010392340341549277},"r":{"v":-0.009180720729478313}}},"r":{"f":25,"t":-0.0175302,"l":{"f":12,"t":-0.239173,"l":{"v":-0.0036488879688156214},"r":{"v":0.013629148461150323}},"r":{"f":19,"t":0.572081,"l":{"v":0.0024183927019188647},"r":{"v":-0.020460514095840848}}}},{"f":31,"t":1.2166,"l":{"f":16,"t":0.0313712,"l":{"f":33,"t":-0.218001,"l":{"v":0.01070452289542632},"r":{"v":-0.012374215894883175}},"r":{"f":31,"t":0.739735,"l":{"v":-0.007616816258672494},"r":{"v":0.0014245581674115799}}},"r":{"f":34,"t":0.0950684,"l":{"f":20,"t":-0.248215,"l":{"v":-0.0023311489639937393},"r":{"v":0.016053307158519447}},"r":{"f":20,"t":0.024827,"l":{"v":0.02029368326886746},"r":{"v":-0.004869219935819381}}}},{"f":31,"t":1.2166,"l":{"f":16,"t":0.0501967,"l":{"f":19,"t":0.0684185,"l":{"v":-0.008975585760592873},"r":{"v":-0.00011402970439386987}},"r":{"f":33,"t":0.196107,"l":{"v":0.005249941972235227},"r":{"v":-0.006860075008228238}}},"r":{"f":34,"t":0.0950684,"l":{"f":23,"t":-0.0806896,"l":{"v":0.0009009028111196111},"r":{"v":0.017015778238968538}},"r":{"f":20,"t":-0.00810927,"l":{"v":0.022777885065013343},"r":{"v":-0.0028632734218899743}}}},{"f":31,"t":1.17231,"l":{"f":16,"t":0.0501967,"l":{"f":31,"t":0.876375,"l":{"v":-0.009358920521135697},"r":{"v":-0.002050465866121523}},"r":{"f":27,"t":0.288859,"l":{"v":-0.02389731433525573},"r":{"v":0.002671866365515959}}},"r":{"f":25,"t":-0.0175302,"l":{"f":15,"t":0.0508339,"l":{"v":0.005186984705454143},"r":{"v":0.01964616621742755}},"r":{"f":9,"t":0.359408,"l":{"v":0.003953534607476688},"r":{"v":-0.016354121872169343}}}},{"f":31,"t":0.961117,"l":{"f":19,"t":-0.15773,"l":{"f":24,"t":-0.282089,"l":{"v":0.0043968947683515605},"r":{"v":0.021112077171296147}},"r":{"f":19,"t":0.106768,"l":{"v":-0.010093403935042166},"r":{"v":0.0018369549391114013}}},"r":{"f":33,"t":0.167284,"l":{"f":9,"t":0.102095,"l":{"v":0.0026805978471126837},"r":{"v":0.013562791573144288}},"r":{"f":5,"t":0.341096,"l":{"v":-0.00043377225548257663},"r":{"v":-0.03470697376783404}}}},{"f":31,"t":0.974475,"l":{"f":33,"t":-0.189468,"l":{"f":22,"t":-0.754806,"l":{"v":-0.009380730668444115},"r":{"v":0.008969971885983865}},"r":{"f":34,"t":-0.308176,"l":{"v":-0.020132467941787725},"r":{"v":-0.00501594594216227}}},"r":{"f":33,"t":0.167284,"l":{"f":16,"t":0.0427606,"l":{"v":-0.0004660926064413575},"r":{"v":0.011488797297238586}},"r":{"f":16,"t":0.0738661,"l":{"v":0.001230384289195836},"r":{"v":-0.02005822989387812}}}},{"f":19,"t":0.0749574,"l":{"f":32,"t":-0.0179787,"l":{"f":23,"t":0.0386276,"l":{"v":0.003575158634528224},"r":{"v":-0.01109886588518414}},"r":{"f":34,"t":-0.197831,"l":{"v":-0.021553500265386986},"r":{"v":-0.0046627684045606995}}},"r":{"f":19,"t":0.572081,"l":{"f":9,"t":0.145449,"l":{"v":0.0027644716134863695},"r":{"v":0.011618756033831515}},"r":{"f":11,"t":0.612352,"l":{"v":-0.031896084284194735},"r":{"v":-0.004759800537785645}}}},{"f":31,"t":0.831557,"l":{"f":34,"t":-0.0701413,"l":{"f":25,"t":-0.211333,"l":{"v":0.0007760366950442749},"r":{"v":-0.018860022431150415}},"r":{"f":32,"t":-0.12213,"l":{"v":0.018576228043483987},"r":{"v":-0.0012517922381868806}}},"r":{"f":16,"t":0.0313712,"l":{"f":19,"t":-0.0349911,"l":{"v":-0.017596797303693155},"r":{"v":-0.003708499458573046}},"r":{"f":33,"t":0.167284,"l":{"v":0.00737579220066402},"r":{"v":-0.003329431679328788}}}},{"f":31,"t":0.814123,"l":{"f":30,"t":0.510339,"l":{"f":32,"t":-0.00431031,"l":{"v":0.011617689996517532},"r":{"v":-0.0029915256209551017}},"r":{"f":26,"t":-0.564504,"l":{"v":0.010218892679677903},"r":{"v":-0.012421325072321566}}},"r":{"f":16,"t":0.0313712,"l":{"f":19,"t":-0.0349911,"l":{"v":-0.019004223782957123},"r":{"v":-0.003716565102202851}},"r":{"f":34,"t":0.342726,"l":{"v":0.006910730983753774},"r":{"v":-0.0035409438617522828}}}},{"f":31,"t":1.2166,"l":{"f":36,"t":10,"l":{"f":32,"t":-0.0197552,"l":{"v":0.011936015954734524},"r":{"v":0.0008843599301975539}},"r":{"f":26,"t":-0.533947,"l":{"v":0.007164028569989837},"r":{"v":-0.0045824299827439225}}},"r":{"f":34,"t":0.0950684,"l":{"f":11,"t":-0.0436236,"l":{"v":-0.0011389331568967332},"r":{"v":0.014975727986053476}},"r":{"f":11,"t":-0.0747285,"l":{"v":0.020696551193392025},"r":{"v":-0.0034247053270756076}}}},{"f":31,"t":0.974475,"l":{"f":19,"t":-0.15773,"l":{"f":24,"t":-0.389417,"l":{"v":0.00011688869040611124},"r":{"v":0.016027922115332504}},"r":{"f":19,"t":0.116502,"l":{"v":-0.009303801338664156},"r":{"v":0.00302916064248139}}},"r":{"f":33,"t":0.107417,"l":{"f":16,"t":0.0409234,"l":{"v":-0.0008325172270254915},"r":{"v":0.011056333543462131}},"r":{"f":21,"t":0.0384215,"l":{"v":-0.007434576492254399},"r":{"v":0.003817701336865701}}}},{"f":9,"t":0.102095,"l":{"f":21,"t":0.0172071,"l":{"f":36,"t":11,"l":{"v":0.003371576703801219},"r":{"v":-0.006004568845286192}},"r":{"f":15,"t":0.0203726,"l":{"v":-0.009808214304063258},"r":{"v":0.0043411107255889635}}},"r":{"f":34,"t":0.342726,"l":{"f":12,"t":0.831283,"l":{"v":0.005171176322944497},"r":{"v":0.018575488440498306}},"r":{"f":32,"t":0.000926269,"l":{"v":0.01763574850880303},"r":{"v":-0.010472028031870535}}}},{"f":31,"t":0.974475,"l":{"f":19,"t":-0.15773,"l":{"f":26,"t":-0.457407,"l":{"v":-0.0022288485198800547},"r":{"v":0.01681436385464609}},"r":{"f":19,"t":0.0909718,"l":{"v":-0.008652318537289769},"r":{"v":0.0012225147349394002}}},"r":{"f":16,"t":0.0313712,"l":{"f":15,"t":0.0379603,"l":{"v":-0.0025010736106725133},"r":{"v":-0.017707713664348708}},"r":{"f":22,"t":0.164919,"l":{"v":0.0078074050160556446},"r":{"v":-0.0020322316111153083}}}},{"f":31,"t":0.862303,"l":{"f":34,"t":-0.164007,"l":{"f":25,"t":-0.254633,"l":{"v":0.00629880208904107},"r":{"v":-0.019440359650732396}},"r":{"f":36,"t":29,"l":{"v":0.003783272556888943},"r":{"v":-0.011241834176653288}}},"r":{"f":19,"t":0.572081,"l":{"f":15,"t":0.0272741,"l":{"v":-0.003177119018902977},"r":{"v":0.004983282425621433}},"r":{"f":2,"t":2.27518,"l":{"v":0.001043425459379194},"r":{"v":-0.02490964092943344}}}},{"f":31,"t":1.17231,"l":{"f":16,"t":0.0501967,"l":{"f":33,"t":0.344677,"l":{"v":-0.006517351822282948},"r":{"v":0.01336462812031029}},"r":{"f":33,"t":0.228956,"l":{"v":0.004452187167423069},"r":{"v":-0.007771162029804252}}},"r":{"f":34,"t":0.0950684,"l":{"f":23,"t":-0.148384,"l":{"v":-0.003387814254670531},"r":{"v":0.01299109542405033}},"r":{"f":20,"t":0.024827,"l":{"v":0.02175702358281619},"r":{"v":-0.004806286566710765}}}},{"f":31,"t":0.814123,"l":{"f":30,"t":0.510339,"l":{"f":25,"t":0.0743221,"l":{"v":0.010790168080031706},"r":{"v":-0.0029188691470599572}},"r":{"f":26,"t":-0.564504,"l":{"v":0.011723208509393495},"r":{"v":-0.011207399557295609}}},"r":{"f":16,"t":0.0313712,"l":{"f":19,"t":-0.0349911,"l":{"v":-0.015145149639441524},"r":{"v":-0.0016666691120229694}},"r":{"f":33,"t":0.167284,"l":{"v":0.00623533297957968},"r":{"v":-0.0025095128380120016}}}},{"f":16,"t":0.030238,"l":{"f":19,"t":-0.0441341,"l":{"f":21,"t":-0.250118,"l":{"v":-0.0001390957890662215},"r":{"v":-0.026992132468839705}},"r":{"f":28,"t":1.24944,"l":{"v":-0.008067469142880838},"r":{"v":0.004922148146720761}}},"r":{"f":19,"t":0.572081,"l":{"f":19,"t":0.175851,"l":{"v":0.00021984516387718535},"r":{"v":0.008395837846536622}},"r":{"f":26,"t":0.721262,"l":{"v":-0.0035646917922547436},"r":{"v":-0.028478495838257612}}}},{"f":16,"t":0.0313712,"l":{"f":33,"t":-0.218001,"l":{"f":4,"t":1.36664,"l":{"v":0.00582316685775723},"r":{"v":0.016481067945133834}},"r":{"f":12,"t":0.123075,"l":{"v":-0.004499004922216972},"r":{"v":-0.016373227146598363}}},"r":{"f":35,"t":0.828571,"l":{"f":22,"t":-0.115527,"l":{"v":0.0038538889087629683},"r":{"v":-0.006169901515758254}},"r":{"f":27,"t":0.355594,"l":{"v":-0.009111035660090964},"r":{"v":0.00457732753678002}}}},{"f":31,"t":0.689261,"l":{"f":16,"t":0.070484,"l":{"f":19,"t":-0.15773,"l":{"v":0.01270564244663486},"r":{"v":-0.017572753902647984}},"r":{"f":36,"t":17,"l":{"v":0.014485718490217939},"r":{"v":-0.006770071971545209}}},"r":{"f":16,"t":0.0501967,"l":{"f":19,"t":0.0684185,"l":{"v":-0.004685358788820747},"r":{"v":0.0025695725033577084}},"r":{"f":34,"t":0.0950684,"l":{"v":0.011138426960837904},"r":{"v":-0.0022345093213601993}}}},{"f":19,"t":0.175851,"l":{"f":23,"t":0.0386276,"l":{"f":8,"t":0.101466,"l":{"v":-0.0012996440357013915},"r":{"v":0.010640123067566318}},"r":{"f":4,"t":2.13623,"l":{"v":-0.003383975608669815},"r":{"v":-0.015868556578231306}}},"r":{"f":32,"t":0.0645035,"l":{"f":7,"t":0.298144,"l":{"v":0.013201317508313786},"r":{"v":-0.009293864581994143}},"r":{"f":22,"t":0.0853209,"l":{"v":0.008405538077151048},"r":{"v":-0.007095605612014767}}}},{"f":16,"t":0.030238,"l":{"f":12,"t":0.123075,"l":{"f":35,"t":0.8,"l":{"v":0.008014740475028006},"r":{"v":-0.009524514177982538}},"r":{"f":28,"t":0.806856,"l":{"v":-0.0028839552329299285},"r":{"v":-0.02183328411281682}}},"r":{"f":19,"t":0.572081,"l":{"f":9,"t":0.145449,"l":{"v":0.00007656541016985588},"r":{"v":0.008756276464475774}},"r":{"f":1,"t":2.03714,"l":{"v":-0.003319163092211974},"r":{"v":-0.026299280133010517}}}},{"f":31,"t":0.961117,"l":{"f":26,"t":-0.606215,"l":{"f":5,"t":0.0626148,"l":{"v":-0.002157235853248654},"r":{"v":0.02268112864826238}},"r":{"f":34,"t":-0.0701413,"l":{"v":-0.009837425936450544},"r":{"v":0.00003699449863681821}}},"r":{"f":25,"t":0.00609976,"l":{"f":9,"t":0.102095,"l":{"v":0.0018644812610261652},"r":{"v":0.013399032279602516}},"r":{"f":35,"t":0.823529,"l":{"v":-0.0069253103766366165},"r":{"v":0.005117286012210418}}}},{"f":16,"t":0.030238,"l":{"f":19,"t":-0.0441341,"l":{"f":19,"t":-0.126583,"l":{"v":-0.003512812896071255},"r":{"v":-0.026036137452305284}},"r":{"f":28,"t":1.32284,"l":{"v":-0.007309510916619352},"r":{"v":0.00681366114525496}}},"r":{"f":27,"t":0.288859,"l":{"f":24,"t":-0.220237,"l":{"v":0.003384454495283334},"r":{"v":-0.02953835000178755}},"r":{"f":22,"t":-0.166525,"l":{"v":0.005156559855503097},"r":{"v":-0.0008521241856926584}}}},{"f":31,"t":0.689261,"l":{"f":16,"t":0.070484,"l":{"f":25,"t":-0.239017,"l":{"v":0.009531592230546315},"r":{"v":-0.01838262768567787}},"r":{"f":32,"t":0.0645035,"l":{"v":0.012283025909602889},"r":{"v":-0.0097517813389142}}},"r":{"f":16,"t":0.0501967,"l":{"f":19,"t":0.106768,"l":{"v":-0.0043061109010903735},"r":{"v":0.003943365771061564}},"r":{"f":33,"t":0.167284,"l":{"v":0.008848667174216425},"r":{"v":-0.0044837682779044616}}}},{"f":31,"t":1.29996,"l":{"f":19,"t":-0.15773,"l":{"f":26,"t":-0.457407,"l":{"v":-0.0026296212896311003},"r":{"v":0.01327392013314947}},"r":{"f":19,"t":0.0618455,"l":{"v":-0.006189148502009034},"r":{"v":0.000636427162623688}}},"r":{"f":34,"t":0.129751,"l":{"f":23,"t":-0.148384,"l":{"v":-0.0027419665328171704},"r":{"v":0.015320491816131305}},"r":{"f":3,"t":1.56544,"l":{"v":0.008810471690650993},"r":{"v":-0.010540544071277953}}}},{"f":31,"t":0.814123,"l":{"f":19,"t":-0.15773,"l":{"f":18,"t":67.7311,"l":{"v":0.00410845565793205},"r":{"v":0.01952331523903708}},"r":{"f":19,"t":0.116502,"l":{"v":-0.010954297275107472},"r":{"v":0.003678768072043839}}},"r":{"f":16,"t":0.0400858,"l":{"f":19,"t":-0.0349911,"l":{"v":-0.010557960001250501},"r":{"v":0.00023922655795552612}},"r":{"f":33,"t":0.167284,"l":{"v":0.007595559930689361},"r":{"v":-0.003923360678520721}}}},{"f":16,"t":0.0454159,"l":{"f":19,"t":0.183945,"l":{"f":34,"t":-0.0701413,"l":{"v":-0.007470532854503578},"r":{"v":0.00041539547621277504}},"r":{"f":17,"t":0.943311,"l":{"v":-0.004009251445030864},"r":{"v":0.010154293864296136}}},"r":{"f":34,"t":0.0950684,"l":{"f":34,"t":-0.175652,"l":{"v":0.001219840063968107},"r":{"v":0.011629175116158446}},"r":{"f":34,"t":0.188607,"l":{"v":-0.015522958194018449},"r":{"v":-0.00016542454549483713}}}},{"f":19,"t":0.175851,"l":{"f":23,"t":0.0534056,"l":{"f":31,"t":0.739735,"l":{"v":-0.007645808333694732},"r":{"v":0.002853554031915294}},"r":{"f":4,"t":2.13623,"l":{"v":-0.004040275403497008},"r":{"v":-0.014690572242962665}}},"r":{"f":19,"t":0.572081,"l":{"f":27,"t":2.28621,"l":{"v":0.0003100778143199217},"r":{"v":0.011095529778500406}},"r":{"f":33,"t":0.177401,"l":{"v":0.0004783282190982585},"r":{"v":-0.02600823062360429}}}},{"f":31,"t":1.2166,"l":{"f":33,"t":-0.258042,"l":{"f":3,"t":-0.739043,"l":{"v":-0.014098498173272836},"r":{"v":0.008857528699080039}},"r":{"f":33,"t":-0.0272171,"l":{"v":-0.006556348607463103},"r":{"v":-0.000029762587613061044}}},"r":{"f":30,"t":0.846596,"l":{"f":9,"t":0.359408,"l":{"v":0.008584427027257455},"r":{"v":-0.010117564879059479}},"r":{"v":-0.0122438149227722}}},{"f":16,"t":0.0313712,"l":{"f":21,"t":-0.069239,"l":{"f":32,"t":-0.0135872,"l":{"v":-0.009512559530595039},"r":{"v":-0.029909013848174428}},"r":{"f":15,"t":0.0190414,"l":{"v":-0.015503216037285363},"r":{"v":0.002464294519845263}}},"r":{"f":3,"t":-0.21452,"l":{"f":16,"t":0.0454159,"l":{"v":-0.013468449579547966},"r":{"v":-0.00010186912232033535}},"r":{"f":30,"t":0.753595,"l":{"v":0.0010888725604877585},"r":{"v":0.008251960044983943}}}},{"f":31,"t":1.17231,"l":{"f":16,"t":0.0533485,"l":{"f":30,"t":0.71573,"l":{"v":-0.009033582168369789},"r":{"v":-0.0008090650227402634}},"r":{"f":27,"t":0.288859,"l":{"v":-0.024452406846698197},"r":{"v":0.0034986893658917164}}},"r":{"f":34,"t":0.0950684,"l":{"f":23,"t":-0.148384,"l":{"v":-0.004111216507537173},"r":{"v":0.012264277906556983}},"r":{"f":20,"t":0.024827,"l":{"v":0.016456202485627694},"r":{"v":-0.004663367590768774}}}},{"f":31,"t":0.961117,"l":{"f":19,"t":-0.15773,"l":{"f":26,"t":-0.457407,"l":{"v":0.0009219573508258401},"r":{"v":0.015484144495896888}},"r":{"f":36,"t":18,"l":{"v":-0.000143751873187557},"r":{"v":-0.008984450301519183}}},"r":{"f":34,"t":0.0950684,"l":{"f":24,"t":0.385652,"l":{"v":0.0035738695343722035},"r":{"v":0.01738083845026498}},"r":{"f":27,"t":12.3382,"l":{"v":0.0006623303558018505},"r":{"v":-0.023323435720938507}}}},{"f":19,"t":0.0749574,"l":{"f":23,"t":0.0386276,"l":{"f":32,"t":-0.0179787,"l":{"v":0.002880440219512286},"r":{"v":-0.008042802242888294}},"r":{"f":34,"t":-0.164007,"l":{"v":-0.02912950329130511},"r":{"v":-0.005602494646208456}}},"r":{"f":25,"t":0.00609976,"l":{"f":12,"t":-0.317054,"l":{"v":-0.005840584376868601},"r":{"v":0.010200472496432142}},"r":{"f":32,"t":0.0518244,"l":{"v":0.0052224330991868725},"r":{"v":-0.0055389438705837945}}}},{"f":31,"t":0.689261,"l":{"f":25,"t":-0.239017,"l":{"f":4,"t":1.29042,"l":{"v":0.015450205225338383},"r":{"v":0.0030881527651444784}},"r":{"f":34,"t":-0.164007,"l":{"v":-0.022405738217683418},"r":{"v":-0.003661622637162425}}},"r":{"f":28,"t":0.624939,"l":{"f":21,"t":-0.170966,"l":{"v":0.015782998783635677},"r":{"v":0.002582898281517347}},"r":{"f":34,"t":-0.164007,"l":{"v":-0.007576155306864408},"r":{"v":0.0024113402229089522}}}},{"f":31,"t":0.876375,"l":{"f":34,"t":-0.0701413,"l":{"f":25,"t":-0.211333,"l":{"v":0.001878421413846738},"r":{"v":-0.013915371186469395}},"r":{"f":35,"t":0.733333,"l":{"v":-0.009085549515118611},"r":{"v":0.005028301327068841}}},"r":{"f":33,"t":0.107417,"l":{"f":9,"t":0.102095,"l":{"v":0.0014644033690515207},"r":{"v":0.011450325005327552}},"r":{"f":24,"t":-0.336314,"l":{"v":0.01611926081045152},"r":{"v":-0.0037880817922917444}}}},{"f":31,"t":0.974475,"l":{"f":26,"t":-0.533947,"l":{"f":18,"t":75.8548,"l":{"v":0.01182159977712461},"r":{"v":-0.0023030698363677503}},"r":{"f":26,"t":-0.436102,"l":{"v":-0.017051237929551093},"r":{"v":-0.001939076092262458}}},"r":{"f":33,"t":0.167284,"l":{"f":21,"t":0.116829,"l":{"v":0.005981061492240206},"r":{"v":-0.009564688732842901}},"r":{"f":35,"t":0.780488,"l":{"v":-0.010104412348302875},"r":{"v":0.0029756905453051834}}}},{"f":19,"t":0.0749574,"l":{"f":19,"t":-0.15773,"l":{"f":26,"t":-0.457407,"l":{"v":-0.0021722659090214853},"r":{"v":0.01365989342634051}},"r":{"f":36,"t":21,"l":{"v":0.00012681783596985152},"r":{"v":-0.008858585191753197}}},"r":{"f":33,"t":-0.0152471,"l":{"f":31,"t":1.29996,"l":{"v":0.004678693989126716},"r":{"v":0.02003756904502606}},"r":{"f":30,"t":0.661162,"l":{"v":-0.004338802588735488},"r":{"v":0.004715922929986126}}}},{"f":16,"t":0.0501967,"l":{"f":31,"t":0.862303,"l":{"f":34,"t":-0.0701413,"l":{"v":-0.012204153569287135},"r":{"v":-0.0005132204252808961}},"r":{"f":30,"t":0.571642,"l":{"v":-0.012875096241598294},"r":{"v":0.0005899880579534729}}},"r":{"f":34,"t":0.0950684,"l":{"f":27,"t":0.288859,"l":{"v":-0.018213985514450626},"r":{"v":0.008352343947673934}},"r":{"f":32,"t":-0.0984412,"l":{"v":0.010424277093741798},"r":{"v":-0.004680070431294968}}}},{"f":36,"t":10,"l":{"f":25,"t":-0.254633,"l":{"f":12,"t":0.0844377,"l":{"v":0.007547203790237015},"r":{"v":0.022256986151974568}},"r":{"f":19,"t":0.198275,"l":{"v":0.0006988551412354119},"r":{"v":0.010500674986998514}}},"r":{"f":19,"t":0.106768,"l":{"f":31,"t":0.658462,"l":{"v":-0.013777164468433146},"r":{"v":-0.0024495259290488536}},"r":{"f":22,"t":0.0685251,"l":{"v":0.007808854187573486},"r":{"v":-0.003157945558714983}}}},{"f":19,"t":0.146239,"l":{"f":23,"t":0.0386276,"l":{"f":27,"t":0.718212,"l":{"v":-0.0038507468626578687},"r":{"v":0.0054733482602072475}},"r":{"f":34,"t":-0.164007,"l":{"v":-0.01615662056325493},"r":{"v":-0.003368600858955216}}},"r":{"f":32,"t":0.0518244,"l":{"f":7,"t":0.298144,"l":{"v":0.011417868333294074},"r":{"v":-0.010707367371649266}},"r":{"f":26,"t":-0.0404715,"l":{"v":0.00675941451234003},"r":{"v":-0.006835118860855827}}}},{"f":31,"t":0.814123,"l":{"f":30,"t":0.469262,"l":{"f":25,"t":0.0602893,"l":{"v":0.014326365861445547},"r":{"v":-0.0036997917720138587}},"r":{"f":33,"t":0.259234,"l":{"v":-0.008132018299617304},"r":{"v":0.009570274537400154}}},"r":{"f":23,"t":0.0672065,"l":{"f":24,"t":-0.242588,"l":{"v":0.00006721013527154836},"r":{"v":0.010310254566465008}},"r":{"f":19,"t":0.0618455,"l":{"v":-0.011794752424571734},"r":{"v":0.0013661958438911655}}}},{"f":27,"t":0.355594,"l":{"f":34,"t":-0.247974,"l":{"v":0.005310710502861102},"r":{"f":19,"t":0.0282477,"l":{"v":-0.02583645679866228},"r":{"v":-0.0013747148466006583}}},"r":{"f":16,"t":0.0501967,"l":{"f":30,"t":0.609439,"l":{"v":-0.009526017528186796},"r":{"v":-0.00018370400923211597}},"r":{"f":34,"t":0.0950684,"l":{"v":0.009005764888017648},"r":{"v":-0.0017668561591250489}}}},{"f":16,"t":0.030238,"l":{"f":28,"t":0.484642,"l":{"f":30,"t":0.783815,"l":{"v":-0.003337027281413947},"r":{"v":0.012554228347509255}},"r":{"f":12,"t":0.0844377,"l":{"v":-0.0008230048636958986},"r":{"v":-0.01328367195943552}}},"r":{"f":26,"t":-0.606215,"l":{"f":6,"t":-0.00691694,"l":{"v":0.018163956001496954},"r":{"v":0.0006654908716653987}},"r":{"f":26,"t":-0.417009,"l":{"v":-0.005089441000546212},"r":{"v":0.0018468698983926631}}}},{"f":31,"t":1.17231,"l":{"f":33,"t":-0.178166,"l":{"f":36,"t":11,"l":{"v":0.01925874788117606},"r":{"v":0.000837225695274186}},"r":{"f":33,"t":-0.0272171,"l":{"v":-0.009213117123668386},"r":{"v":-0.00021399465694616612}}},"r":{"f":34,"t":0.298582,"l":{"f":10,"t":0.305333,"l":{"v":0.005686089909394854},"r":{"v":0.0184968791083043}},"r":{"f":22,"t":0.0513614,"l":{"v":0.009940582899705546},"r":{"v":-0.011660544542480495}}}},{"f":19,"t":0.572081,"l":{"f":19,"t":0.198275,"l":{"f":23,"t":0.0534056,"l":{"v":0.001988147995886372},"r":{"v":-0.0049688884535440585}},"r":{"f":27,"t":0.939067,"l":{"v":-0.023256508764585727},"r":{"v":0.009023556307379221}}},"r":{"f":17,"t":1.88265,"l":{"v":-0.025663443306048698},"r":{"v":0.0028661586068712747}}},{"f":26,"t":-0.606215,"l":{"f":29,"t":0.834094,"l":{"f":28,"t":0.505213,"l":{"v":0.011261066728120358},"r":{"v":0.024475745708914923}},"r":{"f":9,"t":0.0686336,"l":{"v":-0.008769946801939474},"r":{"v":0.013398135634129142}}},"r":{"f":27,"t":0.355594,"l":{"f":2,"t":1.487,"l":{"v":-0.019339937726440163},"r":{"v":0.010493221313603137}},"r":{"f":16,"t":0.0501967,"l":{"v":-0.0021114759431791275},"r":{"v":0.003068952316434256}}}},{"f":31,"t":1.33529,"l":{"f":36,"t":10,"l":{"f":33,"t":-0.178166,"l":{"v":0.016082436603986398},"r":{"v":0.0019209700522390591}},"r":{"f":28,"t":0.452018,"l":{"v":0.0028088280985252593},"r":{"v":-0.0036568743576035415}}},"r":{"f":34,"t":0.0950684,"l":{"f":11,"t":0.0217968,"l":{"v":-0.0020652761399875576},"r":{"v":0.01653419702074903}},"r":{"f":36,"t":27,"l":{"v":-0.005866204927526031},"r":{"v":0.016879771359764723}}}},{"f":16,"t":0.030238,"l":{"f":33,"t":-0.218001,"l":{"v":0.009384512959829384},"r":{"f":22,"t":-0.279783,"l":{"v":-0.02145850705811505},"r":{"v":-0.0053423806956766455}}},"r":{"f":22,"t":-0.166525,"l":{"f":33,"t":-0.0272171,"l":{"v":0.002698472291265636},"r":{"v":0.015104045635296923}},"r":{"f":34,"t":-0.308176,"l":{"v":-0.013184356936081958},"r":{"v":0.000479962815605087}}}},{"f":16,"t":0.030238,"l":{"f":33,"t":-0.218001,"l":{"v":0.011066611210751854},"r":{"f":12,"t":0.123075,"l":{"v":-0.0015088862287306228},"r":{"v":-0.013747577436671316}}},"r":{"f":19,"t":0.572081,"l":{"f":19,"t":0.175851,"l":{"v":0.00037641352112398547},"r":{"v":0.006413586717893882}},"r":{"f":17,"t":1.88265,"l":{"v":-0.022245419352048993},"r":{"v":0.001713431860002531}}}},{"f":31,"t":0.689261,"l":{"f":16,"t":0.0820399,"l":{"f":25,"t":-0.239017,"l":{"v":0.009013179366282832},"r":{"v":-0.014096617887415638}},"r":{"f":16,"t":0.127161,"l":{"v":0.016092498891245737},"r":{"v":-0.0019816220847020593}}},"r":{"f":16,"t":0.0454159,"l":{"f":33,"t":0.344677,"l":{"v":-0.002245027337423072},"r":{"v":0.01240224105676979}},"r":{"f":22,"t":0.164919,"l":{"v":0.0062972803249072016},"r":{"v":-0.0033623244068309104}}}},{"f":26,"t":-0.533947,"l":{"f":29,"t":0.863712,"l":{"f":27,"t":1.73026,"l":{"v":0.015325460558634903},"r":{"v":-0.002337539589149243}},"r":{"f":23,"t":-0.346352,"l":{"v":0.010476214810174295},"r":{"v":-0.010603356567145589}}},"r":{"f":26,"t":-0.457407,"l":{"f":21,"t":-0.0477074,"l":{"v":-0.018322896649323853},"r":{"v":0.005582455432079613}},"r":{"f":25,"t":-0.254633,"l":{"v":0.011095078600605358},"r":{"v":-0.0008640535205292227}}}},{"f":35,"t":0.888889,"l":{"f":22,"t":-0.166525,"l":{"f":28,"t":0.709287,"l":{"v":0.006074793394499178},"r":{"v":-0.007282043725890673}},"r":{"f":19,"t":0.0209238,"l":{"v":-0.010084060771744079},"r":{"v":-0.0018142393874068664}}},"r":{"f":0,"t":1.07509,"l":{"f":11,"t":0.0646947,"l":{"v":0.004892735759972113},"r":{"v":0.019718323610150346}},"r":{"f":16,"t":0.0445376,"l":{"v":-0.001176027496511301},"r":{"v":0.005963958109021973}}}},{"f":27,"t":0.355594,"l":{"f":2,"t":1.487,"l":{"f":34,"t":-0.247974,"l":{"v":-0.00395937913284824},"r":{"v":-0.025447411648689088}},"r":{"v":0.010565379810502842}},"r":{"f":31,"t":1.2166,"l":{"f":33,"t":-0.291108,"l":{"v":0.007680954414469641},"r":{"v":-0.0017915160968438955}},"r":{"f":25,"t":-0.00680371,"l":{"v":0.010408116996550625},"r":{"v":0.0012225409257912278}}}},{"f":31,"t":1.2166,"l":{"f":26,"t":-0.533947,"l":{"f":33,"t":-0.0152471,"l":{"v":0.003962269458408722},"r":{"v":0.021285589365559777}},"r":{"f":26,"t":-0.457407,"l":{"v":-0.011027236365353936},"r":{"v":-0.0003652275879827858}}},"r":{"f":30,"t":0.857769,"l":{"f":27,"t":0.355594,"l":{"v":-0.015242705227797016},"r":{"v":0.007238122541273561}},"r":{"v":-0.017224483489729884}}},{"f":27,"t":0.288859,"l":{"f":30,"t":0.761108,"l":{"v":-0.024713691938195125},"r":{"v":0.002444883441850933}},"r":{"f":28,"t":0.624939,"l":{"f":22,"t":-0.166525,"l":{"v":0.007093329043341414},"r":{"v":-0.001968900900558996}},"r":{"f":29,"t":0.351275,"l":{"v":0.006905133006608125},"r":{"v":-0.002473636216477397}}}},{"f":9,"t":0.106615,"l":{"f":31,"t":0.57107,"l":{"f":19,"t":0.0103762,"l":{"v":-0.002898629602917158},"r":{"v":-0.022091184359126166}},"r":{"f":34,"t":-0.225189,"l":{"v":-0.003750701404857618},"r":{"v":0.0013839543284122273}}},"r":{"f":32,"t":0.000926269,"l":{"f":16,"t":0.070484,"l":{"v":0.0036893199098080236},"r":{"v":0.021192292158612572}},"r":{"f":24,"t":-0.282089,"l":{"v":0.019589322436080886},"r":{"v":-0.0036941024705177856}}}},{"f":31,"t":1.17231,"l":{"f":33,"t":-0.178166,"l":{"f":36,"t":11,"l":{"v":0.0159370469643502},"r":{"v":0.0011212082952897515}},"r":{"f":33,"t":-0.0272171,"l":{"v":-0.008327798974979752},"r":{"v":0.0002596412404465518}}},"r":{"f":34,"t":0.0950684,"l":{"f":4,"t":0.992137,"l":{"v":0.0023474144372022426},"r":{"v":0.015243092693243726}},"r":{"f":20,"t":0.024827,"l":{"v":0.020278135502667022},"r":{"v":-0.005659096501836091}}}},{"f":35,"t":0.888889,"l":{"f":31,"t":0.658462,"l":{"f":25,"t":-0.239017,"l":{"v":0.010914260647461874},"r":{"v":-0.013068808735253026}},"r":{"f":23,"t":0.0672065,"l":{"v":0.002655042218555783},"r":{"v":-0.002714657783389092}}},"r":{"f":19,"t":0.198275,"l":{"f":26,"t":0.568202,"l":{"v":0.0013504362992269067},"r":{"v":0.0177890652949897}},"r":{"f":27,"t":1.57969,"l":{"v":-0.004479614406343686},"r":{"v":0.016079825002203597}}}}],"medians":[1.32724,1.56199,1.487,1.14416,0.910833,0.0712135,-0.0163051,0.0565645,0.0748323,0.0713275,0.112249,0.113516,0.103753,-0.0166983,1,0.0401035,0.0472599,0.878354,63.6035,0.0749574,0.0396981,-0.0410581,-0.0625797,0.0386276,-0.0724555,-0.0618956,-0.140047,1.25067,0.734558,0.697995,0.688851,1.00333,0.000926269,-0.00881867,-0.0701413,0.823529,20],"features":["z10","z20","z30","z60","z90","ext10","r1","r2","turn","r3","r10","r30","r90","fromPeak10","daysSincePeak10","vol10","vol60","volRatio","rsi14","aRet7","aRet30","bRet7","bRet30","aSma50","aSma200","bSma50","bSma200","volA","volB","corr30","corr90","betaRatio","btcRet7","btcRet30","btcSma200","trackRate","trackN"],"trained":"2026-10-01T18:59:51.786Z","rounds":75,"params":{"rounds":800,"lr":0.03,"depth":3,"lambda":5,"minHess":20,"subsample":0.8,"colsample":0.8,"seed":7}};
+/* Swap signal, chosen by the research in research/ml (see research/REPORT.md).
+   A gradient-boosted model estimates the chance that a 100% swap reaches +2% after costs within 30 days.
+   SWAP needs: a basic setup (your coin stretched and turning, with room to cover costs), a model chance of at
+   least 84.5%, the coin bought above its 200-day average price, and live prices that still cover the user's own
+   costs and target. Historically about 9 in 10 such swaps won within 30 days; it is not a guarantee. */
+const TESTED_RULES=Object.freeze({window:10,z:1,target:2,regime:'turn',healthyDays:200,minChance:.845,trackWindow:900,maxTargetDays:30});
+const MODEL_COST=.99*.999**2; // costs the model was trained with: 1% round trip and 0.1% slippage each way
+function signalLib(){return typeof signalFeatures!=='undefined'?{signalFeatures,signalProbability,SIGNAL_HISTORY}:require('./signal-model.js');}
+function swapModel(){return typeof SIGNAL_MODEL!=='undefined'?SIGNAL_MODEL:require('../research/ml/model.json');}
+/* The coin you would buy must trade above its own 200-day average USD price (completed daily closes). */
+function coinHealth(toCloses){
+  const n=TESTED_RULES.healthyDays;
+  if(!Array.isArray(toCloses)||toCloses.length<n)return null;
+  const recent=toCloses.slice(-n);
+  if(!recent.every(v=>Number.isFinite(v)&&v>0))return null;
+  const average=recent.reduce((s,v)=>s+v,0)/recent.length,last=recent.at(-1);
+  return {healthy:last>average,last,average,gapPct:(last/average-1)*100};
+}
+/* Basic setup on day j of a ratio series: 10-day stretch, completed daily turn, room for +2% at the model's costs.
+   Arithmetic matches research/engine2.cjs so research and app agree exactly. */
+function setupAt(logs,closes,j){
+  let sum=0;for(let k=j-9;k<=j;k++)sum+=logs[k];const mu=sum/10;
+  let v=0;for(let k=j-9;k<=j;k++)v+=(logs[k]-mu)**2;const sd=Math.sqrt(v/10);
+  const z=sd>1e-10?(logs[j]-mu)/sd:0,r1=logs[j]-logs[j-1],previous=logs[j-1]-logs[j-2];
+  const turning=r1<=0&&r1<previous,room=(closes[j]/Math.exp(mu)*MODEL_COST-1)*100;
+  return {z,mu,r1,previous,turning,room,ok:z>=TESTED_RULES.z&&turning&&room>=TESTED_RULES.target};
+}
+/* Precomputes setups and their 30-day outcomes for a whole series of completed ratio candles {o,c}.
+   firstIndex: first day a setup may count (120 days after the newer coin's listing when the history starts there). */
+function prepareSwapSeries(rows,firstIndex=rows.length<999?120:0){
+  const n=rows.length,closes=rows.map(r=>r.c),logs=closes.map(Math.log),ok=new Uint8Array(n),win=new Int8Array(n).fill(-1);
+  for(let j=Math.max(9,firstIndex);j<n;j++)if(setupAt(logs,closes,j).ok)ok[j]=1;
+  const goal=TESTED_RULES.target/100;
+  for(let j=0;j+31<n;j++)if(ok[j]){const entry=rows[j+1].o;let w=0;for(let m=j+2;m<=j+31;m++)if(entry/rows[m].o*MODEL_COST-1>=goal){w=1;break;}win[j]=w;}
+  const cn=new Int32Array(n+1),cw=new Int32Array(n+1);
+  for(let j=0;j<n;j++){cn[j+1]=cn[j]+(win[j]>=0?1:0);cw[j+1]=cw[j]+(win[j]===1?1:0);}
+  return {rows,closes,logs,firstIndex,cn,cw};
+}
+/* Decision for day i (default: the last completed day). inputs: USD closes a, b, btc and quote volumes aQv, bQv,
+   all aligned with the series rows. */
+function evaluateSwapSignal(series,inputs,plan,liveRatio=null,i=series.closes.length-1){
+  const {closes,logs}=series;
+  if(i<89||!closes.slice(i-89,i+1).every(v=>Number.isFinite(v)&&v>0))return null;
+  if(liveRatio!==null&&!(Number.isFinite(liveRatio)&&liveRatio>0))return null;
+  const lib=signalLib(),s=setupAt(logs,closes,i);
+  const j0=Math.max(series.firstIndex,i-TESTED_RULES.trackWindow),j1=i-31;
+  const tn=j1>=j0?series.cn[j1+1]-series.cn[j0]:0,tw=j1>=j0?series.cw[j1+1]-series.cw[j0]:0;
+  let chance=null;
+  if(s.ok&&i+1>=lib.SIGNAL_HISTORY){const cut=x=>x.slice(i-lib.SIGNAL_HISTORY+1,i+1);
+    chance=lib.signalProbability(swapModel(),lib.signalFeatures(cut(inputs.a),cut(inputs.b),cut(inputs.btc),cut(inputs.aQv),cut(inputs.bQv),{n:tn,rate:tn?tw/tn:NaN}));}
+  const health=coinHealth(inputs.b.slice(Math.max(0,i-TESTED_RULES.healthyDays+1),i+1));
+  const cost=(1-plan.feePct/100)*(1-plan.slippagePct/100)**2,closed=closes[i],current=liveRatio??closed;
+  const closedRoom=(closed/Math.exp(s.mu)*cost-1)*100,liveRoom=(current/Math.exp(s.mu)*cost-1)*100;
+  const reasons=[];
+  if(s.z<TESTED_RULES.z)reasons.push('Wait for a larger short-term ratio extension');
+  if(!s.turning)reasons.push('Wait for a completed daily turn, rather than selling into acceleration');
+  if(s.room<TESTED_RULES.target||Math.min(closedRoom,liveRoom)<plan.targetPct)reasons.push('Return-to-mean scenario does not cover the total fee and net target');
+  if(s.ok&&chance===null)reasons.push('Not enough price history to judge this swap');
+  if(s.ok&&chance!==null&&chance<TESTED_RULES.minChance)reasons.push('Similar swaps won too rarely: '+Math.round(chance*100)+'% within 30 days, 85% needed');
+  if(!health)reasons.push('Not enough price history for the coin you would buy');
+  else if(!health.healthy)reasons.push('The coin you would buy has been falling for months');
+  const isGo=reasons.length===0;
+  const score=isGo?Math.max(85,Math.round(chance*100)):s.ok&&chance!==null?Math.min(84,Math.round(chance*100)):0;
+  const rank=s.ok&&chance!==null?10+chance*10:Math.min(4,s.z)+Math.min(.3,logs[i]-s.mu)*3;
+  return {isGo,reasons,score,chance,setup:s.ok,z:s.z,mean:Math.exp(s.mu),turning:s.turning,r1:s.r1,previous:s.previous,rank,
+    headroom:liveRoom,health,track:{n:tn,rate:tn?tw/tn:null},cost,current,window:TESTED_RULES.window};
+}
+if(typeof module!=='undefined'&&module.exports)module.exports={TESTED_RULES,MODEL_COST,coinHealth,setupAt,prepareSwapSeries,evaluateSwapSignal};
 
 /* ProfitSwap accumulation engine. Amounts and returns are always in the starting coin. */
-const ENGINE_VERSION = 'researched-turn-2';
+const ENGINE_VERSION = 'model-4';
 const DAY_MS = 86400000;
-const DEFAULT_PLAN = { horizon: 30, targetPct: 0.5, feePct: 1, slippagePct: 0.1, costModel:2 };
+const DEFAULT_PLAN = { horizon: 30, targetPct: 2, feePct: 1, slippagePct: 0.1, costModel:2, planVersion:3 };
 function normalizePlan(value = {}) {
   const number = (v, fallback, min, max) => Number.isFinite(Number(v)) && v !== '' ? Math.min(max, Math.max(min, Number(v))) : fallback;
   return {
     horizon: [7,14,30].includes(Number(value.horizon)) ? Number(value.horizon) : 30,
-    targetPct: number(value.targetPct, 0.5, 0.1, 20),
+    targetPct: number(value.targetPct, 2, 0.1, 20),
     feePct: number(value.feePct, 1, 0, 5),
-    slippagePct: number(value.slippagePct, 0.1, 0, 5),costModel:2
+    slippagePct: number(value.slippagePct, 0.1, 0, 5),costModel:2,planVersion:3
   };
 }
 function loadPlan() { try {
   const old=JSON.parse(localStorage.getItem('profitSwapPlan')||'null');
   if(old&&old.costModel!==2){localStorage.setItem('profitSwapPreviousFeePlan',JSON.stringify(old));localStorage.setItem('profitSwapPlan',JSON.stringify(DEFAULT_PLAN));return {...DEFAULT_PLAN};}
+  // The researched rule uses a +2% net target. Keep the user's own fee and slippage; back up the old plan once.
+  if(old&&old.planVersion!==3){localStorage.setItem('profitSwapPlanBeforeV3',JSON.stringify(old));const next=normalizePlan({...old,targetPct:DEFAULT_PLAN.targetPct});localStorage.setItem('profitSwapPlan',JSON.stringify(next));return next;}
   return normalizePlan(old||DEFAULT_PLAN);
 }catch{return {...DEFAULT_PLAN};} }
 let accumulationPlan = loadPlan();
@@ -1212,7 +1278,7 @@ async function fetchPrice(sym) {
 async function fetchKlines(sym,limit=92) {
   const data=await marketJSON('/klines?symbol='+encodeURIComponent(sym+'USDT')+'&interval=1d&limit='+Math.min(1000,limit),60000);
   if(!Array.isArray(data)) throw new Error('Invalid candle data');
-  return data.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5],end:+k[6],live:+k[6]>=Date.now()}))
+  return data.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5],qv:+k[7],end:+k[6],live:+k[6]>=Date.now()}))
     .filter(k=>[k.t,k.o,k.h,k.l,k.c,k.end].every(Number.isFinite)&&Math.min(k.o,k.h,k.l,k.c)>0);
 }
 function buildRatio(fk,tk) {
@@ -1231,6 +1297,16 @@ function completedRatio(fk,tk) {
   if(!rows.length || Date.now()-(rows.at(-1).t+DAY_MS)>2*DAY_MS) throw new Error('Daily market data is stale.');
   return rows;
 }
+/* Completed daily candles of both coins and BTC, aligned by day: what the swap signal needs. */
+function swapInputs(fk,tk,bk) {
+  const rows=completedRatio(fk,tk),fa=new Map(fk.map(k=>[k.t,k])),tb=new Map(tk.map(k=>[k.t,k])),bt=new Map(bk.map(k=>[k.t,k]));
+  return {rows,a:rows.map(r=>fa.get(r.t).c),b:rows.map(r=>tb.get(r.t).c),btc:rows.map(r=>bt.get(r.t)?.c??NaN),
+    aQv:rows.map(r=>fa.get(r.t).qv),bQv:rows.map(r=>tb.get(r.t).qv)};
+}
+function sliceInputs(input,from,to) {
+  const cut=x=>x.slice(from,to);
+  return {rows:cut(input.rows),a:cut(input.a),b:cut(input.b),btc:cut(input.btc),aQv:cut(input.aQv),bQv:cut(input.bQv)};
+}
 function mean(values) { return values.reduce((a,b)=>a+b,0)/values.length; }
 function halfLife(closes) {
   const logs=closes.map(Math.log),x=logs.slice(0,-1),dy=logs.slice(1).map((v,i)=>v-logs[i]);
@@ -1239,17 +1315,21 @@ function halfLife(closes) {
   const beta=x.reduce((s,v,i)=>s+(v-mx)*(dy[i]-my),0)/den,phi=1+beta;
   return phi>0 && phi<1 ? -Math.log(2)/Math.log(phi) : null;
 }
-function computeQSS(closes,corr,plan=accumulationPlan,liveRatio=null) {
-  const e=evaluateRatioEntry(closes,plan,liveRatio);if(!e)return null;
-  const depth=Math.max(0,Math.min(100,e.z/TESTED_RULES.z*100));
+/* input: swapInputs() result, optionally with a precomputed series and a day index i (default: last completed day). */
+function computeQSS(input,corr,plan=accumulationPlan,liveRatio=null) {
+  if(!input?.rows?.length)return null;
+  const series=input.series||prepareSwapSeries(input.rows),i=input.i??input.rows.length-1;
+  const e=evaluateSwapSignal(series,input,plan,liveRatio,i);if(!e)return null;
+  const closes=series.closes.slice(Math.max(0,i-89),i+1);
+  const depth=Math.max(0,Math.min(100,e.z/2*100));
   const hl=halfLife(closes.slice(-60));
-  return {qss:e.score,isGo:e.isGo,reasons:e.reasons,depth,se_q:depth,reversionQ:e.turning?100:0,confirm:e.turning?100:0,
+  return {qss:e.score,isGo:e.isGo,reasons:e.reasons,chance:e.chance,setup:e.setup,track:e.track,depth,se_q:depth,reversionQ:e.turning?100:0,confirm:e.turning?100:0,
     z30:e.z,mean30:e.mean,meanFmt:e.mean.toPrecision(5),expGain:e.headroom,holdDays:null,window:e.window,
     targetRatio:e.current*retention(plan)**2/(1+plan.targetPct/100),ouHL20:hl??999,crossings:0,
     oscillationOk:e.turning,oscillationNote:e.turning?'':'No completed daily turn yet.',meetsZGate:e.z>=TESTED_RULES.z,
     corrQ:Math.max(0,Math.min(100,(corr||0)*100)),mt:e.turning?1:0,bp:depth,bollPos:depth,re:50,rsi:50,qf:0,ouFPct20:0,
     cum30:(e.current/closes.at(-30)-1)*100,depthZ:depth,depthCum:0,frozenFrac:0,illiquidNote:'',
-    rank:e.rank,turning:e.turning,science:fitRatioRecovery(closes.slice(-60),plan.horizon),plan:{...plan},estimatedOnly:true,provisional:liveRatio!==null,experimental:true};
+    rank:e.rank,turning:e.turning,health:e.health,science:fitRatioRecovery(closes.slice(-60),plan.horizon),plan:{...plan},estimatedOnly:true,provisional:liveRatio!==null,experimental:true};
 }
 // Preserved only as a research reference; no longer drives live signals.
 function previousComputeQSS(closes,corr,plan=accumulationPlan,liveRatio=null) {
@@ -1298,9 +1378,9 @@ function opportunitySummary(q) {
   return 'Mean-return scenario: '+signedPct(q.expGain)+' net · '+accumulationPlan.horizon+'-day goal, not deadline'+history;
 }
 
-function pairEvidence(rows,from,to,plan) {
-  if(rows.length<200)return null;
-  const tested=backtestCycles(rows,from,to,plan,Math.floor(rows.length*.7));
+function pairEvidence(input,plan) {
+  if(input.rows.length<200)return null;
+  const tested=backtestCycles(input,plan,Math.floor(input.rows.length*.7));
   return {monthly:tested.monthly,count:tested.cycles.length,markedReturn:tested.markedReturn,openDays:tested.open?.days??null,drawdown:tested.maxDrawdown,days:tested.elapsed};
 }
 
@@ -1362,7 +1442,8 @@ function exitDecision(tr,result) {
 /* Chronological, non-overlapping paper cycles. Signals use past closes; entry is next open.
    Target exits use subsequent daily opens, not fabricated ratio highs/lows. Never force a
    losing exit at the horizon; report it as unresolved and keep that capital tied up. */
-function backtestCycles(rows,fromCloses,toCloses,plan=accumulationPlan,startIndex=90) {
+function backtestCycles(input,plan=accumulationPlan,startIndex=90) {
+  const rows=input.rows,series=prepareSwapSeries(rows);
   let position=null,multiplier=1,maxDrawdown=0,peak=1;const cycles=[];
   for(let i=Math.max(90,startIndex);i<rows.length;i++) {
     if(position) {
@@ -1373,9 +1454,8 @@ function backtestCycles(rows,fromCloses,toCloses,plan=accumulationPlan,startInde
     }
     const marked=multiplier*(position?1+roundTripGain(position.entry,rows[i].c,plan)/100:1);peak=Math.max(peak,marked);maxDrawdown=Math.max(maxDrawdown,(peak-marked)/peak*100);
     if(!position&&i<rows.length-31) {
-      const closes=rows.slice(Math.max(0,i-89),i+1).map(r=>r.c);
-      const corr=calcCorrelation(fromCloses.slice(Math.max(0,i-89),i+1),toCloses.slice(Math.max(0,i-89),i+1));
-      const q=computeQSS(closes,corr,plan);
+      const corr=calcCorrelation(input.a.slice(Math.max(0,i-89),i+1),input.b.slice(Math.max(0,i-89),i+1));
+      const q=computeQSS({...input,series,i},corr,plan);
       if(q?.isGo) position={entry:rows[i+1].o,t:rows[i+1].t,signal:rows[i].t,score:q.qss};
     }
   }
@@ -1418,13 +1498,13 @@ async function runHistoricalCheck() {
   const out=document.getElementById('researchResult'),button=document.getElementById('historyCheck');
   button.disabled=true;out.textContent='Checking completed daily candles for '+a+' → '+b+' → '+a+'…';
   try {
-    const [fk,tk]=await Promise.all([fetchKlines(a,1000),fetchKlines(b,1000)]);
-    const rows=completedRatio(fk,tk),fa=new Map(fk.map(k=>[k.t,k.c])),tb=new Map(tk.map(k=>[k.t,k.c]));
+    const [fk,tk,bk]=await Promise.all([fetchKlines(a,1000),fetchKlines(b,1000),fetchKlines('BTC',1000)]);
+    const input=swapInputs(fk,tk,bk),rows=input.rows;
     if(rows.length<200) throw new Error('At least 200 matched daily candles are needed.');
-    const f=rows.map(r=>fa.get(r.t)),t=rows.map(r=>tb.get(r.t)),split=Math.max(90,Math.floor(rows.length*0.7));
-    const earlier=backtestCycles(rows.slice(0,split),f.slice(0,split),t.slice(0,split),plan);
-    const later=backtestCycles(rows,f,t,plan,split);
-    const stress=backtestCycles(rows,f,t,{...plan,slippagePct:Math.min(5,plan.slippagePct+0.2)},split);
+    const split=Math.max(90,Math.floor(rows.length*0.7));
+    const earlier=backtestCycles(sliceInputs(input,0,split),plan);
+    const later=backtestCycles(input,plan,split);
+    const stress=backtestCycles(input,{...plan,slippagePct:Math.min(5,plan.slippagePct+0.2)},split);
     if(run!==researchRun)return;
     const attempts=later.cycles.length+(later.open?1:0);
     out.innerHTML=`<h3>${a} → ${b} → more ${a}?</h3><p>Fixed rules, ${rows.length} completed days. Entries at the next daily open; exits at a later daily open. No new entries in the final 30 days. No overlapping positions or forced exits at a loss.</p>
@@ -1596,7 +1676,7 @@ function loadPrefs(){try{return JSON.parse(localStorage.getItem('swapPrefs')||'{
 function savePrefs(){try{localStorage.setItem('swapPrefs',JSON.stringify({fromSym,toSym,activeTF,chartType,activeTab:_activeTab,activeTrackerId}));}catch(e){}}
 const _p=loadPrefs();
 let fromSym=_p.fromSym||'BTC',toSym=_p.toSym||'ETH',activeTF=_p.activeTF||90,chartType=_p.chartType||'candle';
-let _activeTab=_p.activeTab||'analyzer';
+let _activeTab=_p.activeTab==='trendrider'?'analyzer':(_p.activeTab||'analyzer');
 let activeTrackerId=_p.activeTrackerId||null;
 let priceCache={},lastFetch=0,liveTimer=null,scoreTimer=null;
 let currentStats=null, _currentRatioS=[];
@@ -2221,9 +2301,9 @@ function renderMain(series){
       </div>
       <div class="sp-labels" id="spLabels">
         <span style="color:#ef4444">0</span>
-        <span>25 · hold</span>
-        <span>45 · caution</span>
-        <span>60+ · experimental candidate</span>
+        
+        <span>below 85 · don’t swap</span>
+        <span>85+ · swap</span>
         <span style="color:#00c076">100</span>
       </div>
 
@@ -2419,7 +2499,7 @@ function tgShowConnected(chatId){
   if(info) info.textContent='Alerts deliver instantly to your Telegram. Chat ID: '+chatId;
 }
 
-const _CACHE_VER='researched-turn-2'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
+const _CACHE_VER='model-4'; function _scoreKey(){ return 'sc_'+_CACHE_VER+'_'+fromSym+'_'+toSym+'_'+activeTF; }
 function _loadScore(){
   try{
     const o=JSON.parse(localStorage.getItem(_scoreKey())||'null');
@@ -2449,7 +2529,7 @@ async function runAIScore(s,forceRefresh){
   if(run!==analysisRun||a!==fromSym||b!==toSym||!panel.isConnected)return;
   if(!result){panel.className='sp-box orange';panel.querySelector('.sp-verdict').textContent='Data unavailable';panel.querySelector('.sp-num').textContent='—';panel.querySelector('.sp-sub').textContent='No signal. Retry when fresh matched market data is available.';return;}
   const q=result.qss;
-  renderScore({...result,simple_verdict:q.isGo?'Experimental candidate; monthly completion is unproven.':q.reasons[0],plain_explanation:'Sell the relatively extended starting coin, then return when the held coin buys enough starting coins after costs. '+opportunitySummary(q),market_situation:'Signal strength uses completed daily candles. The live ratio checks whether costs are still covered. OU half-life is a model diagnostic, not a completion forecast.',_stats:s||currentStats,prediction:''});
+  renderScore({...result,simple_verdict:q.isGo?'Swap now. Swap back when you are +'+accumulationPlan.targetPct+'% up after costs.':q.reasons[0],plain_explanation:'Sell the relatively extended starting coin, then return when the held coin buys enough starting coins after costs. '+opportunitySummary(q),market_situation:'Signal strength uses completed daily candles. The live ratio checks whether costs are still covered. OU half-life is a model diagnostic, not a completion forecast.',_stats:s||currentStats,prediction:''});
   const button=panel.querySelector('.reanalyze-btn');if(button)button.disabled=false;
 }
 
@@ -2465,7 +2545,7 @@ function renderScore(j){
   const sc=Math.min(100,Math.max(0,j.score));
   const q=j.qss||null;
   // A trustworthy "go" needs the score AND a real Z-depth anomaly AND genuine oscillation history
-  const isG=q?.isGo===true, isR=!isG&&sc<45, cls=isG?'green':isR?'red':'orange';
+  const isG=q?.isGo===true, isR=!isG, cls=isG?'green':isR?'red':'orange';
   p.className=`sp-box ${cls}`;
   p.querySelector('.sp-num').textContent=sc;
 
@@ -2521,7 +2601,7 @@ function renderScore(j){
 
   /* Verdict */
   const verdictEmoji=isG?'✅':isR?'❌':'⏳';
-  p.querySelector('.sp-verdict').textContent=`${verdictEmoji} ${isG?'CYCLE CANDIDATE':isR?'WAIT FOR A SETUP':'WATCHLIST'}`;
+  p.querySelector('.sp-verdict').textContent=`${verdictEmoji} ${isG?'SWAP':'DON’T SWAP'}`;
   p.querySelector('.sp-sub').textContent=j.simple_verdict||(isG?`Good time to swap ${fromSym} for ${toSym}`:isR?'Hold — wait for better conditions':'Not clear yet — keep monitoring');
 
   /* Score bar */
@@ -2771,7 +2851,6 @@ buildGrids();
 initSearchFilters();
 initBestSwapNow();
 initMarketMap();
-initTrendRider();
 loadAndRender();
 initTabs();
 initTrackerForm();
@@ -3526,128 +3605,19 @@ async function getScoreForPair(a,b){
   if(_scorePending[key]) return _scorePending[key];
   const plan={...accumulationPlan};
   const task=(async()=>{try{
-    const [fk,tk,fp,tp]=await Promise.all([fetchKlines(a,1000),fetchKlines(b,1000),fetchPrice(a),fetchPrice(b)]);
+    const [fk,tk,bk,fp,tp]=await Promise.all([fetchKlines(a,1000),fetchKlines(b,1000),fetchKlines('BTC',1000),fetchPrice(a),fetchPrice(b)]);
     priceCache[a]=fp;priceCache[b]=tp;
-    const rows=completedRatio(fk,tk),f=new Map(fk.map(k=>[k.t,k.c])),t=new Map(tk.map(k=>[k.t,k.c]));
-    const from=rows.map(k=>f.get(k.t)),to=rows.map(k=>t.get(k.t));
-    const corr=calcCorrelation(from.slice(-90),to.slice(-90));
-    const q=computeQSS(rows.slice(-90).map(k=>k.c),corr,plan,fp/tp);
+    const input=swapInputs(fk,tk,bk),rows=input.rows;
+    const corr=calcCorrelation(input.a.slice(-90),input.b.slice(-90));
+    const q=computeQSS(input,corr,plan,fp/tp);
     if(!q)return null;
-    q.history=pairEvidence(rows,from,to,plan);
+    q.history=pairEvidence(input,plan);
     const trend1=(fp/tp/rows.at(-1).c-1)*100;
     const result={score:q.qss,qss:q,from:a,to:b,corr,trend1,zScore:q.z30,expectedRevertGain:q.expGain,swingPct:0,asOf:Date.now(),candleAt:rows.at(-1).t,plain_explanation:opportunitySummary(q)};
     if(JSON.stringify(plan)!==JSON.stringify(accumulationPlan))return null;
     _scoreCache[key]=result;_scoreCacheTime[key]=Date.now();observePaperSignal(a,b,fp/tp,result);return result;
   }catch(e){console.warn('Pair unavailable',a,b,e.message);return null;}finally{delete _scorePending[key];}})();
   _scorePending[key]=task;return task;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   TREND RIDER — short-horizon MOMENTUM scanner, completely independent
-   from QSS/OMEGA. Every other score in this app is a REVERSION bet: enter
-   when the ratio is stretched, wait for it to fall back. This is the
-   opposite bet — enter right as a fresh move starts, and ride it a little
-   further, on the theory that a brand-new trend keeps going for a few more
-   days before it eventually reverts (real markets often show short-term
-   continuation even where longer-term reversion also holds — the two
-   aren't contradictory, they just operate on different horizons).
-
-   Backtested against this app's real 13-coin pool (~2.7 years of Binance
-   daily data, same pool as QSS): pairs whose ratio was flat-or-falling for
-   ~5 days and then turned up in the last 2 days went on to gain +2% (net
-   of fees) within 7 days about 47% of the time, and within 14 days about
-   61% of the time — checked against the direction that actually pays out
-   (further UP from here), not the reversion direction QSS/Analyzer track.
-   Real, but a moderate edge, not a high-confidence signal — the UI below
-   is written to reflect that honestly rather than oversell it.
-
-   One thing specifically tested before shipping, because Denis flagged it:
-   this does NOT require the coin to already be strong. A pair that was
-   deeply weak (well below its own mean) and just started turning up scores
-   almost as well (46-62%) as one already running hot (48-64%) — both beat
-   a fresh turn from a flat, near-mean starting point. So EXTREMITY in
-   either direction is a mild plus; direction of that extremity isn't.
-
-   This never overrides the golden rule elsewhere in the app (high score =
-   FROM stronger than TO) — it's a fully separate tab, separate cache,
-   separate score, and doesn't feed into QSS, OMEGA, or the Swap Tracker. ── */
-const _momentumCache={};
-const _momentumCacheTime={};
-const MOMENTUM_TTL=15*60*1000;
-const _momentumPending={};
-
-function computeMomentumScore(closes, corr) {
-  if (!closes || closes.length < 35) return null;
-  if (!closes.every(v => Number.isFinite(v) && v > 0)) return null;
-  const n = closes.length;
-
-  // Was flat or falling over the ~5 days ending 2 days ago, then turned up in the
-  // last 2 days — a fresh start, not a move already well underway (that's QSS's job).
-  const priorAvg   = (closes[n-2]-closes[n-6])/closes[n-6]/4;
-  const recentMove = (closes[n-1]-closes[n-3])/closes[n-3];
-  const isFreshTurn = priorAvg <= 0.001 && recentMove > 0.003;
-
-  const w30 = closes.slice(-30);
-  const mean30 = w30.reduce((a,b)=>a+b,0)/w30.length;
-  const std30  = Math.sqrt(w30.reduce((s,v)=>s+(v-mean30)**2,0)/w30.length) || 0.001;
-  const z30 = (closes[n-1]-mean30)/std30;
-
-  if (!isFreshTurn) {
-    // Most pairs, most days, simply don't have a fresh-turn setup right now — that's
-    // expected and correct, not a bug. No score to give.
-    return { momentumScore:0, isFreshTurn:false, isGo:false, z30, recentMovePct: recentMove*100 };
-  }
-
-  // Strength of the fresh turn itself — the core signal. Starts scoring right at the
-  // gate (0.3% over 2 days) and caps at a clean, decisive 3% move.
-  const turnStrength = Math.max(0, Math.min(100, Math.round((recentMove*100 - 0.3)/2.7*100)));
-  // Extremity bonus — being far from the 30-day mean in EITHER direction tested
-  // slightly better than a turn starting from near the mean (see note above).
-  const extremity = Math.max(0, Math.min(100, Math.round(Math.abs(z30)/2.5*100)));
-  // Same correlation-quality mapping QSS uses — reversion or momentum, the ratio
-  // between two barely-related coins is noise either way.
-  const corrQ = Math.max(0, Math.min(100, Math.round(((corr||0)-0.50)/0.40*100)));
-
-  const momentumScore = Math.round(turnStrength*0.55 + extremity*0.25 + corrQ*0.20);
-
-  return {
-    momentumScore, isFreshTurn:true, turnStrength, extremity, corrQ, z30,
-    recentMovePct: recentMove*100,
-    isGo: momentumScore >= 55
-  };
-}
-
-async function getMomentumForPair(a,b){
-  const key=a+'_'+b;
-  const now=Date.now();
-  if(_momentumCache[key]&&(now-_momentumCacheTime[key])<MOMENTUM_TTL) return _momentumCache[key];
-  if(_momentumPending[key]) return _momentumPending[key];
-  const _fetchJ=(url)=>Promise.race([
-    fetch(url).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }),
-    new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),12000))
-  ]);
-  _momentumPending[key] = (async()=>{
-  try{
-    const [fk,tk]=await Promise.all([
-      _fetchJ(`https://api.binance.com/api/v3/klines?symbol=${a}USDT&interval=1d&limit=95`),
-      _fetchJ(`https://api.binance.com/api/v3/klines?symbol=${b}USDT&interval=1d&limit=95`)
-    ]);
-    const fC=fk.map(k=>+k[4]), tC=tk.map(k=>+k[4]);
-    const n=Math.min(fC.length,tC.length);
-    const ratio=Array.from({length:n},(_,i)=>fC[fC.length-n+i]/tC[tC.length-n+i]);
-    const corr=calcCorrelation(fC.slice(-90),tC.slice(-90));
-    const m = computeMomentumScore(ratio, corr);
-    const result = {
-      from:a, to:b,
-      fromName:COINS.find(x=>x.sym===a)?.name||a, toName:COINS.find(x=>x.sym===b)?.name||b,
-      momentum:m, score: m?m.momentumScore:0
-    };
-    _momentumCache[key]=result; _momentumCacheTime[key]=Date.now();
-    return result;
-  }catch(e){ return null; }
-  finally{ delete _momentumPending[key]; }
-  })();
-  return _momentumPending[key];
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -4103,9 +4073,9 @@ function initBestSwapNow(){
     // ── Best overall banner ──
     const topOm = topOverall.score || 0;
     const topGo = topOverall.qss?.isGo;
-    const bestCol = topGo?'#00c076':topOm>=45?'#f5a623':'#ef4444';
+    const bestCol = topGo?'#00c076':'#ef4444';
     const bestBg  = topGo?'rgba(0,192,118,0.09)':'rgba(245,166,35,0.07)';
-    const bestVerdict = topGo?'✅ CYCLE CANDIDATE':topOm>=45?'⏳ WATCH':'🔴 HOLD';
+    const bestVerdict = topGo?'✅ SWAP':'❌ DON’T SWAP';
     const banner=document.createElement('div');
     banner.style.cssText=`background:${bestBg};border:2px solid ${bestCol};border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.8rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap`;
     banner.innerHTML=`
@@ -4148,9 +4118,9 @@ function initBestSwapNow(){
 
       const bOm = best.score || 0;
       const bGo = best.qss?.isGo;
-      const col = bGo?'#00c076':bOm>=45?'#f5a623':'#ef4444';
-      const verdict = bGo?'✅ CYCLE CANDIDATE':bOm>=45?'⏳ WATCH':'❌ HOLD';
-      const verdictBg = bGo?'rgba(0,192,118,0.12)':bOm>=45?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
+      const col = bGo?'#00c076':'#ef4444';
+      const verdict = bGo?'✅ SWAP':'❌ DON’T SWAP';
+      const verdictBg = bGo?'rgba(0,192,118,0.12)':'rgba(239,68,68,0.1)';
 
       const card=document.createElement('div');
       card.className='bsn-result-item';
@@ -4162,7 +4132,7 @@ function initBestSwapNow(){
         '<span style="font-size:10px;color:var(--text3);font-family:monospace;align-self:center">Also:</span>'+
         top5.slice(1).map(x=>{
           const xOm=x.score||0;
-          const xc=x.qss?.isGo?'#00c076':xOm>=45?'#f5a623':'#ef4444';
+          const xc=x.qss?.isGo?'#00c076':'#ef4444';
           return `<button onclick="switchAnalyzerPair('${x.from}','${x.to}')" style="font-size:11px;font-family:monospace;padding:3px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer">${x.to} <span style="color:${xc};font-weight:700">QSS ${xOm}</span></button>`;
         }).join('')+
         '</div>':'';
@@ -4237,9 +4207,9 @@ function initBestSwapNow(){
     results.innerHTML=`<div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:.8rem;text-align:right">Scanned ${scored.length} pairs across the entire ${COINS.length}-coin market · <span style="color:var(--amber)">⏱ ${scanTime}</span> — results expire in 5 min</div>`;
 
     const topOm=top.score||0, topGo=top.qss?.isGo;
-    const bestCol=topGo?'#00c076':topOm>=45?'#f5a623':'#ef4444';
+    const bestCol=topGo?'#00c076':'#ef4444';
     const bestBg=topGo?'rgba(0,192,118,0.09)':'rgba(245,166,35,0.07)';
-    const bestVerdict=topGo?'✅ CYCLE CANDIDATE':topOm>=45?'⏳ WATCH':'🔴 HOLD';
+    const bestVerdict=topGo?'✅ SWAP':'❌ DON’T SWAP';
     const banner=document.createElement('div');
     banner.style.cssText=`background:${bestBg};border:2px solid ${bestCol};border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.8rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap`;
     banner.innerHTML=`
@@ -4269,9 +4239,9 @@ function initBestSwapNow(){
 
     scored.slice(0,10).forEach(item=>{
       const iOm=item.score||0, iGo=item.qss?.isGo;
-      const col=iGo?'#00c076':iOm>=45?'#f5a623':'#ef4444';
-      const verdict=iGo?'✅ CYCLE CANDIDATE':iOm>=45?'⏳ WATCH':'❌ HOLD';
-      const verdictBg=iGo?'rgba(0,192,118,0.12)':iOm>=45?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
+      const col=iGo?'#00c076':'#ef4444';
+      const verdict=iGo?'✅ SWAP':'❌ DON’T SWAP';
+      const verdictBg=iGo?'rgba(0,192,118,0.12)':'rgba(239,68,68,0.1)';
       const card=document.createElement('div');
       card.className='bsn-result-item';
       card.style.cssText=`border-color:${iGo?'rgba(0,192,118,0.3)':'var(--border)'};margin-bottom:.5rem`;
@@ -4305,167 +4275,6 @@ function initBestSwapNow(){
   renderBsnCoins();
   updateBsnState();
 }
-
-/* ══════════════════════════════════════
-   TREND RIDER TAB — scans for fresh momentum starts.
-   Unlike Best Swap Now, most scans will turn up FEW or ZERO results — a
-   fresh-turn setup is a narrower, rarer thing than "the ratio is somewhere
-   stretched" (which is nearly always true for SOME pair). Coming up empty
-   is expected behavior, not a broken scan, so the empty state says so.
-
-   DIRECTION — this took a real fix after shipping v1: computeMomentumScore(a,b)
-   measures whether coin `a` has just started strengthening AGAINST coin `b`
-   (the ratio a/b turning up). The pair that's actually worth swapping is the
-   MIRROR of that — you'd swap OUT of `b` (the lagging coin) INTO `a` (the one
-   just starting to move), the same way you'd swap out of cash into a stock
-   that just started breaking out, not the other way round. v1 displayed
-   "a → b" here, copying the reversion tabs' labeling — backwards for this
-   tab specifically. Every render below swaps the two before display:
-   `strengthening` (from computeMomentumScore's `a`) is what you swap INTO,
-   `heldOrBase` (its `b`) is what you swap FROM. ── */
-function initTrendRider(){
-  const scanBtn=document.getElementById('trendScanBtn');
-  const scanAllBtn=document.getElementById('trendScanAllBtn');
-  const clearBtn=document.getElementById('trendClearBtn');
-  const grid=document.getElementById('trendCoinGrid');
-  const countEl=document.getElementById('trendCount');
-  const searchEl=document.getElementById('trendSearch');
-  const results=document.getElementById('trendResults');
-  if(!scanBtn||!grid||!results) return;
-
-  let selected=new Set();
-  function _saveSel(){try{localStorage.setItem('trendSel',JSON.stringify([...selected]));}catch(e){}}
-  try{ (JSON.parse(localStorage.getItem('trendSel')||'[]')).forEach(s=>selected.add(s)); }catch(e){}
-
-  function renderCoins(){
-    grid.innerHTML='';
-    const q=(searchEl?searchEl.value:'').trim().toLowerCase();
-    const filtered=COINS.filter(c=>!q||c.sym.toLowerCase().includes(q)||c.name.toLowerCase().includes(q));
-    filtered.forEach(c=>{
-      const isSel=selected.has(c.sym);
-      const btn=document.createElement('button');
-      btn.className='bsn-coin'+(isSel?' selected':'');
-      btn.title=c.name;
-      btn.innerHTML=`<span class="bsn-coin-check">✓</span><span style="font-weight:700">${c.sym}</span><span style="font-size:9px;opacity:.55;margin-left:3px">${c.name}</span>`;
-      btn.onclick=()=>{
-        if(selected.has(c.sym)) selected.delete(c.sym); else selected.add(c.sym);
-        _saveSel(); results.innerHTML=''; renderCoins(); updateState();
-      };
-      grid.appendChild(btn);
-    });
-  }
-  function updateState(){
-    const n=selected.size;
-    scanBtn.disabled=n<1;
-    countEl.textContent = n===0 ? 'Select the coin(s) you currently hold' : `Holding: ${[...selected].join(', ')} · ${n} coin${n>1?'s':''}`;
-  }
-  if(searchEl) searchEl.addEventListener('input', renderCoins);
-  clearBtn.onclick=()=>{
-    selected.clear(); if(searchEl) searchEl.value=''; results.innerHTML='';
-    try{localStorage.removeItem('trendSel');}catch(e){}
-    renderCoins(); updateState();
-  };
-
-  function renderResults(list, emptyMsg, scanLabel){
-    if(!list.length){
-      results.innerHTML=`<div style="color:var(--text3);font-size:12px;font-family:monospace;padding:1.2rem;text-align:center;line-height:1.6">${emptyMsg}</div>`;
-      return;
-    }
-    const scanTime=new Date().toLocaleTimeString();
-    results.innerHTML=`<div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:.8rem;text-align:right">Found ${list.length} fresh trend setup${list.length>1?'s':''} · <span style="color:var(--amber)">⏱ ${scanTime}</span> — results expire in 15 min</div>`;
-    list.slice(0,10).forEach(item=>{
-      const m=item.momentum;
-      const go=m.isGo;
-      const col=go?'#00c076':m.momentumScore>=40?'#f5a623':'#ef4444';
-      const verdict=go?'✅ RIDE IT':m.momentumScore>=40?'⏳ WATCH':'❌ WEAK SETUP';
-      const verdictBg=go?'rgba(0,192,118,0.12)':m.momentumScore>=40?'rgba(245,166,35,0.1)':'rgba(239,68,68,0.1)';
-      const card=document.createElement('div');
-      card.className='bsn-result-item';
-      card.style.cssText=`border-color:${go?'rgba(0,192,118,0.3)':'var(--border)'};margin-bottom:.5rem`;
-      card.innerHTML=`
-        <div style="display:flex;align-items:flex-start;gap:12px;width:100%;flex-wrap:wrap">
-          <div style="flex:1;min-width:180px">
-            <div style="font-size:10px;font-family:monospace;color:var(--text3);margin-bottom:3px">Swap</div>
-            <div style="font-size:18px;font-weight:700;color:var(--text)">${item.heldOrBase} → ${item.strengthening}</div>
-            <div style="font-size:11px;color:var(--text3)">${item.heldOrBaseName} → ${item.strengtheningName}</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:2px">Fresh move: <strong style="color:${col}">+${m.recentMovePct.toFixed(2)}%</strong> over the last 2 days · z: ${m.z30.toFixed(2)}σ</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <div style="text-align:center">
-              <div style="font-family:monospace;font-weight:700;font-size:24px;color:${col};line-height:1">${m.momentumScore}</div>
-              <div style="font-size:9px;color:var(--text3);font-family:monospace">TREND</div>
-            </div>
-            <span style="font-size:10px;font-family:monospace;font-weight:700;padding:3px 10px;border-radius:10px;background:${verdictBg};color:${col}">${verdict}</span>
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-top:6px;width:100%">Experimental momentum watchlist — historical completion rate has not been verified for your current settings.</div>
-      `;
-      results.appendChild(card);
-    });
-  }
-
-  // ── Scan my holdings — for each coin you hold, check every OTHER coin as a
-  // candidate to swap into: is that other coin just starting to strengthen
-  // against the one you're holding right now?
-  scanBtn.onclick=async()=>{
-    if(selected.size<1) return;
-    Object.keys(_momentumCache).forEach(k=>{delete _momentumCache[k]; delete _momentumCacheTime[k];});
-    scanBtn.disabled=true; scanAllBtn.disabled=true;
-    scanBtn.textContent='⏳ Scanning...';
-    const tasks=[];
-    selected.forEach(held=>COINS.forEach(c=>{ if(c.sym!==held) tasks.push({strengthening:c.sym,heldOrBase:held}); }));
-    results.innerHTML=`
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:1.2rem;text-align:center">
-        <div class="sp-anim" style="margin:0 auto 10px"></div>
-        <div style="font-size:13px;color:var(--text2);font-family:monospace">Checking ${tasks.length} candidates against what you hold...</div>
-      </div>`;
-    const BATCH=10;
-    const scored=[];
-    for(let i=0;i<tasks.length;i+=BATCH){
-      const batch=tasks.slice(i,i+BATCH);
-      const batchRes=await Promise.all(batch.map(t=>getMomentumForPair(t.strengthening,t.heldOrBase).catch(()=>null)));
-      batchRes.forEach((r,j)=>{ if(r&&r.momentum&&r.momentum.isFreshTurn) scored.push({...batch[j], strengtheningName:r.fromName, heldOrBaseName:r.toName, momentum:r.momentum, score:r.score}); });
-      scanBtn.textContent=`⏳ ${Math.round(Math.min(i+BATCH,tasks.length)/tasks.length*100)}%`;
-    }
-    scored.sort((a,b)=>b.score-a.score);
-    renderResults(scored,
-      `No fresh trend starts against ${[...selected].join(', ')} right now.<br>This is a narrower signal than the main score on purpose — coming up empty is normal. Try again later.`);
-    scanBtn.disabled=selected.size<1; scanAllBtn.disabled=false;
-    scanBtn.textContent='🚀 Find a trend to swap my coin into';
-  };
-
-  // ── Scan entire market — no specific holding, just the best fresh-turn setups
-  // anywhere in the pool right now.
-  scanAllBtn.onclick=async()=>{
-    Object.keys(_momentumCache).forEach(k=>{delete _momentumCache[k]; delete _momentumCacheTime[k];});
-    scanAllBtn.disabled=true; scanBtn.disabled=true;
-    scanAllBtn.textContent='⏳ Scanning...';
-    const tasks=[];
-    COINS.forEach(a=>COINS.forEach(b=>{ if(b.sym!==a.sym) tasks.push({strengthening:a.sym,heldOrBase:b.sym}); }));
-    results.innerHTML=`
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:1.2rem;text-align:center">
-        <div class="sp-anim" style="margin:0 auto 10px"></div>
-        <div style="font-size:13px;color:var(--text2);font-family:monospace">Scanning ${tasks.length} pairs for fresh trend starts...</div>
-      </div>`;
-    const BATCH=10;
-    const scored=[];
-    for(let i=0;i<tasks.length;i+=BATCH){
-      const batch=tasks.slice(i,i+BATCH);
-      const batchRes=await Promise.all(batch.map(t=>getMomentumForPair(t.strengthening,t.heldOrBase).catch(()=>null)));
-      batchRes.forEach((r,j)=>{ if(r&&r.momentum&&r.momentum.isFreshTurn) scored.push({...batch[j], strengtheningName:r.fromName, heldOrBaseName:r.toName, momentum:r.momentum, score:r.score}); });
-      scanAllBtn.textContent=`⏳ ${Math.round(Math.min(i+BATCH,tasks.length)/tasks.length*100)}%`;
-    }
-    scored.sort((a,b)=>b.score-a.score);
-    renderResults(scored,
-      `No fresh trend starts anywhere in the pool right now.<br>This is a narrower signal than the main score on purpose — coming up empty is normal. Try again later or tomorrow.`);
-    scanAllBtn.disabled=false; scanBtn.disabled=selected.size<1;
-    scanAllBtn.textContent='🌐 Scan entire market';
-  };
-
-  renderCoins();
-  updateState();
-}
-
 
 /* ══════════════════════════════════════
    EXPORT / IMPORT TRACKER DATA
