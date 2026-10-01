@@ -1160,7 +1160,15 @@ const RECOVERY_TABLE={"made":"2026-10-01T19:22:20.956Z","target":2,"events":6840
    least 60%, the coin bought above its 200-day average price, and live prices that still cover the user's own
    costs and target. Chosen for frequency (research/bar60-test.cjs): about 4-5 swaps per coin per year, roughly
    3 in 4 reaching the target within 30 days. Not a guarantee. */
-const TESTED_RULES=Object.freeze({window:10,z:1,target:2,regime:'turn',healthyDays:200,minChance:.6,trackWindow:900,maxTargetDays:30});
+const TESTED_RULES=Object.freeze({window:10,z:1,target:2,regime:'turn',healthyDays:200,minChance:.6,minCorrelation:.6,trackWindow:900,maxTargetDays:30});
+/* How closely the two coins moved together: correlation of daily log returns over the last 90 days up to day i. */
+function returnCorrelation(a,b,i,n=90){
+  if(i<n||!(a[i-n]>0&&b[i-n]>0))return null;
+  const ra=[],rb=[];for(let k=i-n+1;k<=i;k++){if(!(a[k]>0&&b[k]>0))return null;ra.push(Math.log(a[k]/a[k-1]));rb.push(Math.log(b[k]/b[k-1]));}
+  const ma=ra.reduce((s,v)=>s+v,0)/n,mb=rb.reduce((s,v)=>s+v,0)/n;let c=0,va=0,vb=0;
+  for(let k=0;k<n;k++){c+=(ra[k]-ma)*(rb[k]-mb);va+=(ra[k]-ma)**2;vb+=(rb[k]-mb)**2;}
+  return va>0&&vb>0?c/Math.sqrt(va*vb):0;
+}
 const MODEL_COST=.99*.999**2; // costs the model was trained with: 1% round trip and 0.1% slippage each way
 function signalLib(){return typeof signalFeatures!=='undefined'?{signalFeatures,signalProbability,SIGNAL_HISTORY}:require('./signal-model.js');}
 function swapModel(){return typeof SIGNAL_MODEL!=='undefined'?SIGNAL_MODEL:require('../research/ml/model.json');}
@@ -1216,6 +1224,8 @@ function evaluateSwapSignal(series,inputs,plan,liveRatio=null,i=series.closes.le
   if(s.ok&&chance!==null&&chance<TESTED_RULES.minChance)reasons.push('Similar swaps won too rarely: '+Math.round(chance*100)+'% within 30 days, '+Math.round(TESTED_RULES.minChance*100)+'% needed');
   if(!health)reasons.push('Not enough price history for the coin you would buy');
   else if(!health.healthy)reasons.push('The coin you would buy has been falling for months');
+  const correlation=returnCorrelation(inputs.a,inputs.b,i);
+  if(correlation===null||correlation<TESTED_RULES.minCorrelation)reasons.push('These two coins do not move together closely enough'+(correlation===null?'':' ('+correlation.toFixed(2)+', '+TESTED_RULES.minCorrelation+' needed)'));
   const isGo=reasons.length===0;
   // 0 = your coin is not up against this coin; 1-49 building; 50-59 stretched, waiting for the turn or room,
   // or a full setup that is not good enough; 60+ swap (the model's win chance).
@@ -1225,9 +1235,9 @@ function evaluateSwapSignal(series,inputs,plan,liveRatio=null,i=series.closes.le
     :Math.max(0,Math.round(s.z/TESTED_RULES.z*50));
   const rank=score+Math.min(4,Math.max(0,s.z))/10; // the scanner orders pairs by the score shown
   return {isGo,reasons,score,chance,setup:s.ok,z:s.z,mean:Math.exp(s.mu),turning:s.turning,r1:s.r1,previous:s.previous,rank,
-    headroom:liveRoom,health,track:{n:tn,rate:tn?tw/tn:null},cost,current,window:TESTED_RULES.window};
+    headroom:liveRoom,health,correlation,track:{n:tn,rate:tn?tw/tn:null},cost,current,window:TESTED_RULES.window};
 }
-if(typeof module!=='undefined'&&module.exports)module.exports={TESTED_RULES,MODEL_COST,coinHealth,setupAt,prepareSwapSeries,evaluateSwapSignal};
+if(typeof module!=='undefined'&&module.exports)module.exports={TESTED_RULES,MODEL_COST,returnCorrelation,coinHealth,setupAt,prepareSwapSeries,evaluateSwapSignal};
 
 /* ProfitSwap accumulation engine. Amounts and returns are always in the starting coin. */
 const ENGINE_VERSION = 'model-4';
