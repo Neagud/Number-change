@@ -4,61 +4,156 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>XLM ⇄ XRP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0f1b28;--bg2:#172839;--bg3:#203449;--text:#eef3f8;--text2:#bfd0de;--text3:#93a9bc;--line:rgba(185,210,231,.16);--line2:rgba(185,210,231,.3);--green:#72d9b3;--amber:#f0c182;--red:#ff9292;--blue:#8cc6f3;--xlm:#b9c6ff;--xrp:#8be0ff}
+:root{--bg:#060a13;--bg2:#0d1422;--bg3:rgba(255,255,255,.045);--glass:rgba(16,24,40,.66);--text:#f3f6fc;--text2:#a9b5cb;--text3:#6c7a93;--line:rgba(150,172,214,.11);--line2:rgba(150,172,214,.22);--green:#3ee6a8;--amber:#ffc46b;--red:#ff6b81;--blue:#6cb8ff;--xlm:#a5b4ff;--xrp:#5ee4ff;--accent:linear-gradient(135deg,#8b95ff 0%,#4fd8ff 100%);--r:20px;--display:'Space Grotesk','Inter',system-ui,sans-serif}
 *{box-sizing:border-box;margin:0}
-body{background:var(--bg);color:var(--text);font:15px/1.55 'Segoe UI',system-ui,sans-serif;padding:24px max(16px,env(safe-area-inset-right)) 60px max(16px,env(safe-area-inset-left))}
-main{max-width:980px;margin:0 auto}
-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}
-h1{font-size:26px;letter-spacing:-.6px;font-weight:650}h1 span{color:var(--text3);font-weight:400}
-.sub{color:var(--text2);font-size:13px}
-button,input{font:inherit}button{cursor:pointer;border-radius:9px;border:1px solid var(--line2);background:var(--bg3);color:var(--text);padding:9px 14px}
-button.primary{background:#b8d9ef;color:#10283b;border:0;font-weight:650}button:disabled{opacity:.5;cursor:wait}
-button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #9bd3ff;outline-offset:2px}
-.card{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:18px}
-.card h2{font-size:17px;font-weight:650;margin-bottom:10px}
-.signal{border-left:6px solid var(--line2)}.signal.go{border-left-color:var(--green);background:rgba(114,217,179,.09)}
-.watch{margin-top:12px;font-size:13px;color:var(--text2)}.watch button{margin-left:6px}.signal.wait{border-left-color:var(--amber)}.signal.hold{border-left-color:var(--blue)}
-.verdict{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.verdict b{font-size:28px;letter-spacing:-.5px}.signal.go .verdict b{color:var(--green)}
-.verdict small{color:var(--text2);font-size:14px}
-.checks{list-style:none;padding:0;margin:14px 0 4px;display:grid;gap:6px}.checks li{display:flex;gap:10px;align-items:baseline}.checks .ok{color:var(--green)}.checks .no{color:var(--text3)}
-.todo{margin-top:12px;font-size:14px;color:var(--text2)}.todo strong{color:var(--text)}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:16px 0}
-.grid4>div{background:var(--bg2);padding:14px}.grid4 span,.grid4 small{display:block;color:var(--text2);font-size:12px}.grid4 strong{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+html{background:var(--bg)}
+body{min-height:100vh;color:var(--text);font:15px/1.6 'Inter','Segoe UI',system-ui,sans-serif;font-feature-settings:'cv11','ss01';-webkit-font-smoothing:antialiased;padding:28px max(16px,env(safe-area-inset-right)) 64px max(16px,env(safe-area-inset-left));
+  background:radial-gradient(1100px 620px at 8% -12%,rgba(124,138,255,.20),transparent 62%),radial-gradient(900px 560px at 105% -5%,rgba(63,217,255,.13),transparent 60%),radial-gradient(700px 500px at 50% 115%,rgba(62,230,168,.06),transparent 60%),var(--bg);background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background-image:linear-gradient(rgba(150,172,214,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(150,172,214,.035) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse at 50% 0%,#000 30%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 30%,transparent 75%)}
+main{max-width:1040px;margin:0 auto}
+::selection{background:rgba(124,138,255,.35)}
+
+/* Header */
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:26px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{position:relative;width:46px;height:46px;flex:none;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line2);box-shadow:0 10px 30px -10px rgba(124,138,255,.55)}
+.logo i{position:absolute;top:12px;width:20px;height:20px;border-radius:50%;mix-blend-mode:screen}
+.logo i:first-child{left:8px;background:var(--xlm)}.logo i:last-child{right:8px;background:var(--xrp)}
+h1{font:700 28px/1.1 var(--display);letter-spacing:-.03em}
+h1 span{background:var(--accent);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:500;padding:0 2px}
+.sub{color:var(--text2);font-size:13px;margin-top:4px}
+.live{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:var(--bg3);border:1px solid var(--line);font-size:12px;color:var(--text2)}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(62,230,168,.6);animation:ping 2s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(62,230,168,.55)}80%,100%{box-shadow:0 0 0 8px rgba(62,230,168,0)}}
+
+/* Controls */
+button,input{font:inherit}
+button{cursor:pointer;border-radius:11px;border:1px solid var(--line2);background:rgba(255,255,255,.05);color:var(--text);padding:9px 15px;font-weight:500;transition:background .18s,border-color .18s,transform .12s,box-shadow .18s}
+button:hover{background:rgba(255,255,255,.09);border-color:rgba(150,172,214,.35)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--accent);color:#07101f;border:0;font-weight:650;box-shadow:0 8px 24px -8px rgba(79,216,255,.55)}
+button.primary:hover{filter:brightness(1.08);box-shadow:0 10px 30px -8px rgba(79,216,255,.75)}
+button:disabled{opacity:.5;cursor:wait}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--xrp);outline-offset:2px}
+input{background:rgba(3,6,12,.6);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;width:100%;transition:border-color .18s,box-shadow .18s}
+input:focus{border-color:rgba(124,138,255,.7);box-shadow:0 0 0 4px rgba(124,138,255,.15);outline:none}
+input[type=date]{color-scheme:dark}
+
+/* Cards */
+.card{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01)),var(--glass);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;margin-bottom:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 24px 60px -30px rgba(0,0,0,.8);animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
+main>.card:nth-of-type(2){animation-delay:.05s}main>.card:nth-of-type(3){animation-delay:.1s}main>.card:nth-of-type(4){animation-delay:.15s}.two{animation:rise .55s .2s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card h2{font:600 13px/1.3 var(--display);text-transform:uppercase;letter-spacing:.12em;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.card h2::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--accent);flex:none}
+
+/* Signal hero */
+.signal{--sig:var(--line2);overflow:hidden;padding:26px 28px}
+.signal::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:radial-gradient(600px 220px at 0% 0%,color-mix(in srgb,var(--sig) 22%,transparent),transparent 70%)}
+.signal::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--sig);box-shadow:0 0 24px var(--sig)}
+.signal.go{--sig:var(--green);border-color:rgba(62,230,168,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 0 0 1px rgba(62,230,168,.08),0 30px 80px -30px rgba(62,230,168,.35)}
+.signal.wait{--sig:var(--amber)}.signal.hold{--sig:var(--blue)}
+.signal>*{position:relative;z-index:1}
+.verdict{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
+.verdict b{font:700 32px/1.15 var(--display);letter-spacing:-.03em}
+.signal.go .verdict b{color:var(--green);text-shadow:0 0 28px rgba(62,230,168,.45)}
+.signal.wait .verdict b{color:var(--text)}
+.verdict small{color:var(--text2);font-size:14px;flex:1 1 320px}
+.checks{list-style:none;padding:0;margin:18px 0 6px;display:grid;gap:8px}
+.checks li{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--bg3);border:1px solid var(--line);font-size:14px}
+.checks li>span:first-child{flex:none;width:22px;height:22px;margin-top:1px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700}
+.checks .ok{color:var(--green);background:rgba(62,230,168,.14);box-shadow:inset 0 0 0 1px rgba(62,230,168,.35)}
+.checks .no{color:var(--text3);background:rgba(150,172,214,.08);box-shadow:inset 0 0 0 1px var(--line2)}
+.todo{margin-top:16px;font-size:14px;color:var(--text2);padding:12px 14px;border-radius:12px;background:rgba(62,230,168,.07);border:1px solid rgba(62,230,168,.22)}.todo strong{color:var(--text)}
+.watch{margin-top:14px;font-size:13px;color:var(--text2)}.watch button{margin-left:6px;padding:6px 12px;font-size:13px}
+
+/* Stat tiles */
+.grid4,.expect{display:grid;gap:10px;margin:16px 0}
+.grid4{grid-template-columns:repeat(4,1fr)}.expect{grid-template-columns:repeat(3,1fr);margin-top:18px}
+.grid4>div,.expect>div{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:14px 16px;transition:border-color .2s,background .2s}
+.grid4>div:hover,.expect>div:hover{border-color:var(--line2);background:rgba(255,255,255,.05)}
+.grid4 span,.expect span{display:block;color:var(--text3);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.grid4 small,.expect small{display:block;color:var(--text2);font-size:12px;margin-top:4px;line-height:1.45}
+.grid4 strong,.expect strong{display:block;font:600 24px/1.2 var(--display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.expect strong{font-size:22px}
 .up{color:var(--green)}.down{color:var(--red)}
-.status{border-radius:12px;padding:14px 16px;border-left:5px solid var(--line2);background:var(--bg3)}.status h3{font-size:18px}.status p{color:var(--text2);margin-top:6px;font-size:14px}
-.status.good{border-color:var(--green);background:rgba(114,217,179,.12)}.status.good h3{color:var(--green)}.status.ok{border-color:var(--green)}.status.wait{border-color:var(--amber)}.status.low{border-color:var(--amber)}.status.low h3{color:var(--amber)}.status.deep{border-color:var(--red)}.status.deep h3{color:var(--red)}
-.road-top{position:relative;height:18px;margin:18px 9px 4px}.road-tag{position:absolute;transform:translateX(-50%);font-size:11px;color:var(--text3);white-space:nowrap}.road-tag.now{color:var(--text);font-weight:600}
-.road{position:relative;height:10px;border-radius:6px;background:rgba(185,210,231,.12);margin:4px 9px 6px}.road-fill{position:absolute;inset:0 auto 0 0;border-radius:6px;background:linear-gradient(90deg,rgba(255,146,146,.6),rgba(240,193,130,.7),rgba(114,217,179,.9))}
-.road-zero{position:absolute;top:-6px;width:2px;height:22px;background:var(--text3)}.road-now{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:var(--text);border:3px solid var(--bg2);box-shadow:0 0 0 2px var(--blue);transform:translate(-50%,-50%)}
+
+/* Status */
+.status{--st:var(--line2);position:relative;border-radius:14px;padding:16px 18px 16px 20px;background:linear-gradient(90deg,color-mix(in srgb,var(--st) 13%,transparent),rgba(255,255,255,.02) 70%);border:1px solid color-mix(in srgb,var(--st) 28%,transparent);overflow:hidden}
+.status::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--st)}
+.status h3{font:650 19px/1.3 var(--display);letter-spacing:-.01em}.status p{color:var(--text2);margin-top:6px;font-size:14px}
+.status.good,.status.ok{--st:var(--green)}.status.good h3{color:var(--green)}
+.status.wait,.status.low{--st:var(--amber)}.status.low h3{color:var(--amber)}
+.status.deep{--st:var(--red)}.status.deep h3{color:var(--red)}
+
+/* Progress road */
+.road-top{position:relative;height:18px;margin:20px 9px 6px}.road-tag{position:absolute;transform:translateX(-50%);font-size:11px;color:var(--text3);white-space:nowrap}.road-tag.now{color:var(--text);font-weight:600}
+.road{position:relative;height:8px;border-radius:99px;background:rgba(150,172,214,.1);margin:6px 9px 8px;box-shadow:inset 0 1px 2px rgba(0,0,0,.4)}
+.road-fill{position:absolute;inset:0 auto 0 0;border-radius:99px;background:linear-gradient(90deg,#ff6b81,#ffc46b 50%,#3ee6a8);box-shadow:0 0 18px rgba(62,230,168,.25);transition:width .6s cubic-bezier(.2,.7,.2,1)}
+.road-zero{position:absolute;top:-6px;width:2px;height:20px;border-radius:2px;background:var(--text3)}
+.road-now{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--bg2);box-shadow:0 0 0 2px var(--xrp),0 0 18px rgba(94,228,255,.6);transform:translate(-50%,-50%)}
 .road-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text3)}
-form.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:12px}form.row label{display:grid;gap:5px;font-size:12px;color:var(--text2);flex:1;min-width:130px}
-input{background:var(--bg);color:var(--text);border:1px solid var(--line2);border-radius:8px;padding:9px 10px;width:100%}
-.muted{color:var(--text3);font-size:12px}.note{font-size:13px;color:var(--text2);margin-top:10px}
-.chart{width:100%;height:380px}.chart-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.chart-head h2{margin:0}
-.ranges{display:flex;gap:6px}.ranges button{padding:5px 11px;font-size:13px}.ranges button.on{background:#b8d9ef;color:#10283b;border-color:#b8d9ef}
-.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-top:8px}.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
-table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}th{color:var(--text3);font-weight:500;font-size:12px}
-.table-wrap{overflow-x:auto}
-details{margin-top:4px}summary{cursor:pointer;font-weight:600}details p,details li{color:var(--text2);font-size:14px;margin-top:8px}details ul{padding-left:20px}
+
+/* Forms & text */
+form.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:16px}
+form.row label{display:grid;gap:6px;font-size:12px;font-weight:500;color:var(--text2);flex:1;min-width:140px}
+.muted{color:var(--text3);font-size:12px}.note{font-size:13px;color:var(--text2);margin-top:12px}
+.note strong{color:var(--text)}
 .err{color:var(--red)}
-.expect{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:16px}
-.expect>div{background:var(--bg2);padding:12px 14px}.expect span,.expect small{display:block;color:var(--text2);font-size:12px}.expect strong{display:block;font-size:20px;font-weight:600}
+
+/* Chart */
+.chart{width:100%;height:400px;border-radius:12px;overflow:hidden}
+.chart-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}.chart-head h2{margin:0}
+.ranges,.alt-ranges{display:flex;gap:2px;padding:4px;border-radius:12px;background:rgba(3,6,12,.55);border:1px solid var(--line)}
+.ranges button,.alt-ranges button{padding:5px 12px;font-size:12px;font-weight:600;border:0;background:transparent;color:var(--text2);border-radius:8px}
+.ranges button:hover,.alt-ranges button:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.ranges button.on,.alt-ranges button.on{background:var(--accent);color:#07101f;box-shadow:0 4px 14px -4px rgba(79,216,255,.6)}
+.legend{display:flex;gap:8px 16px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-top:12px}.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--text3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+tbody tr{transition:background .15s}tbody tr:hover{background:rgba(255,255,255,.03)}
+tbody tr:last-child td{border-bottom:0}
+.table-wrap{overflow-x:auto}
+
+/* Details */
+details{margin-top:4px;border-top:1px solid var(--line);padding:12px 0 4px}details:first-of-type{border-top:0;padding-top:0}
+summary{cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--text2);border-bottom:2px solid var(--text2);transform:rotate(-45deg);transition:transform .2s;margin-left:2px}
+details[open]>summary::before{transform:rotate(45deg)}
+details p,details li{color:var(--text2);font-size:14px;margin-top:8px}details ul{padding-left:22px}details li::marker{color:var(--xrp)}
+
 .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-@media(max-width:760px){.grid4{grid-template-columns:1fr 1fr}.expect{grid-template-columns:1fr}.two{grid-template-columns:1fr}.verdict b{font-size:23px}.card{padding:16px}}
+.two>.card{animation:none}
+@media(max-width:760px){.grid4{grid-template-columns:1fr 1fr}.expect{grid-template-columns:1fr}.two{grid-template-columns:1fr}.verdict b{font-size:25px}.card,.signal{padding:18px}h1{font-size:24px}.chart{height:320px}}
+@media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+/* Tabs + USDC -> XLM (Alt Season) tab */
+.tabs{display:flex;gap:4px;padding:4px;margin:-6px 0 22px;width:fit-content;max-width:100%;overflow-x:auto;border-radius:14px;background:rgba(3,6,12,.55);border:1px solid var(--line)}
+.tabs button{border:0;background:transparent;color:var(--text2);padding:8px 16px;font-size:13px;font-weight:600;border-radius:10px;white-space:nowrap}
+.tabs button:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.tabs button[aria-selected="true"]{background:var(--accent);color:#07101f;box-shadow:0 4px 14px -4px rgba(79,216,255,.6)}
+main.alt>:not(header):not(.tabs):not(#tabAlt),main:not(.alt)>#tabAlt{display:none}
+.signal.sell{--sig:var(--red)}.signal.sell .verdict b{color:var(--red)}
 </style>
 </head>
 <body>
 <main>
 <header>
-  <div><h1>XLM <span>⇄</span> XRP</h1><div class="sub">Grow your XLM: swap into XRP when XLM is temporarily high, swap back with +5% more XLM.</div></div>
-  <div style="display:flex;gap:8px;align-items:center"><span class="muted" id="updated">Loading…</span><button id="refresh">↻ Refresh</button></div>
+  <div class="brand"><div class="logo" aria-hidden="true"><i></i><i></i></div><div><h1>XLM <span>⇄</span> XRP</h1><div class="sub">Grow your XLM: swap into XRP when XLM is temporarily high, swap back with +5% more XLM.</div></div></div>
+  <div style="display:flex;gap:10px;align-items:center"><span class="live"><i></i><span id="updated">Loading…</span></span><button id="refresh">↻ Refresh</button></div>
 </header>
+<nav class="tabs" role="tablist" aria-label="Strategy"><button type="button" role="tab" id="tabBtnSwap" aria-selected="true">XLM ⇄ XRP swaps</button><button type="button" role="tab" id="tabBtnAlt" aria-selected="false">USDC → XLM · Alt Season</button></nav>
 
 <section class="card signal" id="signalCard" aria-live="polite"><h2>Today's signal</h2><div id="signal">Checking live Binance prices…</div></section>
 
 <section class="card" id="positionCard"><h2>My swap</h2><div id="position"></div></section>
 <section class="card" id="recoveryCard"><h2>Old swap recovery</h2><div id="recovery"></div></section>
+<section class="card" id="botCard"><h2>My bot</h2><div id="botBox"></div></section>
 
 <section class="card"><div class="chart-head"><h2>XLM vs XRP since 2018</h2><div class="ranges" role="group" aria-label="Chart range"><button data-range="120">120D</button><button data-range="365">1Y</button><button data-range="1095">3Y</button><button data-range="1826">5Y</button><button data-range="0">All</button></div></div>
   <div id="chart" class="chart" role="img" aria-label="Interactive chart of XLM price in XRP since 2018 with its 10-day average and every swap signal"></div>
@@ -84,6 +179,30 @@ details{margin-top:4px}summary{cursor:pointer;font-weight:600}details p,details 
     <p class="muted" id="settingsMsg">The signal rule itself uses the tested values (3% above the 10-day average, 7-day XRP crash limit −20%). Fee, slippage and targets change your swap-back price. Tested: +8% for the first 14 days, then +5%.</p>
     <p style="margin-top:10px"><button id="notifyBtn" type="button">Enable notifications</button> <span class="muted" id="notifyMsg">Get a browser notification when it's time to swap or swap back (while this page is open).</span></p></details>
 </section>
+<div id="tabAlt" role="tabpanel" aria-labelledby="tabBtnAlt">
+<section class="card signal wait" id="altSignalCard" aria-live="polite"><h2>Today's signal · USDC ⇄ XLM</h2><div id="altSignal">Loading coins from Binance…</div></section>
+
+<section class="card"><h2>Backtest with $1,000</h2><div id="altStats"></div></section>
+
+<section class="card"><div class="chart-head"><h2>XLM price and Alt Season index since 2019</h2><div class="alt-ranges" role="group" aria-label="Chart range"><button data-r="365">1Y</button><button data-r="1095">3Y</button><button data-r="1826">5Y</button><button data-r="0">All</button></div></div>
+  <div id="altChart" class="chart" role="img" aria-label="XLM price in USD since 2019 with every buy and sell signal, and the Alt Season index"></div>
+  <div class="legend"><span><i style="background:var(--xlm)"></i>XLM price in USD (right scale)</span><span><i style="background:var(--amber)"></i>Alt Season index (left scale, 0–100)</span><span><i style="background:var(--green);height:8px;width:8px;border-radius:50%"></i>Buy XLM</span><span><i style="background:var(--red);height:8px;width:8px;border-radius:50%"></i>Sell to USDC</span><span id="altCross" class="muted"></span></div>
+  <p class="muted" style="margin-top:6px">Dashed lines: buy zone 20 (green), sell line 50 (red). Arrows sit on the daily close where the signal fired; the trade is at the next day's open. Scroll or pinch to zoom, drag to move.</p></section>
+
+<section class="card"><h2>All trades</h2><div id="altTrades" class="table-wrap"></div></section>
+
+<section class="card"><h2>How this strategy works</h2>
+  <details open><summary>The rule</summary><ul>
+    <li><strong>Wait in USDC.</strong> Profit is counted in dollars.</li>
+    <li><strong>Buy XLM with all your USDC</strong> when, on a completed daily close, the Alt Season index is 20 or lower <strong>and</strong> Bitcoin closes above its 50-day average.</li>
+    <li><strong>Sell all XLM back to USDC</strong> when the index closes at 50 or higher, even at a loss.</li>
+    <li><strong>Alt Season index:</strong> the share of 37 altcoins (delisted ones such as XMR and MATIC included) that did better than Bitcoin over the last 90 days, from Binance daily prices.</li></ul></details>
+  <details><summary>What history shows</summary>
+    <p>The numbers above are calculated on this page from Binance history every time it loads. About 1–2 trades a year; waits between trades ranged from about 3 weeks to 8½ months.</p>
+    <p>Most of the profit came from 2–3 big runs (2020–21, 2024, 2025). Drops of around 60% inside a trade happened before big wins, and some trades end at a loss. The Bitcoin filter was added because it cut the losing trades in both 2019–2022 and 2023–2026.</p>
+    <p>Signals use XLM/USDT and BTC/USDT prices because the USDC pairs have little history; trade on XLM/USDC. Fee assumed 0.1% per trade. Past results, not a promise.</p></details>
+</section>
+</div>
 </main>
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <script>
@@ -315,12 +434,51 @@ function notifyOnce(key,cond,title,body){
   if(!cond||state.notified[key])return;state.notified[key]=Date.now();save();
   if(typeof Notification!=='undefined'&&Notification.permission==='granted'){try{new Notification(title,{body});}catch{}}
 }
-function renderAll(){if(!market)return;renderSignal();renderPosition();renderRecovery();const list=pastSignals();renderSignals(list);renderHistory();renderChart().catch(e=>{$('chart').innerHTML='<p class="err">Chart history unavailable: '+esc(e.message)+'</p>';});
+// "My bot" card: the Binance bot on your server reports to your Google script every 10 minutes; the app reads that
+// report (web app URL + bot key, saved only in this browser) and shows holdings, profit in XLM and the Czech tax estimate.
+let botData=null,botErr='',botAt=0;
+async function loadBot(force){
+  const b=state.bot;if(!b||!b.url||!b.key)return;
+  if(!force&&Date.now()-botAt<4*60*1000)return;
+  try{const r=await fetch(b.url+(b.url.includes('?')?'&':'?')+'key='+encodeURIComponent(b.key)),j=await r.json();
+    if(j.error)throw new Error(j.error);botData=j;botErr='';}
+  catch(e){botErr=e.message||'not reachable';}
+  botAt=Date.now();renderBot();
+}
+function renderBot(){
+  const el=$('botBox');if(!el)return;const b=state.bot||{};
+  if(!b.url||!b.key){
+    el.innerHTML=`<p class="muted">Connect the app to your bot to see what it holds, your profit and the tax estimate. You need the Google web app URL and the bot key (Bot sheet, B3) from the setup.</p>
+      <form class="row" id="botForm"><label>Web app URL (ends with /exec)<input name="url" type="url" required placeholder="https://script.google.com/macros/s/…/exec"></label><label>Bot key<input name="key" required></label><button class="primary">Connect</button></form>`;
+    $('botForm').onsubmit=e=>{e.preventDefault();const f=new FormData(e.target);state.bot={url:String(f.get('url')).trim(),key:String(f.get('key')).trim()};save();botData=null;renderBot();loadBot(true);};
+    return;
+  }
+  if(!botData){el.innerHTML=botErr?`<p class="err">Could not read the bot's report: ${esc(botErr)}</p>${botFoot()}`:'<p class="muted">Reading the bot\'s latest report…</p>';hookBotFoot();return;}
+  const d=botData,age=d.receivedAt?(Date.now()-Date.parse(d.receivedAt))/60000:Infinity,stale=age>45;
+  const putIn=(+d.start||0)+(+d.deposits||0),y=new Date().getFullYear(),ty=(d.taxYears||[]).find(x=>x.year===y);
+  const holdingTxt=d.holding==='XLM'?`${num(d.amount,2)} XLM`:`${num(d.amount,2)} XRP${d.open?` (swap from ${esc(d.open.date)}, ${num(d.open.xlmSent,2)} XLM sent)`:''}${d.waitingXlm>0.5?` + ${num(d.waitingXlm,2)} XLM waiting`:''}`;
+  const profit=d.holding==='XLM'&&putIn>0?d.amount/putIn-1:null;
+  el.innerHTML=`<div class="status ${stale||!d.ok?'deep':'good'}"><h3>${stale?'⚠️ No report for '+Math.round(age)+' minutes':!d.ok?'⚠️ The bot reports a problem':'🤖 Running'}${d.mode?` · ${esc(d.mode)} mode`:''}</h3><p>${esc(d.msg||'')}</p></div>
+    <div class="grid4"><div><span>Holding</span><strong>${esc(holdingTxt)}</strong><small>${d.pending?'finishing an interrupted swap':'live from your Spot wallet'}</small></div>
+      <div><span>Profit in XLM</span><strong class="${profit==null?'':profit>=0?'up':'down'}">${profit==null?'swap open':pct(profit)}</strong><small>vs ${num(putIn,2)} XLM you put in</small></div>
+      <div><span>Tax ${y} (estimate)</span><strong class="${ty&&ty.gain<0?'down':''}">${ty?num(ty.gain,0)+' CZK':'no sales yet'}</strong><small>${ty?(ty.exempt?'still under 100,000 CZK of sales':'over 100,000 CZK of sales: taxable')+' · sales '+num(ty.sales,0)+' CZK':'net profit/loss this year'}</small></div>
+      <div><span>Reserve to hold</span><strong>${ty?num(ty.reserve,0)+' CZK':'0 CZK'}</strong><small>${ty&&ty.reserve>0&&d.czkRate&&prices()?'≈ '+num(ty.reserve/(prices().xlm*d.czkRate),0)+' XLM at today\'s price':'15% of this year\'s profit'}</small></div></div>
+    ${d.tax&&d.tax.text?`<p class="note"><strong>Latest tax advice</strong> (${esc(new Date(d.tax.time).toLocaleDateString())}): ${esc(d.tax.text)}</p>`:''}
+    ${(d.taxYears||[]).filter(x=>x.year!==y).length?`<p class="muted">Earlier years: ${(d.taxYears||[]).filter(x=>x.year!==y).map(x=>`${x.year}: ${num(x.gain,0)} CZK (${x.exempt?'exempt':'taxable'}, reserve ${num(x.reserve,0)} CZK)`).join(' · ')}</p>`:''}
+    ${(d.taxSummary||[]).filter(x=>x.final&&x.sales).map(x=>`<p class="note"><strong>📄 Tax report ${x.year} (final):</strong> income ${num(x.income,0)} CZK, expenses ${num(x.expenses,0)} CZK, result ${num(x.result,0)} CZK → estimated tax <strong>${num(x.tax,0)} CZK</strong> (reserve ${num(x.reserveCzk,0)} CZK). Every sale is in the "Tax ${x.year}" tab of your Google Sheet and was emailed to you.</p>`).join('')}
+    <p class="muted">Tax figures are estimates for planning (ČNB rate, average cost, fees ignored), not tax advice. Last report ${d.receivedAt?esc(new Date(d.receivedAt).toLocaleString()):'—'}.</p>${botFoot()}`;
+  hookBotFoot();
+}
+const prices=()=>market&&market.xlm?{xlm:market.xlm,xrp:market.xrp}:null;
+const botFoot=()=>`<p style="margin-top:8px"><button type="button" id="botRefresh">↻ Refresh</button> <button type="button" id="botChange">Change connection</button></p>`;
+function hookBotFoot(){if($('botRefresh'))$('botRefresh').onclick=()=>loadBot(true);if($('botChange'))$('botChange').onclick=()=>{state.bot=null;save();botData=null;renderBot();};}
+
+function renderAll(){if(!market)return;renderSignal();renderPosition();renderRecovery();renderBot();loadBot();const list=pastSignals();renderSignals(list);renderHistory();renderChart().catch(e=>{$('chart').innerHTML='<p class="err">Chart history unavailable: '+esc(e.message)+'</p>';});
   $('updated').textContent='Updated '+new Date(market.at).toLocaleTimeString();}
 async function refresh(){const b=$('refresh');b.disabled=true;try{market=await loadMarket();renderAll();}catch(e){$('signal').innerHTML='<p class="err">'+esc(e.message||'Market data unavailable')+'. Retry with Refresh.</p>';$('updated').textContent='Offline';}finally{b.disabled=false;}}
 $('refresh').onclick=refresh;
 const sf=$('settings');for(const k of ['fee','slip','target','later'])sf.elements[k].value=state.settings[k];
-sf.onsubmit=e=>{e.preventDefault();const f=new FormData(sf),v=k=>Math.min(50,Math.max(0,+f.get(k)));state.settings={fee:v('fee'),slip:v('slip'),target:Math.max(.5,v('target')),later:Math.max(.5,v('later'))};save();$('settingsMsg').textContent='Saved.';renderAll();};
+sf.onsubmit=e=>{e.preventDefault();const f=new FormData(sf),v=k=>Math.min(50,Math.max(0,+f.get(k)));state.settings={...state.settings,fee:v('fee'),slip:v('slip'),target:Math.max(.5,v('target')),later:Math.max(.5,v('later'))};save();$('settingsMsg').textContent='Saved.';renderAll();};
 $('notifyBtn').onclick=async()=>{if(typeof Notification==='undefined'){$('notifyMsg').textContent='This browser does not support notifications.';return;}const p=await Notification.requestPermission();$('notifyMsg').textContent=p==='granted'?'Notifications on.':'Notifications are blocked in this browser.';};
 setInterval(()=>{if(!document.hidden)refresh();},5*60*1000);
 // While a swap is open, check live prices every minute, also in a background tab: target windows can be short
@@ -341,6 +499,131 @@ async function quickCheck(){
 function beep(){try{const a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+.6);}catch{}}
 setInterval(quickCheck,60*1000);
 refresh();
+</script>
+<script>
+/* ALTSEASON-START: USDC <-> XLM rule (Alt Season index + Bitcoin trend). Pure functions. Separate from the STRATEGY block,
+   which the bot and the Google script read. Research 18 Oct 2026 (Binance daily prices 2019-2026): buy when the index is 20 or
+   lower AND BTC closes above its 50-day average; sell when the index reaches 50. The BTC filter cut losing trades in both halves. */
+const ALTSEASON=Object.freeze({
+  coins:['ETH','XRP','XLM','ADA','LTC','TRX','LINK','BNB','EOS','BCH','ETC','NEO','IOTA','ZEC','DASH','ATOM','VET','ONT','QTUM','ICX','XTZ','BAT','ZIL','DOGE','HBAR','ALGO','WAVES','XMR','MATIC','OMG','KNC','ZRX','ENJ','IOST','THETA','FET','CHZ'],
+  lookback:90,minCoins:10,buy:20,sell:50,btcAvg:50,fee:.001});
+// btc: [{t,c}] daily closes, oldest -> newest, no gaps. alts: array of Map(dayStart -> close). Returns Map(dayStart -> 0..100):
+// the share of alts (with prices on both days) whose 90-day change beat BTC's.
+function altSeasonIndex(btc,alts){
+  const out=new Map(),L=ALTSEASON.lookback;
+  for(let i=L;i<btc.length;i++){const t=btc[i].t,t0=btc[i-L].t,b=btc[i].c/btc[i-L].c;let n=0,w=0;
+    for(const m of alts){const a=m.get(t),a0=m.get(t0);if(!(a>0&&a0>0))continue;n++;if(a/a0>b)w++;}
+    if(n>=ALTSEASON.minCoins)out.set(t,w/n*100);}
+  return out;}
+// Map(dayStart -> {close, avg, up}); avg = average of the last 50 closes including that day.
+function btcTrend(btc){
+  const out=new Map(),N=ALTSEASON.btcAvg;let s=0;
+  for(let i=0;i<btc.length;i++){s+=btc[i].c;if(i>=N)s-=btc[i-N].c;if(i>=N-1)out.set(btc[i].t,{close:btc[i].c,avg:s/N,up:btc[i].c>s/N});}
+  return out;}
+// Decision on a completed daily close. holding = the strategy holds XLM. Returns 'buy' | 'wait' | 'sell' | 'hold', or null without data.
+function altDecision(holding,index,btcUp){
+  if(!Number.isFinite(index)||typeof btcUp!=='boolean')return null;
+  return holding?(index>=ALTSEASON.sell?'sell':'hold'):(index<=ALTSEASON.buy&&btcUp?'buy':'wait');}
+// xlm: [{t,o,c}]. Decides on each day's close, trades at the next day's open, starts with $1000 on `from`.
+function altBacktest(xlm,index,trend,from){
+  const f=ALTSEASON.fee,trades=[],signals=[];let usd=1000,q=0,pend=null,open=null,peak=1000,maxDD=0,first=null,last=null;
+  for(const x of xlm){if(x.t<from)continue;first=first||x;last=x;
+    if(pend?.d==='buy'){q=usd*(1-f)/x.o;usd=0;open={t:x.t,price:x.o};}
+    else if(pend?.d==='sell'){usd=q*x.o*(1-f);q=0;trades.push({...open,outT:x.t,outPrice:x.o,ret:x.o/open.price-1,balance:usd});open=null;}
+    pend=null;
+    const d=altDecision(q>0,index.get(x.t),trend.get(x.t)?.up);
+    if(d==='buy'||d==='sell'){signals.push({t:x.t,d,price:x.c});pend={d,t:x.t};}
+    const v=usd+q*x.c;peak=Math.max(peak,v);maxDD=Math.min(maxDD,v/peak-1);}
+  return {trades,signals,open,pending:pend,value:usd+q*last.c,hold:1000*last.c/first.c,maxDD,first,last};}
+/* ALTSEASON-END */
+
+let altData=null,altLoading=null,altChart=null,altSeries=null,altRange=0;
+const usd$=(x,d=0)=>Number.isFinite(x)?'$'+num(x,d):'—',px=x=>Number.isFinite(x)?'$'+x.toFixed(4):'—';
+async function altKlines(sym,from){
+  let all=[],start=from;
+  for(let p=0;p<8;p++){const rows=await getJSON(`/klines?symbol=${sym}USDT&interval=1d&limit=1000&startTime=${start}`);if(!rows.length)break;all=all.concat(rows);start=+rows.at(-1)[0]+DAY;if(rows.length<1000)break;}
+  const now=Date.now();return all.filter(k=>+k[6]<now).map(k=>({t:+k[0],o:+k[1],c:+k[4]}));
+}
+async function loadAltData(progress){
+  const syms=['BTC',...ALTSEASON.coins],res={},from=Date.UTC(2018,6,1);let done=0;
+  for(let i=0;i<syms.length;i+=6)await Promise.all(syms.slice(i,i+6).map(async s=>{res[s]=await altKlines(s,from);progress(++done,syms.length);}));
+  const btc=res.BTC;for(let i=1;i<btc.length;i++)if(btc[i].t-btc[i-1].t!==DAY)throw new Error('Missing BTC daily candles');
+  return {xlm:res.XLM,btc,index:altSeasonIndex(btc,ALTSEASON.coins.map(s=>new Map(res[s].map(x=>[x.t,x.c])))),trend:btcTrend(btc),at:Date.now()};
+}
+function loadAlt(){
+  if(altLoading)return altLoading;
+  if(!altData)$('altSignal').textContent='Loading coins from Binance…';
+  altLoading=loadAltData((n,t)=>{if(!altData)$('altSignal').textContent=`Loading coins from Binance… ${n} of ${t}`;})
+    .then(d=>{altData=d;renderAlt();})
+    .catch(e=>{$('altSignalCard').className='card signal wait';$('altSignal').innerHTML=`<p class="err">${esc(e.message||'Binance data unavailable')}. Try again later.</p><p style="margin-top:10px"><button type="button" id="altRefresh">↻ Try again</button></p>`;$('altRefresh').onclick=loadAlt;})
+    .finally(()=>{altLoading=null;});
+  return altLoading;
+}
+function renderAlt(){
+  const d=altData,res=altBacktest(d.xlm,d.index,d.trend,Date.UTC(2019,0,1)),r23=altBacktest(d.xlm,d.index,d.trend,Date.UTC(2023,0,1));
+  const lastT=res.last.t,idx=d.index.get(lastT),tr=d.trend.get(lastT),open=res.open,pend=res.pending?.d;
+  const li=(ok,text)=>`<li><span class="${ok?'ok':'no'}">${ok?'✓':'✗'}</span><span>${text}</span></li>`;
+  const idxTxt=Number.isFinite(idx)?Math.round(idx):'—',btcLine=tr?`Bitcoin closed at ${usd$(tr.close)}, ${tr.up?'above':'below'} its 50-day average of ${usd$(tr.avg)}`:'Bitcoin trend unavailable';
+  const lastSell=res.trades.at(-1);let cls,head,small,checks;
+  if(pend==='sell'){cls='sell';head='🔴 SELL XLM FOR USDC';small=`The Alt Season index reached ${idxTxt} on the ${fmtDate(lastT)} close. The backtest sells all XLM at the next open.`;checks=li(true,`Alt Season index ${idxTxt} <span class="muted">(sell at 50 or higher)</span>`);}
+  else if(pend==='buy'){cls='go';head='✅ BUY XLM WITH USDC';small=`Both checks passed on the ${fmtDate(lastT)} close. The backtest buys XLM with all USDC at the next open.`;checks=li(true,`Alt Season index ${idxTxt} <span class="muted">(20 or lower needed)</span>`)+li(true,btcLine);}
+  else if(open){cls='hold';head='📈 HOLD XLM';small=`Bought on ${fmtDate(open.t)} at ${px(open.price)}; now ${px(res.last.c)} (${pct(res.last.c/open.price-1)}). Sell when the index reaches 50.`;checks=li(false,`Alt Season index ${idxTxt} <span class="muted">(sell at 50 or higher)</span>`);}
+  else{const low=Number.isFinite(idx)&&idx<=ALTSEASON.buy,near=Number.isFinite(idx)&&idx<=ALTSEASON.buy+10;
+    cls='wait';head=low||near?'🟡 GET READY':'⏳ WAIT IN USDC';
+    small=low?'Altcoins are cheap, but Bitcoin is below its 50-day average. Buy on the first daily close above it while the index is still 20 or lower.':near?'The index is getting close to the buy zone. Check every day.':'Keep your money in USDC until the index drops to 20 or lower with Bitcoin trending up.';
+    checks=li(low,`Alt Season index ${idxTxt} <span class="muted">(20 or lower needed)</span>`)+li(!!tr?.up,btcLine);}
+  $('altSignalCard').className='card signal '+cls;
+  $('altSignal').innerHTML=`<div class="verdict"><b>${head}</b><small>${small}</small></div><ul class="checks">${checks}</ul>
+    ${!open&&!pend&&lastSell?`<p class="note"><strong>Last trade:</strong> sold on ${fmtDate(lastSell.outT)} at ${px(lastSell.outPrice)} (${pct(lastSell.ret)}).</p>`:''}
+    <p class="muted" style="margin-top:12px">Based on the ${fmtDate(lastT)} daily close. This is the strategy's own position, not your wallet. Loaded ${new Date(d.at).toLocaleTimeString()} <button type="button" id="altRefresh" style="margin-left:6px;padding:5px 12px;font-size:12px">↻ Refresh</button></p>`;
+  $('altRefresh').onclick=()=>{altData=null;loadAlt();};
+  const n=res.trades.length,losses=res.trades.filter(t=>t.ret<0).length,yrs=(res.last.t-res.first.t)/(365.25*DAY);
+  $('altStats').innerHTML=`<div class="grid4" style="margin:0">
+    <div><span>$1,000 on 1 Jan 2019</span><strong class="up">${usd$(res.value)}</strong><small>From 1 Jan 2023: ${usd$(r23.value)}</small></div>
+    <div><span>Holding XLM instead</span><strong>${usd$(res.hold)}</strong><small>From 1 Jan 2023: ${usd$(r23.hold)}</small></div>
+    <div><span>Trades</span><strong>${n}${open?' + 1 open':''}</strong><small>${losses} closed at a loss · about ${num(n/yrs,1)} a year</small></div>
+    <div><span>Worst drop</span><strong class="down">${pct(res.maxDD,0)}</strong><small>from a peak of the balance, inside trades</small></div></div>`;
+  const rows=[...res.trades];if(open)rows.push({...open,now:res.last.c/open.price-1});
+  $('altTrades').innerHTML=rows.length?`<table><thead><tr><th>Bought</th><th>Price</th><th>Sold</th><th>Price</th><th>Result</th><th>Days</th><th>Balance</th></tr></thead><tbody>${rows.reverse().map(t=>t.outT
+    ?`<tr><td>${fmtDate(t.t)}</td><td>${px(t.price)}</td><td>${fmtDate(t.outT)}</td><td>${px(t.outPrice)}</td><td class="${t.ret>=0?'up':'down'}">${pct(t.ret)}</td><td>${Math.round((t.outT-t.t)/DAY)}</td><td>${usd$(t.balance)}</td></tr>`
+    :`<tr><td>${fmtDate(t.t)}</td><td>${px(t.price)}</td><td class="muted">open</td><td></td><td class="${t.now>=0?'up':'down'}">now ${pct(t.now)}</td><td>${Math.round((res.last.t-t.t)/DAY)}</td><td>${usd$(res.value)}</td></tr>`).join('')}</tbody></table>`:'<p class="muted">No trades yet.</p>';
+  drawAltChart(res);
+}
+function drawAltChart(res){
+  if(typeof LightweightCharts==='undefined'){$('altChart').innerHTML='<p class="muted">The chart library could not load. Check your internet connection and refresh.</p>';return;}
+  const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim(),sec=t=>Math.floor(t/1000),from=res.first.t,d=altData;
+  if(!altChart){
+    altChart=LightweightCharts.createChart($('altChart'),{autoSize:true,layout:{background:{color:'transparent'},textColor:css('--text3'),fontFamily:'Segoe UI, system-ui, sans-serif'},
+      grid:{vertLines:{color:'rgba(185,210,231,.06)'},horzLines:{color:'rgba(185,210,231,.08)'}},
+      rightPriceScale:{borderColor:'rgba(185,210,231,.2)',mode:LightweightCharts.PriceScaleMode.Logarithmic},leftPriceScale:{visible:true,borderColor:'rgba(185,210,231,.2)'},
+      timeScale:{borderColor:'rgba(185,210,231,.2)',minBarSpacing:.05},crosshair:{mode:0}});
+    altSeries={index:altChart.addLineSeries({priceScaleId:'left',color:css('--amber'),lineWidth:1,priceLineVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:0,minMove:1},autoscaleInfoProvider:()=>({priceRange:{minValue:0,maxValue:100}})}),
+      price:altChart.addLineSeries({color:css('--xlm'),lineWidth:2,priceLineVisible:false,priceFormat:{type:'price',precision:4,minMove:.0001}})};
+    altSeries.index.createPriceLine({price:ALTSEASON.buy,color:css('--green'),lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed,axisLabelVisible:true,title:''});
+    altSeries.index.createPriceLine({price:ALTSEASON.sell,color:css('--red'),lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed,axisLabelVisible:true,title:''});
+    altChart.subscribeCrosshairMove(p=>{const v=p&&p.seriesData&&p.seriesData.get(altSeries.price),ix=p&&p.seriesData&&p.seriesData.get(altSeries.index),tr=p&&p.time&&altData?altData.trend.get(p.time*1000):null;
+      $('altCross').textContent=v&&p.time?`${fmtDate(p.time*1000)}: XLM ${px(v.value)}`+(ix?` · index ${Math.round(ix.value)}`:'')+(tr?` · BTC ${tr.up?'above':'below'} its 50-day average`:''):'';});
+  }
+  altSeries.price.setData(d.xlm.filter(x=>x.t>=from).map(x=>({time:sec(x.t),value:x.c})));
+  altSeries.index.setData([...d.index].filter(([t])=>t>=from).map(([t,v])=>({time:sec(t),value:v})));
+  altSeries.price.setMarkers(res.signals.map(s=>({time:sec(s.t),position:s.d==='buy'?'belowBar':'aboveBar',color:s.d==='buy'?css('--green'):css('--red'),shape:s.d==='buy'?'arrowUp':'arrowDown',text:s.d==='buy'?'Buy':'Sell'})));
+  setAltRange(altRange);
+}
+function setAltRange(days){
+  altRange=days;document.querySelectorAll('.alt-ranges button').forEach(b=>b.classList.toggle('on',+b.dataset.r===days));
+  if(!altChart||!altData)return;
+  if(!days){altChart.timeScale().fitContent();return;}
+  const to=Math.floor(altData.xlm.at(-1).t/1000);altChart.timeScale().setVisibleRange({from:to-days*86400,to});
+}
+document.querySelectorAll('.alt-ranges button').forEach(b=>b.onclick=()=>setAltRange(+b.dataset.r));
+function showTab(alt){
+  document.querySelector('main').classList.toggle('alt',alt);
+  $('tabBtnSwap').setAttribute('aria-selected',String(!alt));$('tabBtnAlt').setAttribute('aria-selected',String(alt));
+  try{localStorage.setItem('xlmxrp.tab',alt?'alt':'swap');}catch{}
+  if(alt&&!altData)loadAlt();
+}
+$('tabBtnSwap').onclick=()=>showTab(false);$('tabBtnAlt').onclick=()=>showTab(true);
+try{if(localStorage.getItem('xlmxrp.tab')==='alt')showTab(true);}catch{}
 </script>
 </body>
 </html>
